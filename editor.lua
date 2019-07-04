@@ -108,6 +108,8 @@ function shrink_area_with_gap(a, gap)
 end
 
 function start_editor(data)
+   local gap = data.gap or 0
+
    if data.cmds == nil then
       data.cmds = {}
    end
@@ -170,7 +172,7 @@ function start_editor(data)
       local msg, ext
 
       for i, a in ipairs(closed_areas) do
-         local sa = shrink_area_with_gap(a, data.gap)
+         local sa = shrink_area_with_gap(a, gap)
          cr:rectangle(sa.x, sa.y, sa.width, sa.height)
          cr:clip()
          cr:set_source(api.gears.color(closed_color))
@@ -193,7 +195,7 @@ function start_editor(data)
       end
 
       for i, a in ipairs(open_areas) do
-         local sa = shrink_area_with_gap(a, data.gap)
+         local sa = shrink_area_with_gap(a, gap)
          cr:rectangle(sa.x, sa.y, sa.width, sa.height)
          cr:clip()
          if i == #open_areas then
@@ -508,7 +510,7 @@ function start_editor(data)
                if layout.set_regions then
                   local areas_with_gap = {}
                   for _, a in ipairs(closed_areas) do
-                     areas_with_gap[#areas_with_gap + 1] = shrink_area_with_gap(a, data.gap)
+                     areas_with_gap[#areas_with_gap + 1] = shrink_area_with_gap(a, gap)
                   end
                   layout.set_regions(areas_with_gap)
                   api.layout.arrange(screen)
