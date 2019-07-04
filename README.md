@@ -42,7 +42,7 @@ By default A = B = 1.
 
 ## Demos:
 
-I used `Super + /` for editor and `Super + Tab` for fitting the windows.
+I used `Super + /` for the editor and `Super + Tab` for fitting the windows.
 
 
 h-v
