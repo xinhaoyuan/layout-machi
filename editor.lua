@@ -507,11 +507,12 @@ function start_editor(data)
             if to_apply then
                layout = api.layout.get(screen)
                if layout.set_regions then
-                  local areas_with_gap = {}
-                  for _, a in ipairs(closed_areas) do
-                     areas_with_gap[#areas_with_gap + 1] = shrink_area_with_gap(a, gap)
-                  end
-                  layout.set_regions(areas_with_gap)
+                  -- local areas_with_gap = {}
+                  -- for _, a in ipairs(closed_areas) do
+                  --    areas_with_gap[#areas_with_gap + 1] = shrink_area_with_gap(a, gap)
+                  -- end
+                  -- layout.set_regions(areas_with_gap)
+                  layout.set_regions(closed_areas)
                   api.layout.arrange(screen)
                end
                api.gears.timer{
