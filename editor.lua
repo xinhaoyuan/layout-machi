@@ -10,7 +10,6 @@ local api = {
    dpi        = require("beautiful.xresources").apply_dpi,
 }
 
-local gap = api.beautiful.useless_gap or 0
 local label_font_family = api.beautiful.get_font(
    api.beautiful.mono_font or api.beautiful.font):get_family()
 local label_size = api.dpi(30)
@@ -171,7 +170,7 @@ function start_editor(data)
       local msg, ext
 
       for i, a in ipairs(closed_areas) do
-         local sa = shrink_area_with_gap(a, gap)
+         local sa = shrink_area_with_gap(a, data.gap)
          cr:rectangle(sa.x, sa.y, sa.width, sa.height)
          cr:clip()
          cr:set_source(api.gears.color(closed_color))
@@ -194,7 +193,7 @@ function start_editor(data)
       end
 
       for i, a in ipairs(open_areas) do
-         local sa = shrink_area_with_gap(a, gap)
+         local sa = shrink_area_with_gap(a, data.gap)
          cr:rectangle(sa.x, sa.y, sa.width, sa.height)
          cr:clip()
          if i == #open_areas then
@@ -507,12 +506,11 @@ function start_editor(data)
             if to_apply then
                layout = api.layout.get(screen)
                if layout.set_regions then
-                  -- local areas_with_gap = {}
-                  -- for _, a in ipairs(closed_areas) do
-                  --    areas_with_gap[#areas_with_gap + 1] = shrink_area_with_gap(a, gap)
-                  -- end
-                  -- layout.set_regions(areas_with_gap)
-                  layout.set_regions(closed_areas)
+                  local areas_with_gap = {}
+                  for _, a in ipairs(closed_areas) do
+                     areas_with_gap[#areas_with_gap + 1] = shrink_area_with_gap(a, data.gap)
+                  end
+                  layout.set_regions(areas_with_gap)
                   api.layout.arrange(screen)
                end
                api.gears.timer{
