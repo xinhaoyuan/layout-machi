@@ -448,6 +448,7 @@ function start_editor(data)
          if key == "BackSpace" then
             pop_history()
          elseif key == "Escape" then
+            table.remove(data.cmds, #data.cmds)
             to_exit = true
          elseif key == "Up" or key == "Down" then
             if current_cmd ~= data.cmds[cmd_index] then
@@ -495,6 +496,20 @@ function start_editor(data)
                   table.remove(data.cmds, cmd_index)
                end
                data.cmds[#data.cmds + 1] = current_cmd
+
+               if data.history_file then
+                  -- only save the last 10 layouts
+                  local file, err = io.open(data.history_file, "w")
+                  if err then
+                     print("cannot save history to " .. data.history_file)
+                  else
+                     for i = max(1, #data.cmds - 10), #data.cmds do
+                        print("save cmd " .. data.cmds[i]) 
+                        file:write(data.cmds[i] .. "\n")
+                     end
+                  end
+               end
+               
                current_info = "Saved!"
                to_exit = true
                to_apply = true
@@ -530,9 +545,27 @@ function start_editor(data)
    end)
 end
 
+function restore_data(data)
+   if data.history_file then
+      local file, err = io.open(data.history_file, "r")
+      if err then
+         print("cannot read history from " .. data.history_file) 
+      else
+         data.cmds = {}
+         for line in file:lines() do
+            print("restore cmd " .. line)
+            data.cmds[#data.cmds + 1] = line
+         end
+      end
+   end
+
+   return data
+end
+
 return
    {
       set_region = set_region,
       cycle_region = cycle_region,
       start_editor = start_editor,
+      restore_data = restore_data,
    }

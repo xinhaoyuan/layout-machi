@@ -12,18 +12,18 @@ TL;DR --- I want the control of my layout.
 
 ## Use the layout
 
-Use `layout-machi.layout.create_layout([LAYOUT_NAME}, [DEFAULT_REGIONS])` to instantiate the layout.
+Use `layout_machi.layout.create_layout([LAYOUT_NAME}, [DEFAULT_REGIONS])` to instantiate the layout.
 For example:
 
 ```
-layout-machi.layout.create_layout("default", {})
+layout_machi.layout.create_layout("default", {})
 ```
 
 Creates a layout with no regions
 
 ## Use the editor
 
-Call `layout-machi.editor.start_editor(data)` to enter the editor for the current layout (given it is a machi instance).
+Call `layout_machi.editor.start_editor(data)` to enter the editor for the current layout (given it is a machi instance).
 `data` is am object for storing the history of the editing, initially `{}`. 
 The editor starts with the open area of the entire workarea, taking command to split the current area into multiple sub-areas, then editing each of them. 
 The editor is keyboard driven, accepting a number of command keys.
@@ -38,10 +38,6 @@ By default A = B = 1.
 6. `Enter`/`.`: close all open regions. When all regions are closed, press `Enter` will save the layout and exit the editor. 
 7. `Backspace`: undo the last command.
 8. `Escape`: exit the editor without saving the layout.
-
-## Other functions
-
-`layout-machi.editor.cycle_region(c)` will fit a floating client into the closest region, then cycle through all regions. 
 
 ## Demos:
 
@@ -91,10 +87,21 @@ history
 
 ![](https://i.imgur.com/gzFr48V.gif)
 
-## TODO
+### Persistent history
 
- - Make history persistent
- 
+You need to specify the path of the history file in the editor data, then restore the persistent history by `layout_machi.editor.restore_data`. For example,
+
+```
+machi_layout_data = layout_machi.editor.restore_data({ history_file = ".machi-layout" })
+```
+
+Then start the editor with the restored data.
+For now the last 10 commands are persisted.
+
+## Other functions
+
+`layout_machi.editor.cycle_region(c)` will fit a floating client into the closest region, then cycle through all regions. 
+
 ## License
 
 Apache 2.0 --- See LICENSE
