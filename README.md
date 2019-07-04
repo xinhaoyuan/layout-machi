@@ -55,7 +55,7 @@ h-v
 11 33
 ```
 
-![][https://i.imgur.com/QbvMRTW.gif]
+![](https://i.imgur.com/QbvMRTW.gif)
 
 
 hvv (or 22w)
@@ -68,12 +68,12 @@ hvv (or 22w)
 22 44
 ```
 
-![][https://i.imgur.com/xJebxcF.gif]
+![](https://i.imgur.com/xJebxcF.gif)
 
 
 history
 
-![][https://i.imgur.com/gzFr48V.gif]
+![](https://i.imgur.com/gzFr48V.gif)
 
 ## TODO
 
