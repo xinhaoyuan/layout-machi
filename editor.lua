@@ -492,9 +492,18 @@ function start_editor(data)
          else
             if key == "Return" then
                table.remove(data.cmds, #data.cmds)
-               if cmd_index <= #data.cmds and current_cmd == data.cmds[cmd_index] then
-                  table.remove(data.cmds, cmd_index)
+               -- remove duplicated entries
+               local j = 1
+               for i = 1, #data.cmds do
+                  if data.cmds[i] ~= current_cmd then
+                     data.cmds[j] = data.cmds[i]
+                     j = j + 1
+                  end
                end
+               for i = #data.cmds, j, -1 do
+                  table.remove(data.cmds, i)
+               end
+               -- bring the current cmd to the front
                data.cmds[#data.cmds + 1] = current_cmd
 
                if data.history_file then
