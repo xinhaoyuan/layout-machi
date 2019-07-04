@@ -39,7 +39,7 @@ By default A = B = 1.
 7. `Backspace`: undo the last command.
 8. `Escape`: exit the editor without saving the layout.
 
-## Demos:
+### Demos:
 
 I used `Super + /` for the editor and `Super + Tab` for fitting the windows.
 
