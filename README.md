@@ -33,7 +33,7 @@ Undefined parameters are (mostly) treated as 1.
 1. `Up`/`Down`: restore to the history command sequence 
 2. `h`/`v`: split the current region horizontally/vertically into 2 regions. The split will respect the ratio A:B. 
 3. `w`: Take two parameters (A, B), and split the current region equally into A columns and B rows. If no parameter is defined, behave the same as `Space` without parameters.
-4. `s`: shift the current editing region with other open sibling regions.
+4. `s`: shift the current editing region with other open sibling regions. If A is defined, shift for A times.
 5. `Space` or `-`: Without parameters, close the current region and move to the next open region. With parameters, set the maximum depth of splitting (default is 2).
 6. `Enter`/`.`: close all open regions. When all regions are closed, press `Enter` will save the layout and exit the editor. 
 7. `Backspace`: undo the last command.

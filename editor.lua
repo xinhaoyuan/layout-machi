@@ -386,14 +386,14 @@ function start_editor(data)
       elseif key == "s" or key == "S" then
          if #open_areas > 0 then
             key = "s"
+            local times = num_1 or 1
             local top = pop_open_area()
-            local t = {}
+            local t = {top}
             while #open_areas > 0 and open_areas[#open_areas].depth == top.depth do
                t[#t + 1] = pop_open_area()
             end
-            open_areas[#open_areas + 1] = top
             for i = #t, 1, -1 do
-               open_areas[#open_areas + 1] = t[i]
+               open_areas[#open_areas + 1] = t[(i + times - 1) % #t + 1]
             end
             num_1 = nil
             num_2 = nil
