@@ -112,14 +112,17 @@ machi_layout_data = layout_machi.editor.restore_data({ history_file = ".machi-la
 Then start the editor with the restored data.
 The last `history_save_max` commands are persisted.
 
+## Other goodies
+
+ - Moving a window using the mouse will move it across regions 
+
 ## Other functions
 
-`layout_machi.editor.cycle_region(c)` will fit a floating client into the closest region, then cycle through all regions. 
+`layout_machi.editor.cycle_region(c)` will fit a floating client into the closest region, then cycle through all regions.
 
 ## TODO
 
- - Nicer way to move window across region
- - Tabled region?
+ - Tabs on regions?
 
 ## License
 
