@@ -80,6 +80,7 @@ function create_layout(name, regions)
       get_region_count = function () return #priv.regions end,
       set_regions = set_regions,
       get_regions = get_regions,
+      resize_handler = resize_handler,
    }
 end
 
