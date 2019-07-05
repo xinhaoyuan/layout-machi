@@ -28,11 +28,11 @@ Call `layout_machi.editor.start_editor(data)` to enter the editor for the curren
 The editor starts with the open area of the entire workarea, taking command to split the current area into multiple sub-areas, then editing each of them. 
 The editor is keyboard driven, accepting a number of command keys.
 Before each command, you can optionally provide at most 2 digits for parameters (A, B) of the command.
-By default A = B = 1.
+Undefined parameters are (mostly) treated as 1.
 
 1. `Up`/`Down`: restore to the history command sequence 
 2. `h`/`v`: split the current region horizontally/vertically into 2 regions. The split will respect the ratio A:B. 
-3. `w`: Take two parameters (A, B), and split the current region equally into A columns and B rows. If both A and B is 1, behave the same as `Space` without parameters.
+3. `w`: Take two parameters (A, B), and split the current region equally into A columns and B rows. If no parameter is defined, behave the same as `Space` without parameters.
 4. `s`: shift the current editing region with other open sibling regions.
 5. `Space` or `-`: Without parameters, close the current region and move to the next open region. With parameters, set the maximum depth of splitting (default is 2).
 6. `Enter`/`.`: close all open regions. When all regions are closed, press `Enter` will save the layout and exit the editor. 

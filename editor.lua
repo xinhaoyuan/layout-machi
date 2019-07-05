@@ -376,7 +376,6 @@ function start_editor(data)
       elseif key == "v" or key == "V" then
          handle_split("v", key == "V")
       elseif key == "w" or key == "W" then
-         push_history()
          if num_1 == nil and num_2 == nil then
             push_area()
          else
