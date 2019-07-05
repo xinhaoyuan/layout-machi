@@ -11,7 +11,9 @@ function do_arrange(p, priv)
          if c.machi_region == nil then
             c.machi_region = 1
             region = 1
-         elseif c.machi_region > #regions or c.machi_region <= 1 then
+         elseif c.machi_region > #regions then
+            region = #regions
+         elseif c.machi_region <= 1 then
             region = 1
          else
             region = c.machi_region

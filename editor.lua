@@ -183,15 +183,6 @@ function start_editor(data)
          cr:rectangle(sa.x, sa.y, sa.width, sa.height)
          cr:set_line_width(10.0)
          cr:stroke()
-
-         cr:select_font_face(label_font_family, "normal", "normal")
-         cr:set_font_size(label_size)
-         cr:set_font_face(cr:get_font_face())
-         msg = tostring(i)
-         ext = cr:text_extents(msg)
-         cr:set_source_rgba(0.75, 0.75, 0.75, 1)
-         cr:move_to(sa.x + sa.width / 2 - ext.width / 2 - ext.x_bearing, sa.y + sa.height / 2 - ext.height / 2 - ext.y_bearing)
-         cr:show_text(msg)
          cr:reset_clip()
       end
 
@@ -543,6 +534,18 @@ function start_editor(data)
                   for _, a in ipairs(closed_areas) do
                      areas_with_gap[#areas_with_gap + 1] = shrink_area_with_gap(a, gap)
                   end
+                  table.sort(
+                     areas_with_gap,
+                     function (a1, a2)
+                        local s1 = a1.width * a1.height
+                        local s2 = a2.width * a2.height
+                        if math.abs(s1 - s2) < 0.01 then
+                           return (a1.x + a1.y) < (a2.x + a2.y)
+                        else
+                           return s1 < s2
+                        end
+                     end
+                  )
                   layout.set_regions(areas_with_gap)
                   api.layout.arrange(screen)
                end
