@@ -1,6 +1,6 @@
 # layout-machi
 
-A simple and static layout for Awesome with a rapid interactive layout editor.
+A manual layout for Awesome with a rapid interactive editor.
 
 ## Why?
 
