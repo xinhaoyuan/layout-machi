@@ -72,6 +72,20 @@ hvv (or 22w)
 
 3-13h2v--2h-12v
 
+Details:
+
+ - `3-`: set the maximum editing depth to 3
+ - `13h`: horizontally split the initial region (entire desktop) to the ratio of 1:3
+ - For the left part:
+   - `2v`: vertically split the region to the ratio of 2:1
+   - `--`: ignore further editing the splitted regions
+ - For the right part:
+   - `2h`: horizontally split the region to the ratio of 2:1
+   - `-`: ignore the left part of the splitted regions
+   - `12v`: split the right part vertically to the ratio of 1:2
+
+Tada!
+
 ```
 11 3333 44
 11 3333 44
