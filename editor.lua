@@ -542,7 +542,7 @@ function start_editor(data)
                         if math.abs(s1 - s2) < 0.01 then
                            return (a1.x + a1.y) < (a2.x + a2.y)
                         else
-                           return s1 < s2
+                           return s1 > s2
                         end
                      end
                   )
