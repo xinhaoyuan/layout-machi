@@ -515,12 +515,11 @@ function start_editor(data)
                data.cmds[#data.cmds + 1] = current_cmd
 
                if data.history_file then
-                  -- only save the last 10 layouts
                   local file, err = io.open(data.history_file, "w")
                   if err then
                      print("cannot save history to " .. data.history_file)
                   else
-                     for i = max(1, #data.cmds - 10), #data.cmds do
+                     for i = max(1, #data.cmds - data.history_save_max + 1), #data.cmds do
                         print("save cmd " .. data.cmds[i]) 
                         file:write(data.cmds[i] .. "\n")
                      end

@@ -106,11 +106,11 @@ history
 You need to specify the path of the history file in the editor data, then restore the persistent history by `layout_machi.editor.restore_data`. For example,
 
 ```
-machi_layout_data = layout_machi.editor.restore_data({ history_file = ".machi-layout" })
+machi_layout_data = layout_machi.editor.restore_data({ history_file = ".machi-layout", history_save_max = 10 })
 ```
 
 Then start the editor with the restored data.
-For now the last 10 commands are persisted.
+The last `history_save_max` commands are persisted.
 
 ## Other functions
 
