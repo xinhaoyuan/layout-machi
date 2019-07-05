@@ -116,6 +116,11 @@ The last `history_save_max` commands are persisted.
 
 `layout_machi.editor.cycle_region(c)` will fit a floating client into the closest region, then cycle through all regions. 
 
+## TODO
+
+ - Nicer way to move window across region
+ - Tabled region?
+
 ## License
 
 Apache 2.0 --- See LICENSE
