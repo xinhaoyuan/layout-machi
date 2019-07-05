@@ -33,7 +33,7 @@ function do_arrange(p, priv)
 end
 
 function create_layout(name, regions)
-   local priv = {}
+   local priv = { regions = {} }
 
    local function set_regions(regions)
       priv.regions = regions
@@ -41,6 +41,35 @@ function create_layout(name, regions)
 
    local function get_regions()
       return priv.regions
+   end
+
+   -- move the closest region regardingly to the center distance
+   local function resize_handler(c, context, h)
+      if context ~= "mouse.move" then return end
+      if #priv.regions == 0 then return end
+
+      local center_x = h.x + h.width / 2
+      local center_y = h.y + h.height / 2
+
+      local choice = 1
+      local choice_value = nil
+      for i, r in ipairs(priv.regions) do
+         local r_x = r.x + r.width / 2
+         local r_y = r.y + r.height / 2
+         local dis = (r_x - center_x) * (r_x - center_x) + (r_y - center_y) * (r_y - center_y)
+         if choice_value == nil or choice_value > dis then
+            choice = i
+            choice_value = dis
+         end
+      end
+
+      if c.machi_region ~= choice then
+         c.machi_region = choice
+         c.x = priv.regions[choice].x
+         c.y = priv.regions[choice].y
+         c.width = priv.regions[choice].width
+         c.height = priv.regions[choice].height
+      end
    end
 
    set_regions(regions)
