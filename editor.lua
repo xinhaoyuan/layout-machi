@@ -125,7 +125,8 @@ function start_editor(data)
       height = screen.workarea.height,
       border = 15,
       depth = 0,
-      -- we do not want to rely on bitop
+      group_id = 0,
+      -- we do not want to rely on BitOp
       bl = true, br = true, bu = true, bd = true,
    }
    local kg
@@ -289,7 +290,11 @@ function start_editor(data)
       infobox.bgimage = draw_info
    end
 
+   local split_count = 0
+
    local function handle_split(method, alt)
+      split_count = split_count + 1
+
       if num_1 == nil then num_1 = 1 end
       if num_2 == nil then num_2 = 1 end
 
@@ -309,12 +314,14 @@ function start_editor(data)
             x = a.x, y = a.y,
             width = a.width / (num_1 + num_2) * num_1, height = a.height,
             depth = a.depth + 1,
+            group_id = split_count,
             bl = a.bl, br = false, bu = a.bu, bd = a.bd,
          }
          rd = {
             x = a.x + lu.width, y = a.y,
             width = a.width - lu.width, height = a.height,
             depth = a.depth + 1,
+            group_id = split_count,
             bl = false, br = a.br, bu = a.bu, bd = a.bd,
          }
          open_areas[#open_areas + 1] = rd
@@ -324,12 +331,14 @@ function start_editor(data)
             x = a.x, y = a.y,
             width = a.width, height = a.height / (num_1 + num_2) * num_1,
             depth = a.depth + 1,
+            group_id = split_count,
             bl = a.bl, br = a.br, bu = a.bu, bd = false
          }
          rd = {
             x = a.x, y = a.y + lu.height,
             width = a.width, height = a.height - lu.height,
             depth = a.depth + 1,
+            group_id = split_count,
             bl = a.bl, br = a.br, bu = false, bd = a.bd,
          }
          open_areas[#open_areas + 1] = rd
@@ -344,7 +353,8 @@ function start_editor(data)
                   y = a.y + y_interval * (y - 1),
                   width = x_interval,
                   height = y_interval,
-                  depth = a.depth + 1
+                  depth = a.depth + 1,
+                  group_id = split_count,
                }
                if x == 1 then r.bl = a.bl else r.bl = false end
                if x == num_1 then r.br = a.br else r.br = false end
@@ -387,9 +397,8 @@ function start_editor(data)
          if #open_areas > 0 then
             key = "s"
             local times = num_1 or 1
-            local top = pop_open_area()
-            local t = {top}
-            while #open_areas > 0 and open_areas[#open_areas].depth == top.depth do
+            local t = {}
+            while #open_areas > 0 do
                t[#t + 1] = pop_open_area()
             end
             for i = #t, 1, -1 do
