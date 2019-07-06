@@ -50,7 +50,10 @@ local function set_region(c, r)
    api.layout.arrange(c.screen)
 end
 
--- find the best region for the area
+--- find the best region for the area-like object
+-- @param c       area-like object - table with properties x, y, width, and height
+-- @param regions array of area-like objects
+-- @return the index of the best region
 local function find_region(c, regions)
    local choice = 1
    local choice_value = nil
@@ -77,12 +80,15 @@ local function find_region(c, regions)
    return choice
 end
 
+--- fit the client into the machi of the screen
+-- @param  c     the client to fit
+-- @param  cycle whether to cycle the region if the window is already in machi
+-- @return       whether any actions have been taken on the client
 local function fit_region(c, cycle)
    layout = api.layout.get(c.screen)
    regions = layout.get_regions and layout.get_regions()
    if type(regions) ~= "table" or #regions < 1 then
-      c.float = true
-      return
+      return false
    end
    current_region = c.machi_region or 1
    if not is_tiling(c) then
@@ -96,7 +102,10 @@ local function fit_region(c, cycle)
          c.machi_region = current_region + 1
       end
       api.layout.arrange(c.screen)
+   else
+      return false
    end
+   return true
 end
 
 local function _area_tostring(wa)
