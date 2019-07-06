@@ -129,7 +129,7 @@ local function create(data)
       data = restore_data({
             history_file = ".machi_history",
             history_save_max = 100,
-            gap = beautiful.useless_gap,
+            gap = api.beautiful.useless_gap,
       })
    end
 
