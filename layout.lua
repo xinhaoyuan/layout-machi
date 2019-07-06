@@ -32,7 +32,7 @@ function do_arrange(p, priv)
    end
 end
 
-function create_layout(name, regions)
+function create()
    local priv = { regions = {} }
 
    local function set_regions(regions)
@@ -72,10 +72,7 @@ function create_layout(name, regions)
       end
    end
 
-   set_regions(regions)
-
    return {
-      name = "machi[" .. name .. "]",
       arrange = function (p) do_arrange(p, priv) end,
       get_region_count = function () return #priv.regions end,
       set_regions = set_regions,
@@ -85,5 +82,5 @@ function create_layout(name, regions)
 end
 
 return { 
-   create_layout = create_layout,
+   create = create,
 }

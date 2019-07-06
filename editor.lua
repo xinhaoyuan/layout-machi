@@ -86,7 +86,7 @@ function cycle_region(c)
    end
    current_region = c.machi_region or 1
    if not is_tiling(c) then
-      -- find out which region has the most intersection, calculated by a cap b / a cup b 
+      -- find out which region has the most intersection, calculated by a cap b / a cup b
       c.machi_region = fit_region(c, regions)
       set_tiling(c)
    elseif current_region >= #regions then
@@ -107,39 +107,8 @@ function shrink_area_with_gap(a, gap)
             height = a.height - (a.bu and 0 or gap / 2) - (a.bd and 0 or gap / 2) }
 end
 
-function start_editor(data)
+function create(data)
    local gap = data.gap or 0
-
-   if data.cmds == nil then
-      data.cmds = {}
-   end
-
-   local cmd_index = #data.cmds + 1
-   data.cmds[cmd_index] = ""
-
-   local screen = api.screen.focused()
-   local init_area = {
-      x = screen.workarea.x,
-      y = screen.workarea.y,
-      width = screen.workarea.width,
-      height = screen.workarea.height,
-      border = 15,
-      depth = 0,
-      group_id = 0,
-      -- we do not want to rely on BitOp
-      bl = true, br = true, bu = true, bd = true,
-   }
-   local kg
-   local infobox = api.wibox({
-         x = screen.workarea.x,
-         y = screen.workarea.y,
-         width = screen.workarea.width,
-         height = screen.workarea.height,
-         bg = "#ffffff00",
-         opacity = 1,
-         ontop = true
-   })
-   infobox.visible = true
 
    local closed_areas
    local open_areas
@@ -152,9 +121,21 @@ function start_editor(data)
    local to_exit
    local to_apply
 
-   local function init()
+   local function init(init_area)
       closed_areas = {}
-      open_areas = {init_area}
+      open_areas = {
+         {
+            x = init_area.x,
+            y = init_area.y,
+            width = init_area.width,
+            height = init_area.height,
+            border = 15,
+            depth = 0,
+            group_id = 0,
+            -- we do not want to rely on BitOp
+            bl = true, br = true, bu = true, bd = true,
+         }
+      }
       history = {}
       num_1 = nil
       num_2 = nil
@@ -163,68 +144,6 @@ function start_editor(data)
       current_cmd = ""
       to_exit = false
       to_apply = false
-   end
-
-   local function draw_info(context, cr, width, height)
-      cr:set_source_rgba(0, 0, 0, 0)
-      cr:rectangle(0, 0, width, height)
-      cr:fill()
-
-      local msg, ext
-
-      for i, a in ipairs(closed_areas) do
-         local sa = shrink_area_with_gap(a, gap)
-         cr:rectangle(sa.x, sa.y, sa.width, sa.height)
-         cr:clip()
-         cr:set_source(api.gears.color(closed_color))
-         cr:rectangle(sa.x, sa.y, sa.width, sa.height)
-         cr:fill()
-         cr:set_source(api.gears.color(border_color))
-         cr:rectangle(sa.x, sa.y, sa.width, sa.height)
-         cr:set_line_width(10.0)
-         cr:stroke()
-         cr:reset_clip()
-      end
-
-      for i, a in ipairs(open_areas) do
-         local sa = shrink_area_with_gap(a, gap)
-         cr:rectangle(sa.x, sa.y, sa.width, sa.height)
-         cr:clip()
-         if i == #open_areas then
-            cr:set_source(api.gears.color(active_color))
-         else
-            cr:set_source(api.gears.color(open_color))
-         end
-         cr:rectangle(sa.x, sa.y, sa.width, sa.height)
-         cr:fill()
-
-         cr:set_source(api.gears.color(border_color))
-         cr:rectangle(sa.x, sa.y, sa.width, sa.height)
-         cr:set_line_width(10.0)
-         if i ~= #open_areas then
-            cr:set_dash({5, 5}, 0)
-            cr:stroke()
-            cr:set_dash({}, 0)
-         else
-            cr:stroke()
-         end
-         cr:reset_clip()
-      end
-
-      cr:select_font_face(label_font_family, "normal", "normal")
-      cr:set_font_size(info_size)
-      cr:set_font_face(cr:get_font_face())
-      msg = current_info
-      ext = cr:text_extents(msg)
-      cr:move_to(width / 2 - ext.width / 2 - ext.x_bearing, height / 2 - ext.height / 2 - ext.y_bearing)
-      cr:text_path(msg)
-      cr:set_source_rgba(1, 1, 1, 1)
-      cr:fill()
-      cr:move_to(width / 2 - ext.width / 2 - ext.x_bearing, height / 2 - ext.height / 2 - ext.y_bearing)
-      cr:text_path(msg)
-      cr:set_source_rgba(0, 0, 0, 1)
-      cr:set_line_width(2.0)
-      cr:stroke()
    end
 
    local function push_history()
@@ -267,18 +186,6 @@ function start_editor(data)
          history[#history][3][#history[#history][3] + 1] = a
       end
       return a
-   end
-
-   local function refresh()
-      print("closed areas:")
-      for i, a in ipairs(closed_areas) do
-         print("  " .. _area_tostring(a))
-      end
-      print("open areas:")
-      for i, a in ipairs(open_areas) do
-         print("  " .. _area_tostring(a))
-      end
-      infobox.bgimage = draw_info
    end
 
    local split_count = 0
@@ -362,13 +269,8 @@ function start_editor(data)
       num_2 = nil
    end
 
-   local function cleanup()
-      infobox.visible = false
-   end
-
    local function push_area()
       closed_areas[#closed_areas + 1] = pop_open_area()
-      infobox.bgimage = draw_info
    end
 
    local function handle_command(key)
@@ -434,141 +336,285 @@ function start_editor(data)
       return key
    end
 
-   print("interactive layout editing starts")
+   local function start_interactive()
+      if data.cmds == nil then
+         data.cmds = {}
+      end
 
-   init()
-   refresh()
+      local cmd_index = #data.cmds + 1
+      data.cmds[cmd_index] = ""
 
-   kg = keygrabber.run(function (mod, key, event)
-         if event == "release" then
-            return
+      local screen = api.screen.focused()
+      local kg
+      local infobox = api.wibox({
+            x = screen.workarea.x,
+            y = screen.workarea.y,
+            width = screen.workarea.width,
+            height = screen.workarea.height,
+            bg = "#ffffff00",
+            opacity = 1,
+            ontop = true
+      })
+      infobox.visible = true
+
+      local function cleanup()
+         infobox.visible = false
+      end
+
+      local function draw_info(context, cr, width, height)
+         cr:set_source_rgba(0, 0, 0, 0)
+         cr:rectangle(0, 0, width, height)
+         cr:fill()
+
+         local msg, ext
+
+         for i, a in ipairs(closed_areas) do
+            local sa = shrink_area_with_gap(a, gap)
+            cr:rectangle(sa.x, sa.y, sa.width, sa.height)
+            cr:clip()
+            cr:set_source(api.gears.color(closed_color))
+            cr:rectangle(sa.x, sa.y, sa.width, sa.height)
+            cr:fill()
+            cr:set_source(api.gears.color(border_color))
+            cr:rectangle(sa.x, sa.y, sa.width, sa.height)
+            cr:set_line_width(10.0)
+            cr:stroke()
+            cr:reset_clip()
          end
 
-         if key == "BackSpace" then
-            pop_history()
-         elseif key == "Escape" then
-            table.remove(data.cmds, #data.cmds)
-            to_exit = true
-         elseif key == "Up" or key == "Down" then
-            if current_cmd ~= data.cmds[cmd_index] then
-               data.cmds[#data.cmds] = current_cmd
-            end
-
-            if key == "Up" and cmd_index > 1 then
-               cmd_index = cmd_index - 1
-            elseif key == "Down" and cmd_index < #data.cmds then
-               cmd_index = cmd_index + 1
-            end
-
-            print("restore history #" .. tostring(cmd_index) .. ":" .. data.cmds[cmd_index])
-            init()
-            for i = 1, #data.cmds[cmd_index] do
-               cmd = data.cmds[cmd_index]:sub(i, i)
-
-               push_history()
-               local ret = handle_command(cmd)
-
-               current_info = current_info .. ret
-               current_cmd = current_cmd .. ret
-            end
-
-            if #open_areas == 0 then
-               current_info = current_info .. " (enter to save)"
-            end            
-         elseif #open_areas > 0 then
-            push_history()
-            local ret = handle_command(key)
-            if ret ~= nil then
-               current_info = current_info .. ret
-               current_cmd = current_cmd .. ret
+         for i, a in ipairs(open_areas) do
+            local sa = shrink_area_with_gap(a, gap)
+            cr:rectangle(sa.x, sa.y, sa.width, sa.height)
+            cr:clip()
+            if i == #open_areas then
+               cr:set_source(api.gears.color(active_color))
             else
-               discard_history()
+               cr:set_source(api.gears.color(open_color))
+            end
+            cr:rectangle(sa.x, sa.y, sa.width, sa.height)
+            cr:fill()
+
+            cr:set_source(api.gears.color(border_color))
+            cr:rectangle(sa.x, sa.y, sa.width, sa.height)
+            cr:set_line_width(10.0)
+            if i ~= #open_areas then
+               cr:set_dash({5, 5}, 0)
+               cr:stroke()
+               cr:set_dash({}, 0)
+            else
+               cr:stroke()
+            end
+            cr:reset_clip()
+         end
+
+         cr:select_font_face(label_font_family, "normal", "normal")
+         cr:set_font_size(info_size)
+         cr:set_font_face(cr:get_font_face())
+         msg = current_info
+         ext = cr:text_extents(msg)
+         cr:move_to(width / 2 - ext.width / 2 - ext.x_bearing, height / 2 - ext.height / 2 - ext.y_bearing)
+         cr:text_path(msg)
+         cr:set_source_rgba(1, 1, 1, 1)
+         cr:fill()
+         cr:move_to(width / 2 - ext.width / 2 - ext.x_bearing, height / 2 - ext.height / 2 - ext.y_bearing)
+         cr:text_path(msg)
+         cr:set_source_rgba(0, 0, 0, 1)
+         cr:set_line_width(2.0)
+         cr:stroke()
+      end
+
+      local function refresh()
+         print("closed areas:")
+         for i, a in ipairs(closed_areas) do
+            print("  " .. _area_tostring(a))
+         end
+         print("open areas:")
+         for i, a in ipairs(open_areas) do
+            print("  " .. _area_tostring(a))
+         end
+         infobox.bgimage = draw_info
+      end
+
+
+      print("interactive layout editing starts")
+
+      init(screen.workarea)
+      refresh()
+
+      kg = keygrabber.run(function (mod, key, event)
+            if event == "release" then
+               return
             end
 
-            if #open_areas == 0 then
-               current_info = current_info .. " (enter to save)"
-            end
-         else
-            if key == "Return" then
+            if key == "BackSpace" then
+               pop_history()
+            elseif key == "Escape" then
                table.remove(data.cmds, #data.cmds)
-               -- remove duplicated entries
-               local j = 1
-               for i = 1, #data.cmds do
-                  if data.cmds[i] ~= current_cmd then
-                     data.cmds[j] = data.cmds[i]
-                     j = j + 1
-                  end
+               to_exit = true
+            elseif key == "Up" or key == "Down" then
+               if current_cmd ~= data.cmds[cmd_index] then
+                  data.cmds[#data.cmds] = current_cmd
                end
-               for i = #data.cmds, j, -1 do
-                  table.remove(data.cmds, i)
-               end
-               -- bring the current cmd to the front
-               data.cmds[#data.cmds + 1] = current_cmd
 
-               if data.history_file then
-                  local file, err = io.open(data.history_file, "w")
-                  if err then
-                     print("cannot save history to " .. data.history_file)
-                  else
-                     for i = max(1, #data.cmds - data.history_save_max + 1), #data.cmds do
-                        print("save cmd " .. data.cmds[i]) 
-                        file:write(data.cmds[i] .. "\n")
+               if key == "Up" and cmd_index > 1 then
+                  cmd_index = cmd_index - 1
+               elseif key == "Down" and cmd_index < #data.cmds then
+                  cmd_index = cmd_index + 1
+               end
+
+               print("restore history #" .. tostring(cmd_index) .. ":" .. data.cmds[cmd_index])
+               init(screen.workarea)
+               for i = 1, #data.cmds[cmd_index] do
+                  cmd = data.cmds[cmd_index]:sub(i, i)
+
+                  push_history()
+                  local ret = handle_command(cmd)
+
+                  current_info = current_info .. ret
+                  current_cmd = current_cmd .. ret
+               end
+
+               if #open_areas == 0 then
+                  current_info = current_info .. " (enter to save)"
+               end
+            elseif #open_areas > 0 then
+               push_history()
+               local ret = handle_command(key)
+               if ret ~= nil then
+                  current_info = current_info .. ret
+                  current_cmd = current_cmd .. ret
+               else
+                  discard_history()
+               end
+
+               if #open_areas == 0 then
+                  current_info = current_info .. " (enter to save)"
+               end
+            else
+               if key == "Return" then
+                  table.remove(data.cmds, #data.cmds)
+                  -- remove duplicated entries
+                  local j = 1
+                  for i = 1, #data.cmds do
+                     if data.cmds[i] ~= current_cmd then
+                        data.cmds[j] = data.cmds[i]
+                        j = j + 1
                      end
                   end
-               end
-               
-               current_info = "Saved!"
-               to_exit = true
-               to_apply = true
-            end
-         end
-
-         refresh()
-
-         if to_exit then
-            print("interactive layout editing ends")
-            if to_apply then
-               layout = api.layout.get(screen)
-               if layout.set_regions then
-                  local areas_with_gap = {}
-                  for _, a in ipairs(closed_areas) do
-                     areas_with_gap[#areas_with_gap + 1] = shrink_area_with_gap(a, gap)
+                  for i = #data.cmds, j, -1 do
+                     table.remove(data.cmds, i)
                   end
-                  table.sort(
-                     areas_with_gap,
-                     function (a1, a2)
-                        local s1 = a1.width * a1.height
-                        local s2 = a2.width * a2.height
-                        if math.abs(s1 - s2) < 0.01 then
-                           return (a1.x + a1.y) < (a2.x + a2.y)
-                        else
-                           return s1 > s2
+                  -- bring the current cmd to the front
+                  data.cmds[#data.cmds + 1] = current_cmd
+
+                  if data.history_file then
+                     local file, err = io.open(data.history_file, "w")
+                     if err then
+                        print("cannot save history to " .. data.history_file)
+                     else
+                        for i = max(1, #data.cmds - data.history_save_max + 1), #data.cmds do
+                           print("save cmd " .. data.cmds[i])
+                           file:write(data.cmds[i] .. "\n")
                         end
                      end
-                  )
-                  layout.set_regions(areas_with_gap)
-                  api.layout.arrange(screen)
+                  end
+
+                  current_info = "Saved!"
+                  to_exit = true
+                  to_apply = true
                end
-               api.gears.timer{
-                  timeout = 1,
-                  autostart = true,
-                  singleshot = true,
-                  callback = cleanup
-               }
-            else
-               cleanup()
             end
-            keygrabber.stop(kg)
-            return
+
+            refresh()
+
+            if to_exit then
+               print("interactive layout editing ends")
+               if to_apply then
+                  local layout = api.layout.get(screen)
+                  if layout.set_regions then
+                     local areas_with_gap = {}
+                     for _, a in ipairs(closed_areas) do
+                        areas_with_gap[#areas_with_gap + 1] = shrink_area_with_gap(a, gap)
+                     end
+                     table.sort(
+                        areas_with_gap,
+                        function (a1, a2)
+                           local s1 = a1.width * a1.height
+                           local s2 = a2.width * a2.height
+                           if math.abs(s1 - s2) < 0.01 then
+                              return (a1.x + a1.y) < (a2.x + a2.y)
+                           else
+                              return s1 > s2
+                           end
+                        end
+                     )
+                     layout.cmd = current_cmd
+                     layout.set_regions(areas_with_gap)
+                     api.layout.arrange(screen)
+                  end
+                  api.gears.timer{
+                     timeout = 1,
+                     autostart = true,
+                     singleshot = true,
+                     callback = cleanup
+                  }
+               else
+                  cleanup()
+               end
+               keygrabber.stop(kg)
+               return
+            end
+      end)
+   end
+
+   local function set_by_cmd(layout, screen, cmd)
+      init(screen.workarea)
+      push_history()
+
+      for i = 1, #cmd do
+         local key = handle_command(cmd:sub(i, i))
+      end
+
+      local areas_with_gap = {}
+      for _, a in ipairs(closed_areas) do
+         areas_with_gap[#areas_with_gap + 1] = shrink_area_with_gap(a, gap)
+      end
+      table.sort(
+         areas_with_gap,
+         function (a1, a2)
+            local s1 = a1.width * a1.height
+            local s2 = a2.width * a2.height
+            if math.abs(s1 - s2) < 0.01 then
+               return (a1.x + a1.y) < (a2.x + a2.y)
+            else
+               return s1 > s2
+            end
          end
-   end)
+      )
+      layout.cmd = cmd
+      layout.set_regions(areas_with_gap)
+      api.layout.arrange(screen)
+   end
+
+   local function try_restore_last(layout, screen)
+      local index = #data.cmds
+      if index == 0 then return end
+
+      set_by_cmd(layout, screen, data.cmds[#data.cmds])
+   end
+
+   return {
+      start_interactive = start_interactive,
+      set_by_cmd = set_by_cmd,
+      try_restore_last = try_restore_last,
+   }
 end
 
 function restore_data(data)
    if data.history_file then
       local file, err = io.open(data.history_file, "r")
       if err then
-         print("cannot read history from " .. data.history_file) 
+         print("cannot read history from " .. data.history_file)
       else
          data.cmds = {}
          for line in file:lines() do
@@ -585,6 +631,6 @@ return
    {
       set_region = set_region,
       cycle_region = cycle_region,
-      start_editor = start_editor,
+      create = create,
       restore_data = restore_data,
    }
