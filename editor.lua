@@ -383,6 +383,7 @@ local function create(data)
       local screen = api.screen.focused()
       local kg
       local infobox = api.wibox({
+            screen = screen,
             x = screen.workarea.x,
             y = screen.workarea.y,
             width = screen.workarea.width,
