@@ -145,7 +145,7 @@ local function start(c)
 
                infobox.bgimage = draw_info
             end
-         elseif key == "Escape" then
+         elseif key == "Escape" or key == "Return" then
             infobox.visible = false
             keygrabber.stop(kg)
          end
