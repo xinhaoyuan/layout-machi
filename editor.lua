@@ -128,8 +128,8 @@ local function create(data)
    if data == nil then
       data = restore_data({
             history_file = ".machi_history",
-            history_save_max = 100
-            gap = beautiful.useless_gap
+            history_save_max = 100,
+            gap = beautiful.useless_gap,
       })
    end
 
