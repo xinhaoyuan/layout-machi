@@ -7,14 +7,20 @@ local api = {
    keygrabber = require("awful.keygrabber"),
    naughty    = require("naughty"),
    gears      = require("gears"),
+   lgi        = require("lgi"),
    dpi        = require("beautiful.xresources").apply_dpi,
 }
+
+local function with_alpha(col, alpha)
+   _, r, g, b, a = col:get_rgba()
+   return api.lgi.cairo.SolidPattern.create_rgba(r, g, b, alpha)
+end
 
 local label_font_family = api.beautiful.get_font(
    api.beautiful.mono_font or api.beautiful.font):get_family()
 local label_size = api.dpi(30)
-local border_color = "#ffffff80"
-local fill_color = "#00000040"
+local border_color = with_alpha(api.gears.color(api.beautiful.border_focus), 0.75)
+local fill_color = with_alpha(api.gears.color(api.beautiful.bg_normal), 0.5)
 -- for comparing floats
 local threshold = 0.1
 
@@ -37,8 +43,8 @@ local function start(c)
    })
    infobox.visible = true
 
-   local traverse_x = c.x + c.width / 2
-   local traverse_y = c.y + c.height / 2
+   local traverse_x = c.x
+   local traverse_y = c.y
 
    local function draw_info(context, cr, width, height)
       cr:set_source_rgba(0, 0, 0, 0)
@@ -47,34 +53,32 @@ local function start(c)
 
       local msg, ext
       for i, a in ipairs(regions) do
-         if i ~= c.machi_region then
-            cr:rectangle(a.x, a.y, a.width, a.height)
-            cr:clip()
-            cr:set_source(api.gears.color(fill_color))
-            cr:rectangle(a.x, a.y, a.width, a.height)
-            cr:fill()
-            cr:set_source(api.gears.color(border_color))
-            cr:rectangle(a.x, a.y, a.width, a.height)
-            cr:set_line_width(10.0)
-            cr:stroke()
-            cr:reset_clip()
+         cr:rectangle(a.x, a.y, a.width, a.height)
+         cr:clip()
+         -- cr:set_source(fill_color)
+         -- cr:rectangle(a.x, a.y, a.width, a.height)
+         -- cr:fill()
+         cr:set_source(border_color)
+         cr:rectangle(a.x, a.y, a.width, a.height)
+         cr:set_line_width(10.0)
+         cr:stroke()
+         cr:reset_clip()
 
-            cr:select_font_face(label_font_family, "normal", "normal")
-            cr:set_font_size(label_size)
-            cr:set_font_face(cr:get_font_face())
-            msg = tostring(i)
-            ext = cr:text_extents(msg)
-            cr:move_to(a.x + a.width / 2 - ext.width / 2 - ext.x_bearing, a.y + a.height / 2 - ext.height / 2 - ext.y_bearing)
-            cr:text_path(msg)
-            cr:set_source_rgba(1, 1, 1, 1)
-            cr:fill()
-         end
+         -- cr:select_font_face(label_font_family, "normal", "normal")
+         -- cr:set_font_size(label_size)
+         -- cr:set_font_face(cr:get_font_face())
+         -- msg = tostring(i)
+         -- ext = cr:text_extents(msg)
+         -- cr:move_to(a.x + a.width / 2 - ext.width / 2 - ext.x_bearing, a.y + a.height / 2 - ext.height / 2 - ext.y_bearing)
+         -- cr:text_path(msg)
+         -- cr:set_source_rgba(1, 1, 1, 1)
+         -- cr:fill()
       end
 
-      -- -- show the traverse point
-      -- cr:rectangle(traverse_x - api.dpi(5), traverse_y - api.dpi(5), api.dpi(10), api.dpi(10))
-      -- cr:set_source_rgba(1, 1, 1, 1)
-      -- cr:fill()
+      -- show the traverse point
+      cr:rectangle(traverse_x - api.dpi(5), traverse_y - api.dpi(5), api.dpi(10), api.dpi(10))
+      cr:set_source_rgba(1, 1, 1, 1)
+      cr:fill()
    end
 
    infobox.bgimage = draw_info

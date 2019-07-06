@@ -7,18 +7,24 @@ local api = {
    keygrabber = require("awful.keygrabber"),
    naughty    = require("naughty"),
    gears      = require("gears"),
+   lgi        = require("lgi"),
    dpi        = require("beautiful.xresources").apply_dpi,
 }
+
+local function with_alpha(col, alpha)
+   _, r, g, b, a = col:get_rgba()
+   return api.lgi.cairo.SolidPattern.create_rgba(r, g, b, alpha)
+end
 
 local label_font_family = api.beautiful.get_font(
    api.beautiful.mono_font or api.beautiful.font):get_family()
 local label_size = api.dpi(30)
 local info_size = api.dpi(60)
 -- colors are in rgba
-local border_color = "#ffffffc0"
-local active_color = "#6c7ea780"
-local open_color   = "#00000080"
-local closed_color = "#00000080"
+local border_color = with_alpha(api.gears.color(api.beautiful.border_focus), 0.75)
+local active_color = with_alpha(api.gears.color(api.beautiful.bg_focus), 0.5)
+local open_color   = with_alpha(api.gears.color(api.beautiful.bg_normal), 0.5)
+local closed_color = open_color
 local init_max_depth = 2
 
 local function is_tiling(c)
@@ -409,10 +415,10 @@ local function create(data)
             local sa = shrink_area_with_gap(a, gap)
             cr:rectangle(sa.x, sa.y, sa.width, sa.height)
             cr:clip()
-            cr:set_source(api.gears.color(closed_color))
+            cr:set_source(closed_color)
             cr:rectangle(sa.x, sa.y, sa.width, sa.height)
             cr:fill()
-            cr:set_source(api.gears.color(border_color))
+            cr:set_source(border_color)
             cr:rectangle(sa.x, sa.y, sa.width, sa.height)
             cr:set_line_width(10.0)
             cr:stroke()
@@ -431,7 +437,7 @@ local function create(data)
             cr:rectangle(sa.x, sa.y, sa.width, sa.height)
             cr:fill()
 
-            cr:set_source(api.gears.color(border_color))
+            cr:set_source(border_color)
             cr:rectangle(sa.x, sa.y, sa.width, sa.height)
             cr:set_line_width(10.0)
             if i ~= #open_areas then
