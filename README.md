@@ -16,7 +16,7 @@ Use `layotu = layout_machi.layout.create()` to instantiate the layout.
 
 ## Use the editor
 
-Call `editor = layout_machi.editor.create(data)` to create an editor that can either
+Call `editor = layout_machi.editor.create()` to create an editor that can either
 
  - Interactively edit layout by calling `editor.start_interactive()`
  - Set the layout with batched commands by calling `editor.set_by_cmd(cmd)`, where cmd is a string
@@ -25,9 +25,8 @@ Call `editor = layout_machi.editor.create(data)` to create an editor that can ei
 
 ### The layout editing command
 
-The editor starts with the open area of the entire workarea, taking command to split the current area into multiple sub-areas, then editing each of them.
-The editor is keyboard driven, accepting a number of command keys.
-Before each command, you can optionally provide at most 2 digits for parameters (A, B) of the command.
+The editing starts with the open area of the entire workarea, takes commands to split the current area into multiple sub-areas, then recursively edits each of them.
+The editor is keyboard driven, each command is a key with at most 2 digits as parameters (A, B) before the command.
 Undefined parameters are (mostly) treated as 1.
 
 1. `Up`/`Down`: restore to the history command sequence
@@ -92,15 +91,8 @@ Tada!
 
 ### Persistent history
 
-If you want all command persisted, you need to specify the path of the history file in the editor data.
-The persisted history can be restored by `layout_machi.editor.restore_data(...)`. For example,
-
-```
-machi_editor_data = layout_machi.editor.restore_data({ history_file = ".machi-layout", history_save_max = 10 })
-```
-
-The last `history_save_max` commands are persisted.
-
+By default, the last 100 command sequences is stored in `~/.machi_history`.
+To change that, please refer to `editor.lua`. (XXX more documents)
 
 ## Other functions
 

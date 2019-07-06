@@ -21,12 +21,12 @@ local open_color   = "#00000080"
 local closed_color = "#00000080"
 local init_max_depth = 2
 
-function is_tiling(c)
+local function is_tiling(c)
    return
       not (c.tomb_floating or c.floating or c.maximized_horizontal or c.maximized_vertical or c.maximized or c.fullscreen)
 end
 
-function set_tiling(c)
+local function set_tiling(c)
    c.floating = false
    c.maximized = false
    c.maximized_vertical = false
@@ -34,15 +34,15 @@ function set_tiling(c)
    c.fullscreen = false
 end
 
-function min(a, b)
+local function min(a, b)
    if a < b then return a else return b end
 end
 
-function max(a, b)
+local function max(a, b)
    if a < b then return b else return a end
 end
 
-function set_region(c, r)
+local function set_region(c, r)
    c.floating = false
    c.maximized = false
    c.fullscreen = false
@@ -51,7 +51,7 @@ function set_region(c, r)
 end
 
 -- find the best region for the area
-function fit_region(c, regions)
+local function fit_region(c, regions)
    local choice = 1
    local choice_value = nil
    local c_area = c.width * c.height
@@ -77,7 +77,7 @@ function fit_region(c, regions)
    return choice
 end
 
-function cycle_region(c)
+local function cycle_region(c)
    layout = api.layout.get(c.screen)
    regions = layout.get_regions and layout.get_regions()
    if type(regions) ~= "table" or #regions < 1 then
@@ -97,17 +97,42 @@ function cycle_region(c)
    api.layout.arrange(c.screen)
 end
 
-function _area_tostring(wa)
+local function _area_tostring(wa)
    return "{x:" .. tostring(wa.x) .. ",y:" .. tostring(wa.y) .. ",w:" .. tostring(wa.width) .. ",h:" .. tostring(wa.height) .. "}"
 end
 
-function shrink_area_with_gap(a, gap)
+local function shrink_area_with_gap(a, gap)
    return { x = a.x + (a.bl and 0 or gap / 2), y = a.y + (a.bu and 0 or gap / 2),
             width = a.width - (a.bl and 0 or gap / 2) - (a.br and 0 or gap / 2),
             height = a.height - (a.bu and 0 or gap / 2) - (a.bd and 0 or gap / 2) }
 end
 
-function create(data)
+local function restore_data(data)
+   if data.history_file then
+      local file, err = io.open(data.history_file, "r")
+      if err then
+         print("cannot read history from " .. data.history_file)
+      else
+         data.cmds = {}
+         for line in file:lines() do
+            print("restore cmd " .. line)
+            data.cmds[#data.cmds + 1] = line
+         end
+      end
+   end
+
+   return data
+end
+
+local function create(data)
+   if data == nil then
+      data = restore_data({
+            history_file = ".machi_history",
+            history_save_max = 100
+            gap = beautiful.useless_gap
+      })
+   end
+
    local gap = data.gap or 0
 
    local closed_areas
@@ -608,23 +633,6 @@ function create(data)
       set_by_cmd = set_by_cmd,
       try_restore_last = try_restore_last,
    }
-end
-
-function restore_data(data)
-   if data.history_file then
-      local file, err = io.open(data.history_file, "r")
-      if err then
-         print("cannot read history from " .. data.history_file)
-      else
-         data.cmds = {}
-         for line in file:lines() do
-            print("restore cmd " .. line)
-            data.cmds[#data.cmds + 1] = line
-         end
-      end
-   end
-
-   return data
 end
 
 return
