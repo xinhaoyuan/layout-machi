@@ -96,7 +96,8 @@ To change that, please refer to `editor.lua`. (XXX more documents)
 
 ## Other functions
 
-`layout_machi.editor.cycle_region(c)` will fit a floating client into the closest region, then cycle through all regions.
+`layout_machi.editor.fit_region(c, cycle)` will fit a floating client into the closest region.
+If `cycle` is true, it then moves the window by cycling all regions.
 
 ## TODO
 
