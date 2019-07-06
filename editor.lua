@@ -51,7 +51,7 @@ local function set_region(c, r)
 end
 
 -- find the best region for the area
-local function fit_region(c, regions)
+local function find_region(c, regions)
    local choice = 1
    local choice_value = nil
    local c_area = c.width * c.height
@@ -77,7 +77,7 @@ local function fit_region(c, regions)
    return choice
 end
 
-local function cycle_region(c)
+local function fit_region(c, cycle)
    layout = api.layout.get(c.screen)
    regions = layout.get_regions and layout.get_regions()
    if type(regions) ~= "table" or #regions < 1 then
@@ -87,14 +87,16 @@ local function cycle_region(c)
    current_region = c.machi_region or 1
    if not is_tiling(c) then
       -- find out which region has the most intersection, calculated by a cap b / a cup b
-      c.machi_region = fit_region(c, regions)
+      c.machi_region = find_region(c, regions)
       set_tiling(c)
-   elseif current_region >= #regions then
-      c.machi_region = 1
-   else
-      c.machi_region = current_region + 1
+   elseif cycle then
+      if current_region >= #regions then
+         c.machi_region = 1
+      else
+         c.machi_region = current_region + 1
+      end
+      api.layout.arrange(c.screen)
    end
-   api.layout.arrange(c.screen)
 end
 
 local function _area_tostring(wa)
@@ -638,7 +640,7 @@ end
 return
    {
       set_region = set_region,
-      cycle_region = cycle_region,
+      fit_region = fit_region,
       create = create,
       restore_data = restore_data,
    }
