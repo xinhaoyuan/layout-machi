@@ -40,7 +40,7 @@ Undefined parameters are (mostly) treated as 1.
 
 For examples:
 
-h-v
+`h-v`
 
 ```
 11 22
@@ -51,7 +51,7 @@ h-v
 ```
 
 
-hvv (or 22w)
+`hvv` (or `22w`)
 
 ```
 11 33
@@ -62,7 +62,7 @@ hvv (or 22w)
 ```
 
 
-3-13h2v--2h-12v
+`3-13h2v--2h-12v`
 
 Details:
 
