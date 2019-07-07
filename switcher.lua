@@ -32,9 +32,12 @@ end
 
 local label_font_family = api.beautiful.get_font(
    api.beautiful.mono_font or api.beautiful.font):get_family()
+local tablist_font_size = api.dpi(15)
+local font_color = with_alpha(api.gears.color(api.beautiful.fg_normal), 1)
 local label_size = api.dpi(30)
 local border_color = with_alpha(api.gears.color(api.beautiful.border_focus), 0.75)
 local fill_color = with_alpha(api.gears.color(api.beautiful.bg_normal), 0.5)
+local fill_color_hl = with_alpha(api.gears.color(api.beautiful.bg_focus), 1)
 -- for comparing floats
 local threshold = 0.1
 
@@ -72,6 +75,35 @@ local function start(c)
       for i, a in ipairs(regions) do
          cr:rectangle(a.x, a.y, a.width, a.height)
          cr:clip()
+
+         if i == c.machi_region and tablist ~= nil then
+
+            local x_offset = api.dpi(10)
+            local y_offset = api.dpi(10)
+
+            for index, tc in ipairs(tablist) do
+               local label = tc.name
+               cr:select_font_face(label_font_family, "normal", "normal")
+               cr:set_font_face(cr:get_font_face())
+               cr:set_font_size(tablist_font_size)
+               local ext = cr:text_extents(label)
+               cr:rectangle(a.x + x_offset - api.dpi(3), a.y + y_offset - api.dpi(3),
+                            ext.width + api.dpi(6), ext.height + api.dpi(6))
+               if index == tablist_index then
+                  cr:set_source(fill_color_hl)
+               else
+                  cr:set_source(fill_color)
+               end
+               cr:fill()
+               cr:move_to(a.x + x_offset - ext.x_bearing, a.y + y_offset - ext.y_bearing)
+               cr:text_path(label)
+               cr:set_source(font_color)
+               cr:fill()
+
+               y_offset = y_offset + ext.height + api.dpi(10)
+            end
+         end
+
          -- cr:set_source(fill_color)
          -- cr:rectangle(a.x, a.y, a.width, a.height)
          -- cr:fill()
@@ -121,6 +153,8 @@ local function start(c)
                c = tablist[tablist_index]
                c:emit_signal("request::activate", "mouse.move", {raise=false})
                c:raise()
+
+               infobox.bgimage = draw_info
             end
          elseif key == "Up" or key == "Down" or key == "Left" or key == "Right" then
             local choice = nil
