@@ -1,3 +1,11 @@
+local function min(a, b)
+   if a < b then return a else return b end
+end
+
+local function max(a, b)
+   if a < b then return b else return a end
+end
+
 --- find the best region for the area-like object
 -- @param c       area-like object - table with properties x, y, width, and height
 -- @param regions array of area-like objects

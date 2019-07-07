@@ -1,5 +1,5 @@
 local machi = {
-   layout = require(".layout"),
+   layout = require((...):match("(.-)[^%.]+$") .. "layout"),
 }
 
 local api = {
@@ -18,6 +18,10 @@ local api = {
 local function with_alpha(col, alpha)
    _, r, g, b, a = col:get_rgba()
    return api.lgi.cairo.SolidPattern.create_rgba(r, g, b, alpha)
+end
+
+local function max(a, b)
+   if a < b then return b else return a end
 end
 
 local label_font_family = api.beautiful.get_font(
