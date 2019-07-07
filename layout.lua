@@ -1,23 +1,52 @@
+--- find the best region for the area-like object
+-- @param c       area-like object - table with properties x, y, width, and height
+-- @param regions array of area-like objects
+-- @return the index of the best region
+local function find_region(c, regions)
+   local choice = 1
+   local choice_value = nil
+   local c_area = c.width * c.height
+   for i, a in ipairs(regions) do
+      local x_cap = max(0, min(c.x + c.width, a.x + a.width) - max(c.x, a.x))
+      local y_cap = max(0, min(c.y + c.height, a.y + a.height) - max(c.y, a.y))
+      local cap = x_cap * y_cap
+      -- -- a cap b / a cup b
+      -- local cup = c_area + a.width * a.height - cap
+      -- if cup > 0 then
+      --    local itx_ratio = cap / cup
+      --    if choice_value == nil or choice_value < itx_ratio then
+      --       choice_value = itx_ratio
+      --       choice = i
+      --    end
+      -- end
+      -- a cap b
+      if choice_value == nil or choice_value < cap then
+         choice = i
+         choice_value = cap
+      end
+   end
+   return choice
+end
+
 function do_arrange(p, priv)
    local wa = p.workarea
    local cls = p.clients
    local regions = priv.regions
 
+   if #regions == 0 then return end
+
    for i, c in ipairs(cls) do
       if c.floating then
          print("Ignore client " .. tostring(c))
       else
-         local region
          if c.machi_region == nil then
-            c.machi_region = 1
-            region = 1
+            c.machi_region = find_region(c, regions)
          elseif c.machi_region > #regions then
-            region = #regions
+            c.machi_region = #regions
          elseif c.machi_region <= 1 then
-            region = 1
-         else
-            region = c.machi_region
+            c.machi_region = region = 1
          end
+         local region = c.machi_region
 
          p.geometries[c] = {
             x = regions[region].x,
@@ -83,4 +112,5 @@ end
 
 return { 
    create = create,
+   find_region = find_region,
 }

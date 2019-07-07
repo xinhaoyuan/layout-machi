@@ -1,3 +1,7 @@
+local machi = {
+   layout = require(".layout"),
+}
+
 local api = {
    beautiful  = require("beautiful"),
    wibox      = require("wibox"),
@@ -56,36 +60,6 @@ local function set_region(c, r)
    api.layout.arrange(c.screen)
 end
 
---- find the best region for the area-like object
--- @param c       area-like object - table with properties x, y, width, and height
--- @param regions array of area-like objects
--- @return the index of the best region
-local function find_region(c, regions)
-   local choice = 1
-   local choice_value = nil
-   local c_area = c.width * c.height
-   for i, a in ipairs(regions) do
-      local x_cap = max(0, min(c.x + c.width, a.x + a.width) - max(c.x, a.x))
-      local y_cap = max(0, min(c.y + c.height, a.y + a.height) - max(c.y, a.y))
-      local cap = x_cap * y_cap
-      -- -- a cap b / a cup b
-      -- local cup = c_area + a.width * a.height - cap
-      -- if cup > 0 then
-      --    local itx_ratio = cap / cup
-      --    if choice_value == nil or choice_value < itx_ratio then
-      --       choice_value = itx_ratio
-      --       choice = i
-      --    end
-      -- end
-      -- a cap b
-      if choice_value == nil or choice_value < cap then
-         choice = i
-         choice_value = cap
-      end
-   end
-   return choice
-end
-
 --- fit the client into the machi of the screen
 -- @param  c     the client to fit
 -- @param  cycle whether to cycle the region if the window is already in machi
@@ -99,7 +73,7 @@ local function fit_region(c, cycle)
    current_region = c.machi_region or 1
    if not is_tiling(c) then
       -- find out which region has the most intersection, calculated by a cap b / a cup b
-      c.machi_region = find_region(c, regions)
+      c.machi_region = machi.layout.find_region(c, regions)
       set_tiling(c)
    elseif cycle then
       if current_region >= #regions then
