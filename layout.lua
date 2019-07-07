@@ -44,7 +44,7 @@ function do_arrange(p, priv)
          elseif c.machi_region > #regions then
             c.machi_region = #regions
          elseif c.machi_region <= 1 then
-            c.machi_region = region = 1
+            c.machi_region = 1
          end
          local region = c.machi_region
 
