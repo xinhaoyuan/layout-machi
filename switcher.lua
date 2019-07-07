@@ -57,6 +57,9 @@ local function start(c)
    })
    infobox.visible = true
 
+   local tablist = nil
+   local tablist_index = nil
+
    local traverse_x = c.x
    local traverse_y = c.y
 
@@ -101,8 +104,25 @@ local function start(c)
    kg = keygrabber.run(
       function (mod, key, event)
          if event == "release" then return end
+         if key == "Tab" then
+            if tablist == nil then
+               tablist = {}
+               for _, tc in ipairs(screen.tiled_clients) do
+                  if tc.machi_region == c.machi_region then
+                     tablist[#tablist + 1] = tc
+                  end
+               end
 
-         if key == "Up" or key == "Down" or key == "Left" or key == "Right" then
+               tablist_index = 1
+            end
+
+            if #tablist > 0 then
+               tablist_index = tablist_index % #tablist + 1
+               c = tablist[tablist_index]
+               c:emit_signal("request::activate", "mouse.move", {raise=false})
+               c:raise()
+            end
+         elseif key == "Up" or key == "Down" or key == "Left" or key == "Right" then
             local choice = nil
             local choice_value
             local choice_x
@@ -172,7 +192,8 @@ local function start(c)
                   -- move the focus
                   for _, tc in ipairs(screen.tiled_clients) do
                      if tc.machi_region == choice then
-                        api.client.focus = tc
+                        c = tc
+                        api.client.focus = c
                         move_traverse = true
                         break
                      end
@@ -182,6 +203,8 @@ local function start(c)
                if move_traverse then
                   traverse_x = choice_x
                   traverse_y = choice_y
+
+                  tablist = nil
                end
 
                infobox.bgimage = draw_info
@@ -189,6 +212,8 @@ local function start(c)
          elseif key == "Escape" or key == "Return" then
             infobox.visible = false
             keygrabber.stop(kg)
+         else
+            print("Unhandled key " .. key)
          end
       end
    )
