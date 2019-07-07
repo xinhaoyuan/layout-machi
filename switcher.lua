@@ -1,4 +1,5 @@
 local api = {
+   client     = client,
    beautiful  = require("beautiful"),
    wibox      = require("wibox"),
    awful      = require("awful"),
@@ -10,6 +11,19 @@ local api = {
    lgi        = require("lgi"),
    dpi        = require("beautiful.xresources").apply_dpi,
 }
+
+-- -- Seems not needed?
+-- local focus_timer = 0
+-- api.client.connect_signal(
+--    "focus",
+--    function (c)
+--       if c.focus_timer == nil or c.focus_timer < focus_timer then
+--          c.focus_timer = focus_timer
+--       end
+--       focus_timer = c.focus_timer + 1
+--       c.focus_timer = focus_timer
+--    end
+-- )
 
 local function with_alpha(col, alpha)
    _, r, g, b, a = col:get_rgba()
@@ -141,11 +155,34 @@ local function start(c)
             end
 
             if choice ~= nil and choice_value > threshold then
-               c.machi_region = choice
-               api.layout.arrange(screen)
+               local shift = false
+               for i, m in ipairs(mod) do
+                  if m == "Shift" then shift = true end
+               end
 
-               traverse_x = choice_x
-               traverse_y = choice_y
+               local move_traverse = false
+
+               if shift then
+                  -- move the window
+                  c.machi_region = choice
+                  api.layout.arrange(screen)
+                  move_traverse = true
+               else
+                  local found_
+                  -- move the focus
+                  for _, tc in ipairs(screen.tiled_clients) do
+                     if tc.machi_region == choice then
+                        api.client.focus = tc
+                        move_traverse = true
+                        break
+                     end
+                  end
+               end
+
+               if move_traverse then
+                  traverse_x = choice_x
+                  traverse_y = choice_y
+               end
 
                infobox.bgimage = draw_info
             end
