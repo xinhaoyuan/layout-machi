@@ -12,9 +12,9 @@ TL;DR --- I want the control of my layout.
 
 ## Use the layout
 
-Use `layotu = layout_machi.layout.create()` to instantiate the layout.
+Use `layout = layout_machi.layout.create()` to instantiate the layout.
 
-## Use the editor
+## Editor
 
 Call `editor = layout_machi.editor.create()` to create an editor that can either
 
@@ -93,6 +93,10 @@ Tada!
 
 By default, the last 100 command sequences are stored in `~/.machi_history`.
 To change that, please refer to `editor.lua`. (XXX more documents)
+
+## Switcher
+
+Calling `layout_machi.switcher.start()` will create a switcher that can (1) move window/focus into other regions by direction keys, and (2) switch windows in the same regions using `Tab` key. 
 
 ## Other functions
 
