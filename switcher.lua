@@ -25,6 +25,14 @@ local api = {
 --    end
 -- )
 
+local function min(a, b)
+   if a < b then return a else return b end
+end
+
+local function max(a, b)
+   if a < b then return b else return a end
+end
+
 local function with_alpha(col, alpha)
    _, r, g, b, a = col:get_rgba()
    return api.lgi.cairo.SolidPattern.create_rgba(r, g, b, alpha)
@@ -40,6 +48,7 @@ local fill_color = with_alpha(api.gears.color(api.beautiful.bg_normal), 0.5)
 local fill_color_hl = with_alpha(api.gears.color(api.beautiful.bg_focus), 1)
 -- for comparing floats
 local threshold = 0.1
+local traverse_radius = api.dpi(5)
 
 local function start(c)
    local screen = c.screen
@@ -63,8 +72,8 @@ local function start(c)
    local tablist = nil
    local tablist_index = nil
 
-   local traverse_x = c.x
-   local traverse_y = c.y
+   local traverse_x = c.x + traverse_radius
+   local traverse_y = c.y + traverse_radius
 
    local function draw_info(context, cr, width, height)
       cr:set_source_rgba(0, 0, 0, 0)
@@ -125,7 +134,7 @@ local function start(c)
       end
 
       -- show the traverse point
-      cr:rectangle(traverse_x - api.dpi(5), traverse_y - api.dpi(5), api.dpi(10), api.dpi(10))
+      cr:rectangle(traverse_x - traverse_radius, traverse_y - traverse_radius, traverse_radius * 2, traverse_radius * 2)
       cr:set_source_rgba(1, 1, 1, 1)
       cr:fill()
    end
@@ -159,18 +168,13 @@ local function start(c)
          elseif key == "Up" or key == "Down" or key == "Left" or key == "Right" then
             local choice = nil
             local choice_value
-            local choice_x
-            local choice_y
 
             for i, a in ipairs(regions) do
                local v
-               local x = traverse_x
-               local y = traverse_y
                if key == "Up" then
                   if a.x < traverse_x + threshold
                   and traverse_x < a.x + a.width + threshold then
                      v = traverse_y - a.y - a.height
-                     y = a.y + a.height
                   else
                      v = -1
                   end
@@ -178,7 +182,6 @@ local function start(c)
                   if a.x < traverse_x + threshold
                   and traverse_x < a.x + a.width + threshold then
                      v = a.y - traverse_y
-                     y = a.y
                   else
                      v = -1
                   end
@@ -186,7 +189,6 @@ local function start(c)
                   if a.y < traverse_y + threshold
                   and traverse_y < a.y + a.height + threshold then
                      v = traverse_x - a.x - a.width
-                     x = a.x + a.width
                   else
                      v = -1
                   end
@@ -194,7 +196,6 @@ local function start(c)
                   if a.y < traverse_y + threshold
                   and traverse_y < a.y + a.height + threshold then
                      v = a.x - traverse_x
-                     x = a.x
                   else
                      v = -1
                   end
@@ -203,8 +204,6 @@ local function start(c)
                if (v > threshold) and (choice_value == nil or choice_value > v) then
                   choice = i
                   choice_value = v
-                  choice_x = x
-                  choice_y = y
                end
             end
 
@@ -222,7 +221,6 @@ local function start(c)
                   api.layout.arrange(screen)
                   move_traverse = true
                else
-                  local found_
                   -- move the focus
                   for _, tc in ipairs(screen.tiled_clients) do
                      if tc.machi_region == choice then
@@ -235,9 +233,8 @@ local function start(c)
                end
 
                if move_traverse then
-                  traverse_x = choice_x
-                  traverse_y = choice_y
-
+                  traverse_x = max(regions[choice].x + traverse_radius, min(regions[choice].x + regions[choice].width - traverse_radius, traverse_x))
+                  traverse_y = max(regions[choice].y + traverse_radius, min(regions[choice].y + regions[choice].height - traverse_radius, traverse_y))
                   tablist = nil
                end
 
