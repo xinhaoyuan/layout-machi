@@ -128,6 +128,10 @@ local function create(data)
       })
    end
 
+   if data.cmds == nil then
+      data.cmds = {}
+   end
+
    local gap = data.gap or 0
 
    local closed_areas
@@ -357,10 +361,6 @@ local function create(data)
    end
 
    local function start_interactive()
-      if data.cmds == nil then
-         data.cmds = {}
-      end
-
       local cmd_index = #data.cmds + 1
       data.cmds[cmd_index] = ""
 
