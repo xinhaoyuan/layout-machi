@@ -40,7 +40,7 @@ end
 
 
 local tablist_font_desc = api.beautiful.get_merged_font(
-   api.beautiful.mono_font or api.beautiful.font, 15)
+   api.beautiful.mono_font or api.beautiful.font, api.dpi(10))
 local font_color = with_alpha(api.gears.color(api.beautiful.fg_normal), 1)
 local label_size = api.dpi(30)
 local border_color = with_alpha(api.gears.color(api.beautiful.border_focus), 0.75)
