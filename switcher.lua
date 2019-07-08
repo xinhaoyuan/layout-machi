@@ -87,29 +87,42 @@ local function start(c)
 
          if i == c.machi_region and tablist ~= nil then
 
-            local x_offset = api.dpi(10)
-            local y_offset = api.dpi(10)
+            cr:select_font_face(label_font_family, "normal", "normal")
+            cr:set_font_face(cr:get_font_face())
+            cr:set_font_size(tablist_font_size)
+
+            local vpadding = api.dpi(10)
+            local height = vpadding
+            local exts = {}
 
             for index, tc in ipairs(tablist) do
                local label = tc.name
-               cr:select_font_face(label_font_family, "normal", "normal")
-               cr:set_font_face(cr:get_font_face())
-               cr:set_font_size(tablist_font_size)
                local ext = cr:text_extents(label)
-               cr:rectangle(a.x + x_offset - api.dpi(3), a.y + y_offset - api.dpi(3),
-                            ext.width + api.dpi(6), ext.height + api.dpi(6))
+               exts[#exts + 1] = ext
+               height = height + ext.height + vpadding
+            end
+
+            local x_offset = a.x + a.width / 2
+            local y_offset = a.y + a.height / 2 - height / 2 + vpadding
+
+            cr:rectangle(a.x, y_offset - vpadding, a.width, height)
+            cr:set_source(fill_color)
+            cr:fill()
+
+            for index, tc in ipairs(tablist) do
+               local label = tc.name
+               local ext = exts[index]
                if index == tablist_index then
+                  cr:rectangle(x_offset - ext.width / 2 - vpadding / 2, y_offset - vpadding / 2, ext.width + vpadding, ext.height + vpadding)
                   cr:set_source(fill_color_hl)
-               else
-                  cr:set_source(fill_color)
+                  cr:fill()
                end
-               cr:fill()
-               cr:move_to(a.x + x_offset - ext.x_bearing, a.y + y_offset - ext.y_bearing)
+               cr:move_to(x_offset - ext.width / 2 - ext.x_bearing, y_offset - ext.y_bearing)
                cr:text_path(label)
                cr:set_source(font_color)
                cr:fill()
 
-               y_offset = y_offset + ext.height + api.dpi(10)
+               y_offset = y_offset + ext.height + vpadding
             end
          end
 
