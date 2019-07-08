@@ -642,6 +642,11 @@ local function create(data)
       api.layout.arrange(screen)
    end
 
+   local function refresh_layout(layout, screen)
+      if layout.cmd == nil then return end
+      set_by_cmd(layout, screen, layout.cmd)
+   end
+
    local function try_restore_last(layout, screen)
       if data.last_cmd[layout.name] == nil then return end
       set_by_cmd(layout, screen, data.last_cmd[layout.name])
@@ -649,7 +654,7 @@ local function create(data)
 
    return {
       start_interactive = start_interactive,
-      set_by_cmd = set_by_cmd,
+      refresh_layout = refresh_layout,
       try_restore_last = try_restore_last,
    }
 end
