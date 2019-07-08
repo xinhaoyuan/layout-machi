@@ -12,14 +12,15 @@ TL;DR --- I want the control of my layout.
 
 ## Use the layout
 
-Use `layout = layout_machi.layout.create()` to instantiate the layout.
+Use `layout = layout_machi.layout.create(name)` to instantiate the layout.
+It is advised to instantiate layouts of unique names for each tag (and for each screen), since the editor will restore the last regions of the layout based on the names.
 
 ## Editor
 
 Call `editor = layout_machi.editor.create()` to create an editor that can either
 
  - Interactively edit layout by calling `editor.start_interactive()`
- - Set the layout with batched commands by calling `editor.set_by_cmd(cmd)`, where cmd is a string
+ - Set the layout with batched commands by calling `editor.set_by_cmd(cmd)`, where `cmd` is a string
 
 `data` is an object for storing the history of the editing, initially `{}`.
 
