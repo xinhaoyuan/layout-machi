@@ -38,9 +38,10 @@ local function with_alpha(col, alpha)
    return api.lgi.cairo.SolidPattern.create_rgba(r, g, b, alpha)
 end
 
-local label_font_family = api.beautiful.get_font(
-   api.beautiful.mono_font or api.beautiful.font):get_family()
+
 local tablist_font_size = api.dpi(15)
+local tablist_font_desc = api.beautiful.get_merged_font(
+   api.beautiful.mono_font or api.beautiful.font, tablist_font_size)
 local font_color = with_alpha(api.gears.color(api.beautiful.fg_normal), 1)
 local label_size = api.dpi(30)
 local border_color = with_alpha(api.gears.color(api.beautiful.border_focus), 0.75)
@@ -87,9 +88,8 @@ local function start(c)
 
          if i == c.machi_region and tablist ~= nil then
 
-            cr:select_font_face(label_font_family, "normal", "normal")
-            cr:set_font_face(cr:get_font_face())
-            cr:set_font_size(tablist_font_size)
+            local pl = api.lgi.Pango.Layout.create(cr)
+            pl:set_font_description(tablist_font_desc)
 
             local vpadding = api.dpi(10)
             local height = vpadding
@@ -97,7 +97,12 @@ local function start(c)
 
             for index, tc in ipairs(tablist) do
                local label = tc.name
-               local ext = cr:text_extents(label)
+               pl:set_text(label)
+               local w, h
+               w, h = pl:get_size()
+               w = w / api.lgi.Pango.SCALE
+               h = h / api.lgi.Pango.SCALE
+               local ext = { width = w, height = h, x_bearing = 0, y_bearing = 0 }
                exts[#exts + 1] = ext
                height = height + ext.height + vpadding
             end
@@ -117,10 +122,10 @@ local function start(c)
                   cr:set_source(fill_color_hl)
                   cr:fill()
                end
+               pl:set_text(label)
                cr:move_to(x_offset - ext.width / 2 - ext.x_bearing, y_offset - ext.y_bearing)
-               cr:text_path(label)
                cr:set_source(font_color)
-               cr:fill()
+               cr:show_layout(pl)
 
                y_offset = y_offset + ext.height + vpadding
             end
