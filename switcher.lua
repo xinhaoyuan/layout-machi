@@ -52,6 +52,9 @@ local traverse_radius = api.dpi(5)
 
 local function start(c)
    local screen = c.screen
+   local screen_x = screen.geometry.x
+   local screen_y = screen.geometry.y
+
    local layout = api.layout.get(screen)
    if c.floating or layout.get_regions == nil then return end
 
@@ -82,7 +85,7 @@ local function start(c)
 
       local msg, ext
       for i, a in ipairs(regions) do
-         cr:rectangle(a.x, a.y, a.width, a.height)
+         cr:rectangle(a.x - screen_x, a.y - screen_y, a.width, a.height)
          cr:clip()
 
          if i == c.machi_region and tablist ~= nil then
@@ -106,10 +109,10 @@ local function start(c)
                height = height + ext.height + vpadding
             end
 
-            local x_offset = a.x + a.width / 2
-            local y_offset = a.y + a.height / 2 - height / 2 + vpadding
+            local x_offset = a.x + a.width / 2 - screen_x
+            local y_offset = a.y + a.height / 2 - height / 2 + vpadding - screen_y
 
-            cr:rectangle(a.x, y_offset - vpadding, a.width, height)
+            cr:rectangle(a.x - screen_x, y_offset - vpadding - screen_y, a.width, height)
             cr:set_source(fill_color)
             cr:fill()
 
@@ -134,14 +137,14 @@ local function start(c)
          -- cr:rectangle(a.x, a.y, a.width, a.height)
          -- cr:fill()
          cr:set_source(border_color)
-         cr:rectangle(a.x, a.y, a.width, a.height)
+         cr:rectangle(a.x - screen_x, a.y - screen_y, a.width, a.height)
          cr:set_line_width(10.0)
          cr:stroke()
          cr:reset_clip()
       end
 
       -- show the traverse point
-      cr:rectangle(traverse_x - traverse_radius, traverse_y - traverse_radius, traverse_radius * 2, traverse_radius * 2)
+      cr:rectangle(traverse_x - screen_x - traverse_radius, traverse_y - screen_y - traverse_radius, traverse_radius * 2, traverse_radius * 2)
       cr:set_source_rgba(1, 1, 1, 1)
       cr:fill()
    end

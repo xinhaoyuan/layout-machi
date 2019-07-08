@@ -365,6 +365,9 @@ local function create(data)
       data.cmds[cmd_index] = ""
 
       local screen = api.screen.focused()
+      local screen_x = screen.geometry.x
+      local screen_y = screen.geometry.y
+
       local kg
       local infobox = api.wibox({
             screen = screen,
@@ -391,13 +394,13 @@ local function create(data)
 
          for i, a in ipairs(closed_areas) do
             local sa = shrink_area_with_gap(a, gap)
-            cr:rectangle(sa.x, sa.y, sa.width, sa.height)
+            cr:rectangle(sa.x - screen_x, sa.y - screen_y, sa.width, sa.height)
             cr:clip()
             cr:set_source(closed_color)
-            cr:rectangle(sa.x, sa.y, sa.width, sa.height)
+            cr:rectangle(sa.x - screen_x, sa.y - screen_y, sa.width, sa.height)
             cr:fill()
             cr:set_source(border_color)
-            cr:rectangle(sa.x, sa.y, sa.width, sa.height)
+            cr:rectangle(sa.x - screen_x, sa.y - screen_y, sa.width, sa.height)
             cr:set_line_width(10.0)
             cr:stroke()
             cr:reset_clip()
@@ -405,18 +408,18 @@ local function create(data)
 
          for i, a in ipairs(open_areas) do
             local sa = shrink_area_with_gap(a, gap)
-            cr:rectangle(sa.x, sa.y, sa.width, sa.height)
+            cr:rectangle(sa.x - screen_x, sa.y - screen_y, sa.width, sa.height)
             cr:clip()
             if i == #open_areas then
                cr:set_source(api.gears.color(active_color))
             else
                cr:set_source(api.gears.color(open_color))
             end
-            cr:rectangle(sa.x, sa.y, sa.width, sa.height)
+            cr:rectangle(sa.x - screen_x, sa.y - screen_y, sa.width, sa.height)
             cr:fill()
 
             cr:set_source(border_color)
-            cr:rectangle(sa.x, sa.y, sa.width, sa.height)
+            cr:rectangle(sa.x - screen_x, sa.y - screen_y, sa.width, sa.height)
             cr:set_line_width(10.0)
             if i ~= #open_areas then
                cr:set_dash({5, 5}, 0)
