@@ -39,9 +39,8 @@ local function with_alpha(col, alpha)
 end
 
 
-local tablist_font_size = api.dpi(15)
 local tablist_font_desc = api.beautiful.get_merged_font(
-   api.beautiful.mono_font or api.beautiful.font, tablist_font_size)
+   api.beautiful.mono_font or api.beautiful.font, 15)
 local font_color = with_alpha(api.gears.color(api.beautiful.fg_normal), 1)
 local label_size = api.dpi(30)
 local border_color = with_alpha(api.gears.color(api.beautiful.border_focus), 0.75)
@@ -139,16 +138,6 @@ local function start(c)
          cr:set_line_width(10.0)
          cr:stroke()
          cr:reset_clip()
-
-         -- cr:select_font_face(label_font_family, "normal", "normal")
-         -- cr:set_font_size(label_size)
-         -- cr:set_font_face(cr:get_font_face())
-         -- msg = tostring(i)
-         -- ext = cr:text_extents(msg)
-         -- cr:move_to(a.x + a.width / 2 - ext.width / 2 - ext.x_bearing, a.y + a.height / 2 - ext.height / 2 - ext.y_bearing)
-         -- cr:text_path(msg)
-         -- cr:set_source_rgba(1, 1, 1, 1)
-         -- cr:fill()
       end
 
       -- show the traverse point
