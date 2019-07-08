@@ -109,9 +109,21 @@ local function restore_data(data)
          print("cannot read history from " .. data.history_file)
       else
          data.cmds = {}
+         data.last_cmd = {}
+         local last_layout_name
          for line in file:lines() do
-            print("restore cmd " .. line)
-            data.cmds[#data.cmds + 1] = line
+            if line:sub(1, 1) == "+" then
+               last_layout_name = line:sub(2, #line)
+            else
+               if last_layout_name ~= nil then
+                  print("restore last cmd " .. line .. " for " .. last_layout_name)
+                  data.last_cmd[last_layout_name] = line
+                  last_layout_name = nil
+               else
+                  print("restore cmd " .. line)
+                  data.cmds[#data.cmds + 1] = line
+               end
+            end
          end
       end
    end
@@ -130,6 +142,10 @@ local function create(data)
 
    if data.cmds == nil then
       data.cmds = {}
+   end
+
+   if data.last_cmd == nil then
+      data.last_cmd = {}
    end
 
    local gap = data.gap or 0
@@ -530,6 +546,7 @@ local function create(data)
                   end
                   -- bring the current cmd to the front
                   data.cmds[#data.cmds + 1] = current_cmd
+                  data.last_cmd[layout.name] = current_cmd
 
                   if data.history_file then
                      local file, err = io.open(data.history_file, "w")
@@ -539,6 +556,10 @@ local function create(data)
                         for i = max(1, #data.cmds - data.history_save_max + 1), #data.cmds do
                            print("save cmd " .. data.cmds[i])
                            file:write(data.cmds[i] .. "\n")
+                        end
+                        for name, cmd in pairs(data.last_cmd) do
+                           print("save last cmd " .. cmd .. " for " .. name)
+                           file:write("+" .. name .. "\n" .. cmd .. "\n")
                         end
                      end
                   end
@@ -616,15 +637,14 @@ local function create(data)
          end
       )
       layout.cmd = cmd
+      data.last_cmd[layout.name] = cmd
       layout.set_regions(areas_with_gap)
       api.layout.arrange(screen)
    end
 
    local function try_restore_last(layout, screen)
-      local index = #data.cmds
-      if index == 0 then return end
-
-      set_by_cmd(layout, screen, data.cmds[#data.cmds])
+      if data.last_cmd[layout.name] == nil then return end
+      set_by_cmd(layout, screen, data.last_cmd[layout.name])
    end
 
    return {

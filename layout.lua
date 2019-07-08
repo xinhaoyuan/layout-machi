@@ -69,7 +69,7 @@ function do_arrange(p, priv)
    end
 end
 
-function create()
+function create(name)
    local priv = { regions = {} }
 
    local function set_regions(regions)
@@ -110,6 +110,7 @@ function create()
    end
 
    return {
+      name = name,
       arrange = function (p) do_arrange(p, priv) end,
       get_region_count = function () return #priv.regions end,
       set_regions = set_regions,
