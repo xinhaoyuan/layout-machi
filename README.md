@@ -17,12 +17,7 @@ It is advised to instantiate layouts of unique names for each tag (and for each 
 
 ## Editor
 
-Call `editor = layout_machi.editor.create()` to create an editor that can either
-
- - Interactively edit layout by calling `editor.start_interactive()`
- - Set the layout with batched commands by calling `editor.set_by_cmd(cmd)`, where `cmd` is a string
-
-`data` is an object for storing the history of the editing, initially `{}`.
+Call `editor = layout_machi.editor.create()` to create an editor that can interactively edit the current layout by calling `editor.start_interactive()`.
 
 ### The layout editing command
 
