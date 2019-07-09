@@ -125,6 +125,7 @@ local function restore_data(data)
                end
             end
          end
+         file:close()
       end
    end
 
@@ -510,8 +511,12 @@ local function create(data)
                   push_history()
                   local ret = handle_command(cmd)
 
-                  current_info = current_info .. ret
-                  current_cmd = current_cmd .. ret
+                  if ret == nil then
+                     print("warning: ret is nil")
+                  else
+                     current_info = current_info .. ret
+                     current_cmd = current_cmd .. ret
+                  end
                end
 
                if #open_areas == 0 then
@@ -532,6 +537,8 @@ local function create(data)
                end
             else
                if key == "Return" then
+                  local layout = api.layout.get(screen)
+
                   table.remove(data.cmds, #data.cmds)
                   -- remove duplicated entries
                   local j = 1
@@ -562,6 +569,7 @@ local function create(data)
                            file:write("+" .. name .. "\n" .. cmd .. "\n")
                         end
                      end
+                     file:close()
                   end
 
                   current_info = "Saved!"
