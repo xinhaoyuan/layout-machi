@@ -78,7 +78,26 @@ local function start(c)
    local traverse_x = c.x + traverse_radius
    local traverse_y = c.y + traverse_radius
 
+   local function ensure_tablist()
+      if tablist == nil then
+         tablist = {}
+         for _, tc in ipairs(screen.tiled_clients) do
+            if tc.machi_region == c.machi_region
+               and not tc.maximized
+               and not tc.maximized_horizontal
+               and not tc.maximized_vertical
+            then
+               tablist[#tablist + 1] = tc
+            end
+         end
+
+         tablist_index = 1
+      end
+   end
+
    local function draw_info(context, cr, width, height)
+      ensure_tablist()
+
       cr:set_source_rgba(0, 0, 0, 0)
       cr:rectangle(0, 0, width, height)
       cr:fill()
@@ -88,7 +107,7 @@ local function start(c)
          cr:rectangle(a.x - screen_x, a.y - screen_y, a.width, a.height)
          cr:clip()
 
-         if i == c.machi_region and tablist ~= nil then
+         if i == c.machi_region then
 
             local pl = api.lgi.Pango.Layout.create(cr)
             pl:set_font_description(tablist_font_desc)
@@ -156,20 +175,7 @@ local function start(c)
       function (mod, key, event)
          if event == "release" then return end
          if key == "Tab" then
-            if tablist == nil then
-               tablist = {}
-               for _, tc in ipairs(screen.tiled_clients) do
-                  if tc.machi_region == c.machi_region
-                     and not tc.maximized
-                     and not tc.maximized_horizontal
-                     and not tc.maximized_vertical
-                  then
-                     tablist[#tablist + 1] = tc
-                  end
-               end
-
-               tablist_index = 1
-            end
+            ensure_tablist()
 
             if #tablist > 0 then
                tablist_index = tablist_index % #tablist + 1
