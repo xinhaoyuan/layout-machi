@@ -159,7 +159,11 @@ local function start(c)
             if tablist == nil then
                tablist = {}
                for _, tc in ipairs(screen.tiled_clients) do
-                  if tc.machi_region == c.machi_region then
+                  if tc.machi_region == c.machi_region
+                     and not tc.maximized
+                     and not tc.maximized_horizontal
+                     and not tc.maximized_vertical
+                  then
                      tablist[#tablist + 1] = tc
                   end
                end
@@ -233,7 +237,11 @@ local function start(c)
                else
                   -- move the focus
                   for _, tc in ipairs(screen.tiled_clients) do
-                     if tc.machi_region == choice then
+                     if tc.machi_region == choice
+                        and not tc.maximized
+                        and not tc.maximized_horizontal
+                        and not tc.maximized_vertical
+                     then
                         c = tc
                         api.client.focus = c
                         move_traverse = true
