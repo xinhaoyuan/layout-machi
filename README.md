@@ -103,6 +103,11 @@ If `cycle` is true, it then moves the window by cycling all regions.
 
 `layout_machi.editor.refresh_layout(layout, screen)` will recalculate the regions of the layout based on the workarea of the `screen` and the last editing command performed on `layout`.
 
+## Caveats
+
+`beautiful.useless_gap` is handled differently in layout-machi and it doesn't cooperate well with the standard way.
+In my usage I set `gap = 0` for the tags and let machi to handle the gaps. 
+
 ## TODO
 
  - Tabs on regions?
