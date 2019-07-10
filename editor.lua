@@ -528,142 +528,154 @@ local function create(data)
       init(screen.workarea)
       refresh()
 
-      kg = keygrabber.run(function (mod, key, event)
+      kg = keygrabber.run(
+         function (mod, key, event)
             if event == "release" then
                return
             end
 
-            if key == "BackSpace" then
-               pop_history()
-            elseif key == "Escape" then
-               table.remove(data.cmds, #data.cmds)
-               to_exit = true
-            elseif key == "Up" or key == "Down" then
-               if current_cmd ~= data.cmds[cmd_index] then
-                  data.cmds[#data.cmds] = current_cmd
-               end
-
-               if key == "Up" and cmd_index > 1 then
-                  cmd_index = cmd_index - 1
-               elseif key == "Down" and cmd_index < #data.cmds then
-                  cmd_index = cmd_index + 1
-               end
-
-               print("restore history #" .. tostring(cmd_index) .. ":" .. data.cmds[cmd_index])
-               init(screen.workarea)
-               for i = 1, #data.cmds[cmd_index] do
-                  cmd = data.cmds[cmd_index]:sub(i, i)
-
-                  push_history()
-                  local ret = handle_command(cmd)
-
-                  if ret == nil then
-                     print("warning: ret is nil")
-                  else
-                     current_info = current_info .. ret
-                     current_cmd = current_cmd .. ret
-                  end
-               end
-
-               if #open_areas == 0 then
-                  current_info = current_info .. " (enter to save)"
-               end
-            elseif #open_areas > 0 then
-               push_history()
-               local ret = handle_command(key)
-               if ret ~= nil then
-                  current_info = current_info .. ret
-                  current_cmd = current_cmd .. ret
-               else
-                  discard_history()
-               end
-
-               if #open_areas == 0 then
-                  current_info = current_info .. " (enter to save)"
-               end
-            else
-               if key == "Return" then
-                  local layout = api.layout.get(screen)
-
-                  table.remove(data.cmds, #data.cmds)
-                  -- remove duplicated entries
-                  local j = 1
-                  for i = 1, #data.cmds do
-                     if data.cmds[i] ~= current_cmd then
-                        data.cmds[j] = data.cmds[i]
-                        j = j + 1
+            local ok, err = pcall(
+               function ()
+                  if key == "BackSpace" then
+                     pop_history()
+                  elseif key == "Escape" then
+                     table.remove(data.cmds, #data.cmds)
+                     to_exit = true
+                  elseif key == "Up" or key == "Down" then
+                     if current_cmd ~= data.cmds[cmd_index] then
+                        data.cmds[#data.cmds] = current_cmd
                      end
-                  end
-                  for i = #data.cmds, j, -1 do
-                     table.remove(data.cmds, i)
-                  end
-                  -- bring the current cmd to the front
-                  data.cmds[#data.cmds + 1] = current_cmd
-                  data.last_cmd[layout.name] = current_cmd
 
-                  if data.history_file then
-                     local file, err = io.open(data.history_file, "w")
-                     if err then
-                        print("cannot save history to " .. data.history_file)
+                     if key == "Up" and cmd_index > 1 then
+                        cmd_index = cmd_index - 1
+                     elseif key == "Down" and cmd_index < #data.cmds then
+                        cmd_index = cmd_index + 1
+                     end
+
+                     print("restore history #" .. tostring(cmd_index) .. ":" .. data.cmds[cmd_index])
+                     init(screen.workarea)
+                     for i = 1, #data.cmds[cmd_index] do
+                        cmd = data.cmds[cmd_index]:sub(i, i)
+
+                        push_history()
+                        local ret = handle_command(cmd)
+
+                        if ret == nil then
+                           print("warning: ret is nil")
+                        else
+                           current_info = current_info .. ret
+                           current_cmd = current_cmd .. ret
+                        end
+                     end
+
+                     if #open_areas == 0 then
+                        current_info = current_info .. " (enter to save)"
+                     end
+                  elseif #open_areas > 0 then
+                     push_history()
+                     local ret = handle_command(key)
+                     if ret ~= nil then
+                        current_info = current_info .. ret
+                        current_cmd = current_cmd .. ret
                      else
-                        for i = max(1, #data.cmds - data.history_save_max + 1), #data.cmds do
-                           print("save cmd " .. data.cmds[i])
-                           file:write(data.cmds[i] .. "\n")
-                        end
-                        for name, cmd in pairs(data.last_cmd) do
-                           print("save last cmd " .. cmd .. " for " .. name)
-                           file:write("+" .. name .. "\n" .. cmd .. "\n")
-                        end
+                        discard_history()
                      end
-                     file:close()
-                  end
 
-                  current_info = "Saved!"
-                  to_exit = true
-                  to_apply = true
-               end
-            end
-
-            refresh()
-
-            if to_exit then
-               print("interactive layout editing ends")
-               if to_apply then
-                  local layout = api.layout.get(screen)
-                  if layout.set_regions then
-                     local areas_with_gap = {}
-                     for _, a in ipairs(closed_areas) do
-                        areas_with_gap[#areas_with_gap + 1] = shrink_area_with_gap(a, gap)
+                     if #open_areas == 0 then
+                        current_info = current_info .. " (enter to save)"
                      end
-                     table.sort(
-                        areas_with_gap,
-                        function (a1, a2)
-                           local s1 = a1.width * a1.height
-                           local s2 = a2.width * a2.height
-                           if math.abs(s1 - s2) < 0.01 then
-                              return (a1.x + a1.y) < (a2.x + a2.y)
-                           else
-                              return s1 > s2
+                  else
+                     if key == "Return" then
+                        local layout = api.layout.get(screen)
+
+                        table.remove(data.cmds, #data.cmds)
+                        -- remove duplicated entries
+                        local j = 1
+                        for i = 1, #data.cmds do
+                           if data.cmds[i] ~= current_cmd then
+                              data.cmds[j] = data.cmds[i]
+                              j = j + 1
                            end
                         end
-                     )
-                     layout.cmd = current_cmd
-                     layout.set_regions(areas_with_gap)
-                     api.layout.arrange(screen)
+                        for i = #data.cmds, j, -1 do
+                           table.remove(data.cmds, i)
+                        end
+                        -- bring the current cmd to the front
+                        data.cmds[#data.cmds + 1] = current_cmd
+                        data.last_cmd[layout.name] = current_cmd
+
+                        if data.history_file then
+                           local file, err = io.open(data.history_file, "w")
+                           if err then
+                              print("cannot save history to " .. data.history_file)
+                           else
+                              for i = max(1, #data.cmds - data.history_save_max + 1), #data.cmds do
+                                 print("save cmd " .. data.cmds[i])
+                                 file:write(data.cmds[i] .. "\n")
+                              end
+                              for name, cmd in pairs(data.last_cmd) do
+                                 print("save last cmd " .. cmd .. " for " .. name)
+                                 file:write("+" .. name .. "\n" .. cmd .. "\n")
+                              end
+                           end
+                           file:close()
+                        end
+
+                        current_info = "Saved!"
+                        to_exit = true
+                        to_apply = true
+                     end
                   end
-                  api.gears.timer{
-                     timeout = 1,
-                     autostart = true,
-                     singleshot = true,
-                     callback = cleanup
-                  }
-               else
-                  cleanup()
-               end
-               keygrabber.stop(kg)
-               return
+
+                  refresh()
+
+                  if to_exit then
+                     print("interactive layout editing ends")
+                     if to_apply then
+                        local layout = api.layout.get(screen)
+                        if layout.set_regions then
+                           local areas_with_gap = {}
+                           for _, a in ipairs(closed_areas) do
+                              areas_with_gap[#areas_with_gap + 1] = shrink_area_with_gap(a, gap)
+                           end
+                           table.sort(
+                              areas_with_gap,
+                              function (a1, a2)
+                                 local s1 = a1.width * a1.height
+                                 local s2 = a2.width * a2.height
+                                 if math.abs(s1 - s2) < 0.01 then
+                                    return (a1.x + a1.y) < (a2.x + a2.y)
+                                 else
+                                    return s1 > s2
+                                 end
+                              end
+                           )
+                           layout.cmd = current_cmd
+                           layout.set_regions(areas_with_gap)
+                           api.layout.arrange(screen)
+                        end
+                        api.gears.timer{
+                           timeout = 1,
+                           autostart = true,
+                           singleshot = true,
+                           callback = cleanup
+                        }
+                     else
+                        cleanup()
+                     end
+                  end
+            end)
+
+            if not ok then
+               print("Getting error in keygrabber: " .. err)
+               to_exit = true
             end
-      end)
+
+            if to_exit then
+               keygrabber.stop(kg)
+            end
+         end
+      )
    end
 
    local function set_by_cmd(layout, screen, cmd)
