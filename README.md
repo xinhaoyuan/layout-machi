@@ -22,14 +22,13 @@ Call `editor = layout_machi.editor.create()` to create an editor that can intera
 ### The layout editing command
 
 The editing starts with the open area of the entire workarea, takes commands to split the current area into multiple sub-areas, then recursively edits each of them.
-The editor is keyboard driven, each command is a key with at most 2 digits as parameters (A, B) before the command.
-Undefined parameters are (mostly) treated as 1.
+The editor is keyboard driven, each command is a key with optional digits (namely `D`) before it as parameter (or multiple parameters depending on the command).
 
 1. `Up`/`Down`: restore to the history command sequence
-2. `h`/`v`: split the current region horizontally/vertically into 2 regions. The split will respect the ratio A:B.
-3. `w`: Take two parameters (A, B), and split the current region equally into A columns and B rows. If no parameter is defined, behave the same as `Space` without parameters.
-4. `s`: shift the current editing region with other open regions. If A is defined, shift for A times.
-5. `Space` or `-`: Without parameters, close the current region and move to the next open region. With parameters, set the maximum depth of splitting (default is 2).
+2. `h`/`v`: split the current region horizontally/vertically into `#D` regions. The split will respect the ratio of digits in `D`.
+3. `w`: Take the last two digits from `D` as `D = ...AB` (1 if `D` is shorter than 2 digits), and split the current region equally into A rows and B columns. If no digits are provided at all, behave the same as `Space`.
+4. `s`: shift the current editing region with other open regions. If digits are provided, shift for that many times.
+5. `Space` or `-`: Without parameters, close the current region and move to the next open region. With digits, set the maximum depth of splitting (the default depth is 2).
 6. `Enter`/`.`: close all open regions. When all regions are closed, press `Enter` will save the layout and exit the editor.
 7. `Backspace`: undo the last command.
 8. `Escape`: exit the editor without saving the layout.
@@ -58,18 +57,15 @@ For examples:
 ```
 
 
-`3-13h2v--2h-12v`
+`131h2v-12v`
 
 Details:
 
- - `3-`: set the maximum editing depth to 3
- - `13h`: horizontally split the initial region (entire desktop) to the ratio of 1:3
- - For the left part:
+ - `131h`: horizontally split the initial region (entire desktop) to the ratio of 1:3:1
+ - For the first `1` part:
    - `2v`: vertically split the region to the ratio of 2:1
-   - `--`: ignore further editing the splitted regions
- - For the right part:
-   - `2h`: horizontally split the region to the ratio of 2:1
-   - `-`: ignore the left part of the splitted regions
+ - `-`: skip the editing of the middle `3` part
+ - For the right `1` part:
    - `12v`: split the right part vertically to the ratio of 1:2
 
 Tada!
@@ -92,7 +88,7 @@ To change that, please refer to `editor.lua`. (XXX more documents)
 
 ## Switcher
 
-Calling `layout_machi.switcher.start()` will create a switcher that can (1) move window/focus into other regions by direction keys, and (2) switch windows in the same regions using `Tab` key. 
+Calling `layout_machi.switcher.start()` will create a switcher that can (1) move window/focus into other regions by direction keys, and (2) switch windows in the same regions using `Tab` key.
 
 ## Other functions
 

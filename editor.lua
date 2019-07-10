@@ -154,8 +154,7 @@ local function create(data)
    local closed_areas
    local open_areas
    local history
-   local num_1
-   local num_2
+   local args
    local max_depth
    local current_info
    local current_cmd
@@ -178,8 +177,7 @@ local function create(data)
          }
       }
       history = {}
-      num_1 = nil
-      num_2 = nil
+      args = ""
       max_depth = init_max_depth
       current_info = ""
       current_cmd = ""
@@ -188,7 +186,7 @@ local function create(data)
    end
 
    local function push_history()
-      history[#history + 1] = {#closed_areas, #open_areas, {}, current_info, current_cmd, max_depth, num_1, num_2}
+      history[#history + 1] = {#closed_areas, #open_areas, {}, current_info, current_cmd, max_depth, args}
    end
 
    local function discard_history()
@@ -212,8 +210,7 @@ local function create(data)
       current_info = history[#history][4]
       current_cmd = history[#history][5]
       max_depth = history[#history][6]
-      num_1 = history[#history][7]
-      num_2 = history[#history][8]
+      args = history[#history][7]
 
       table.remove(history, #history)
    end
@@ -234,59 +231,117 @@ local function create(data)
    local function handle_split(method, alt)
       split_count = split_count + 1
 
-      if num_1 == nil then num_1 = 1 end
-      if num_2 == nil then num_2 = 1 end
-
-      if alt then
-         local tmp = num_1
-         num_1 = num_2
-         num_2 = tmp
-      end
-
       local a = pop_open_area()
-      local lu, rd
 
-      print("split " .. method .. " " .. tostring(alt) .. " " .. _area_tostring(a))
+      print("split " .. method .. " " .. tostring(alt) .. " " .. args .. " " .. _area_tostring(a))
 
       if method == "h" then
-         lu = {
-            x = a.x, y = a.y,
-            width = a.width / (num_1 + num_2) * num_1, height = a.height,
-            depth = a.depth + 1,
-            group_id = split_count,
-            bl = a.bl, br = false, bu = a.bu, bd = a.bd,
-         }
-         rd = {
-            x = a.x + lu.width, y = a.y,
-            width = a.width - lu.width, height = a.height,
-            depth = a.depth + 1,
-            group_id = split_count,
-            bl = false, br = a.br, bu = a.bu, bd = a.bd,
-         }
-         open_areas[#open_areas + 1] = rd
-         open_areas[#open_areas + 1] = lu
+
+         if #args == 0 then
+            args = "11"
+         elseif #args == 1 then
+            args = args .. "1"
+         end
+
+         local total = 0
+         local offset = {}
+         for i = 1, #args do
+            local arg
+            if not alt then
+               arg = tonumber(args:sub(i, i))
+            else
+               arg = tonumber(args:sub(#args - i + 1, #args - i + 1))
+            end
+            if arg < 1 then arg = 1 end
+            offset[#offset + 1] = total
+            total = total + arg
+         end
+         offset[#offset + 1] = total
+         local children = {}
+
+         for i = 1, #offset - 1 do
+            local child = {
+               x = a.x + a.width / total * offset[i],
+               y = a.y,
+               width = a.width / total * (offset[i + 1] - offset[i]),
+               height = a.height,
+               depth = a.depth + 1,
+               group_id = split_count,
+               bl = i == 1 and a.bl or false,
+               br = i == #offset and a.br or false,
+               bu = a.bu,
+               bd = a.bd,
+            }
+            children[#children + 1] = child
+         end
+
+         for i = #children, 1, -1 do
+            open_areas[#open_areas + 1] = children[i]
+         end
       elseif method == "v" then
-         lu = {
-            x = a.x, y = a.y,
-            width = a.width, height = a.height / (num_1 + num_2) * num_1,
-            depth = a.depth + 1,
-            group_id = split_count,
-            bl = a.bl, br = a.br, bu = a.bu, bd = false
-         }
-         rd = {
-            x = a.x, y = a.y + lu.height,
-            width = a.width, height = a.height - lu.height,
-            depth = a.depth + 1,
-            group_id = split_count,
-            bl = a.bl, br = a.br, bu = false, bd = a.bd,
-         }
-         open_areas[#open_areas + 1] = rd
-         open_areas[#open_areas + 1] = lu
+
+         if #args == 0 then
+            args = "11"
+         elseif #args == 1 then
+            args = args .. "1"
+         end
+
+         local total = 0
+         local offset = {}
+         for i = 1, #args do
+            local arg
+            if not alt then
+               arg = tonumber(args:sub(i, i))
+            else
+               arg = tonumber(args:sub(#args - i + 1, #args - i + 1))
+            end
+            if arg < 1 then arg = 1 end
+            offset[#offset + 1] = total
+            total = total + arg
+         end
+         offset[#offset + 1] = total
+         local children = {}
+
+         for i = 1, #offset - 1 do
+            local child = {
+               x = a.x,
+               y = a.y + a.height / total * offset[i],
+               width = a.width,
+               height = a.height / total * (offset[i + 1] - offset[i]),
+               depth = a.depth + 1,
+               group_id = split_count,
+               bl = a.bl,
+               br = a.br,
+               bu = i == 1 and a.bu or false,
+               bd = i == #offset and a.bd or false,
+            }
+            children[#children + 1] = child
+         end
+
+         for i = #children, 1, -1 do
+            open_areas[#open_areas + 1] = children[i]
+         end
+
       elseif method == "w" then
-         local x_interval = a.width / num_1
-         local y_interval = a.height / num_2
-         for y = num_2, 1, -1 do
-            for x = num_1, 1, -1 do
+
+         if #args == 0 then
+            args = "11"
+         elseif #args == 1 then
+            args = "1" .. args
+         end
+
+         if alt then args = string.reverse(args) end
+
+         local h_split = tonumber(args:sub(#args - 1, #args - 1))
+         local v_split = tonumber(args:sub(#args, #args))
+
+         if h_split < 1 then h_split = 1 end
+         if v_split < 1 then v_split = 1 end
+
+         local x_interval = a.width / h_split
+         local y_interval = a.height / v_split
+         for y = v_split, 1, -1 do
+            for x = h_split, 1, -1 do
                local r = {
                   x = a.x + x_interval * (x - 1),
                   y = a.y + y_interval * (y - 1),
@@ -296,18 +351,17 @@ local function create(data)
                   group_id = split_count,
                }
                if x == 1 then r.bl = a.bl else r.bl = false end
-               if x == num_1 then r.br = a.br else r.br = false end
+               if x == h_split then r.br = a.br else r.br = false end
                if y == 1 then r.bu = a.bu else r.bu = false end
-               if y == num_2 then r.bd = a.bd else r.bd = false end
+               if y == v_split then r.bd = a.bd else r.bd = false end
                open_areas[#open_areas + 1] = r
             end
          end
-      elseif method == "P" then
+      elseif method == "p" then
          -- XXX
       end
 
-      num_1 = nil
-      num_2 = nil
+      args = ""
    end
 
    local function push_area()
@@ -320,7 +374,7 @@ local function create(data)
       elseif key == "v" or key == "V" then
          handle_split("v", key == "V")
       elseif key == "w" or key == "W" then
-         if num_1 == nil and num_2 == nil then
+         if args == "" then
             push_area()
          else
             handle_split("w", key == "W")
@@ -330,7 +384,7 @@ local function create(data)
       elseif key == "s" or key == "S" then
          if #open_areas > 0 then
             key = "s"
-            local times = num_1 or 1
+            local times = args == "" and 1 or tonumber(args)
             local t = {}
             while #open_areas > 0 do
                t[#t + 1] = pop_open_area()
@@ -338,34 +392,26 @@ local function create(data)
             for i = #t, 1, -1 do
                open_areas[#open_areas + 1] = t[(i + times - 1) % #t + 1]
             end
-            num_1 = nil
-            num_2 = nil
+            args = ""
          else
             return nil
          end
       elseif key == " " or key == "-" then
          key = "-"
-         if num_1 ~= nil then
-            max_depth = num_1
-            num_1 = nil
-            num_2 = nil
-         else
+         if args == "" then
             push_area()
+         else
+            max_depth = tonumber(args)
+            args = ""
          end
       elseif key == "Return" or key == "." then
          key = "."
          while #open_areas > 0 do
             push_area()
          end
+         args = ""
       elseif tonumber(key) ~= nil then
-         local v = tonumber(key)
-         if num_1 == nil then
-            num_1 = v
-         elseif num_2 == nil then
-            num_2 = v
-         else
-            return nil
-         end
+         args = args .. key
       else
          return nil
       end
