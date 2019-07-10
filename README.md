@@ -88,7 +88,13 @@ To change that, please refer to `editor.lua`. (XXX more documents)
 
 ## Switcher
 
-Calling `layout_machi.switcher.start()` will create a switcher that can (1) move window/focus into other regions by direction keys, and (2) switch windows in the same regions using `Tab` key.
+Calling `layout_machi.switcher.start()` will create a switcher supporting the following keys:
+
+ - Arrow keys: move focus into other regions by the direction.
+ - `Shift` + arrow keys: move the focused window to other regions by the direction.
+ - `Tab`: switch windows in the same regions.
+
+So far, the key binding is not configurable. One has to modify the source code to change it.
 
 ## Other functions
 
