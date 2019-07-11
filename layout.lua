@@ -101,7 +101,7 @@ function create(name, editor)
       local workarea = c.screen.workarea
       local regions = get_regions(workarea)
 
-      if #priv.regions == 0 then return end
+      if #regions == 0 then return end
 
       local center_x = h.x + h.width / 2
       local center_y = h.y + h.height / 2
