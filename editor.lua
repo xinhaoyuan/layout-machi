@@ -655,25 +655,8 @@ local function create(data)
                      print("interactive layout editing ends")
                      if to_apply then
                         local layout = api.layout.get(screen)
-                        if layout.set_regions then
-                           local areas_with_gap = {}
-                           for _, a in ipairs(closed_areas) do
-                              areas_with_gap[#areas_with_gap + 1] = shrink_area_with_gap(a, gap)
-                           end
-                           table.sort(
-                              areas_with_gap,
-                              function (a1, a2)
-                                 local s1 = a1.width * a1.height
-                                 local s2 = a2.width * a2.height
-                                 if math.abs(s1 - s2) < 0.01 then
-                                    return (a1.x + a1.y) < (a2.x + a2.y)
-                                 else
-                                    return s1 > s2
-                                 end
-                              end
-                           )
-                           layout.cmd = current_cmd
-                           layout.set_regions(areas_with_gap)
+                        if layout.set_cmd then
+                           layout.set_cmd(current_cmd)
                            api.layout.arrange(screen)
                         end
                         api.gears.timer{
