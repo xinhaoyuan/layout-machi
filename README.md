@@ -12,8 +12,8 @@ TL;DR --- I want the control of my layout.
 
 ## Use the layout
 
-Use `layout = layout_machi.layout.create(name)` to instantiate the layout.
-It is advised to instantiate layouts of unique names for each tag (and for each screen), since the editor will restore the last regions of the layout based on the names.
+Use `layout = layout_machi.layout.create(name, editor)` to instantiate the layout with an editor object (see below on creating the editor).
+The editor will restore the last regions of the layouts based on their names.
 
 ## Editor
 
@@ -100,8 +100,6 @@ So far, the key binding is not configurable. One has to modify the source code t
 
 `layout_machi.editor.fit_region(c, cycle = false)` will fit a floating client into the closest region.
 If `cycle` is true, it then moves the window by cycling all regions.
-
-`layout_machi.editor.refresh_layout(layout, screen)` will recalculate the regions of the layout based on the workarea of the `screen` and the last editing command performed on `layout`.
 
 ## Caveats
 

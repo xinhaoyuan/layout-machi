@@ -70,7 +70,7 @@ end
 -- @return       whether any actions have been taken on the client
 local function fit_region(c, cycle)
    layout = api.layout.get(c.screen)
-   regions = layout.get_regions and layout.get_regions()
+   regions = layout.get_regions and layout.get_regions(c.screen.workarea)
    if type(regions) ~= "table" or #regions < 1 then
       return false
    end
@@ -101,6 +101,28 @@ local function shrink_area_with_gap(a, gap)
             width = a.width - (a.bl and 0 or gap / 2) - (a.br and 0 or gap / 2),
             height = a.height - (a.bu and 0 or gap / 2) - (a.bd and 0 or gap / 2) }
 end
+
+-- local function parse(cmd)
+--    root = {}
+--    args = ""
+
+--    open_areas = { root }
+
+--    for c = 1, #cmd do
+--       char = cmd:sub(c, c)
+
+--       if char == "w" then
+--          local a = open_areas[#open_areas]
+--          table.remove(open_areas, #open_areas)
+
+--          root.type = "w"
+--          root.
+
+--       else if tonumber(char) ~= nil then
+--          args = args .. char
+--       end
+--    end
+-- end
 
 local function restore_data(data)
    if data.history_file then
@@ -268,7 +290,7 @@ local function create(data)
                depth = a.depth + 1,
                group_id = split_count,
                bl = i == 1 and a.bl or false,
-               br = i == #offset and a.br or false,
+               br = i == #offset - 1 and a.br or false,
                bu = a.bu,
                bd = a.bd,
             }
@@ -313,7 +335,7 @@ local function create(data)
                bl = a.bl,
                br = a.br,
                bu = i == 1 and a.bu or false,
-               bd = i == #offset and a.bd or false,
+               bd = i == #offset - 1 and a.bd or false,
             }
             children[#children + 1] = child
          end
@@ -678,8 +700,8 @@ local function create(data)
       )
    end
 
-   local function set_by_cmd(layout, screen, cmd)
-      init(screen.workarea)
+   local function run_cmd(init_area, cmd)
+      init(init_area)
       push_history()
 
       for i = 1, #cmd do
@@ -702,26 +724,18 @@ local function create(data)
             end
          end
       )
-      layout.cmd = cmd
-      data.last_cmd[layout.name] = cmd
-      layout.set_regions(areas_with_gap)
-      api.layout.arrange(screen)
+
+      return areas_with_gap
    end
 
-   local function refresh_layout(layout, screen)
-      if layout.cmd == nil then return end
-      set_by_cmd(layout, screen, layout.cmd)
-   end
-
-   local function try_restore_last(layout, screen)
-      if data.last_cmd[layout.name] == nil then return end
-      set_by_cmd(layout, screen, data.last_cmd[layout.name])
+   local function get_last_cmd(name)
+      return data.last_cmd[name]
    end
 
    return {
       start_interactive = start_interactive,
-      refresh_layout = refresh_layout,
-      try_restore_last = try_restore_last,
+      run_cmd = run_cmd,
+      get_last_cmd = get_last_cmd
    }
 end
 

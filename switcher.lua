@@ -58,7 +58,7 @@ local function start(c)
    local layout = api.layout.get(screen)
    if c.floating or layout.get_regions == nil then return end
 
-   local regions = layout.get_regions()
+   local regions = layout.get_regions(c.screen.workarea)
 
    local infobox = api.wibox({
          screen = screen,

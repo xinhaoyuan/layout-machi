@@ -36,53 +36,71 @@ local function find_region(c, regions)
    return choice
 end
 
-function do_arrange(p, priv)
-   local wa = p.workarea
-   local cls = p.clients
-   local regions = priv.regions
+function create(name, editor)
+   local priv = {
+      name = name,
+      editor = editor,
+      cmd = editor.get_last_cmd(name),
+      regions_cache = {}
+   }
 
-   if #regions == 0 then return end
+   local function get_regions(workarea)
+      if priv.cmd == nil then return {} end
+      local key = tostring(workarea.width) .. "x" .. tostring(workarea.height) .. "+" .. tostring(workarea.x) .. "+" .. tostring(workarea.y)
+      if priv.regions_cache[key] == nil then
+         priv.regions_cache[key] = priv.editor.run_cmd(workarea, priv.cmd)
+      end
+      return priv.regions_cache[key]
+   end
 
-   for i, c in ipairs(cls) do
-      if c.floating then
-         print("Ignore client " .. tostring(c))
-      else
-         if c.machi_region == nil then
-            c.machi_region = find_region(c, regions)
-         elseif c.machi_region > #regions then
-            c.machi_region = #regions
-         elseif c.machi_region <= 1 then
-            c.machi_region = 1
+   function arrange(p)
+      local wa = p.workarea
+      local cls = p.clients
+      local regions = get_regions(wa)
+
+
+      if #regions == 0 then return end
+
+      for i, c in ipairs(cls) do
+         if c.floating then
+            print("Ignore client " .. tostring(c))
+         else
+            if c.machi_region == nil then
+               c.machi_region = find_region(c, regions)
+            elseif c.machi_region > #regions then
+               c.machi_region = #regions
+            elseif c.machi_region <= 1 then
+               c.machi_region = 1
+            end
+            local region = c.machi_region
+
+            p.geometries[c] = {
+               x = regions[region].x,
+               y = regions[region].y,
+               width = regions[region].width,
+               height = regions[region].height,
+            }
+
+            print("Put client " .. tostring(c) .. " to region " .. region)
+
          end
-         local region = c.machi_region
-
-         p.geometries[c] = {
-            x = regions[region].x,
-            y = regions[region].y,
-            width = regions[region].width,
-            height = regions[region].height,
-         }
-
-         print("Put client " .. tostring(c) .. " to region " .. region)
-
       end
    end
-end
 
-function create(name)
-   local priv = { regions = {} }
-
-   local function set_regions(regions)
-      priv.regions = regions
-   end
-
-   local function get_regions()
-      return priv.regions
+   function set_cmd(cmd)
+      if priv.cmd ~= cmd then
+         priv.cmd = cmd
+         priv.regions_cache = {}
+      end
    end
 
    -- move the closest region regardingly to the center distance
    local function resize_handler(c, context, h)
       if context ~= "mouse.move" then return end
+
+      local workarea = c.screen.workarea
+      local regions = get_regions(workarea)
+
       if #priv.regions == 0 then return end
 
       local center_x = h.x + h.width / 2
@@ -90,7 +108,8 @@ function create(name)
 
       local choice = 1
       local choice_value = nil
-      for i, r in ipairs(priv.regions) do
+
+      for i, r in ipairs(regions) do
          local r_x = r.x + r.width / 2
          local r_y = r.y + r.height / 2
          local dis = (r_x - center_x) * (r_x - center_x) + (r_y - center_y) * (r_y - center_y)
@@ -102,24 +121,23 @@ function create(name)
 
       if c.machi_region ~= choice then
          c.machi_region = choice
-         c.x = priv.regions[choice].x
-         c.y = priv.regions[choice].y
-         c.width = priv.regions[choice].width
-         c.height = priv.regions[choice].height
+         c.x = regions[choice].x
+         c.y = regions[choice].y
+         c.width = regions[choice].width
+         c.height = regions[choice].height
       end
    end
 
    return {
       name = name,
-      arrange = function (p) do_arrange(p, priv) end,
-      get_region_count = function () return #priv.regions end,
-      set_regions = set_regions,
+      arrange = arrange,
+      set_cmd = set_cmd,
       get_regions = get_regions,
       resize_handler = resize_handler,
    }
 end
 
-return { 
+return {
    create = create,
    find_region = find_region,
 }
