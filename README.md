@@ -10,10 +10,24 @@ TL;DR --- I want the control of my layout.
 2. I don't want to have all windows moving around whenever a new window shows up.
 3. I want to have a flexible layout such that I can quickly adjust to whatever I need.
 
+## Quick usage
+
+Suppose this git is checked out at `~/.config/awesome/layout-machi`
+
+```
+machi = { layout = require("layout-machi.layout"), editor = require("layout-machi.editor"), switcher = require("layout-machi.switcher") }
+machi_editor = machi.editor.create()
+
+machi_layout = machi.layout.create("default", machi_editor)
+```
+
+Then add the `machi_layout` in your tag layouts
+
 ## Use the layout
 
 Use `layout = layout_machi.layout.create(name, editor)` to instantiate the layout with an editor object (see below on creating the editor).
-The editor will restore the last regions of the layouts based on their names.
+You can also create multiple layouts with different names and share the same editor.
+The editor will restore the last setups of the layouts based on their names.
 
 ## Editor
 
@@ -104,7 +118,7 @@ If `cycle` is true, it then moves the window by cycling all regions.
 ## Caveats
 
 `beautiful.useless_gap` is handled differently in layout-machi and it doesn't cooperate well with the standard way.
-In my usage I set `gap = 0` for the tags and let machi to handle the gaps. 
+In my usage I set `gap = 0` for the tags and let machi to handle the gaps.
 
 ## TODO
 
