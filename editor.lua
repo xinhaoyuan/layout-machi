@@ -445,11 +445,11 @@ local function create(data)
       return key
    end
 
-   local function start_interactive()
+   local function start_interactive(screen)
       local cmd_index = #data.cmds + 1
       data.cmds[cmd_index] = ""
 
-      local screen = api.screen.focused()
+      screen = screen or api.screen.focused()
       local screen_x = screen.geometry.x
       local screen_y = screen.geometry.y
 

@@ -15,7 +15,7 @@ TL;DR --- I want the control of my layout.
 Suppose this git is checked out at `~/.config/awesome/layout-machi`
 
 ```
-machi = { layout = require("layout-machi.layout"), editor = require("layout-machi.editor"), switcher = require("layout-machi.switcher") }
+machi = require("layout-machi")
 machi_editor = machi.editor.create()
 
 machi_layout = machi.layout.create("default", machi_editor)
@@ -25,13 +25,15 @@ Then add the `machi_layout` in your tag layouts
 
 ## Use the layout
 
-Use `layout = layout_machi.layout.create(name, editor)` to instantiate the layout with an editor object (see below on creating the editor).
+Use `layout = machi.layout.create(name, editor)` to instantiate the layout with an editor object (see below on creating the editor).
 You can also create multiple layouts with different names and share the same editor.
 The editor will restore the last setups of the layouts based on their names.
 
 ## Editor
 
-Call `editor = layout_machi.editor.create()` to create an editor that can interactively edit the current layout by calling `editor.start_interactive()`.
+Call `editor = machi.editor.create()` to create an editor.
+To edit the current layout on screen `scr`, call `editor.start_interactive(scr)`.
+If `screen` is ignored, `screen.focused()` will be used.
 
 ### The layout editing command
 
@@ -102,7 +104,7 @@ To change that, please refer to `editor.lua`. (XXX more documents)
 
 ## Switcher
 
-Calling `layout_machi.switcher.start()` will create a switcher supporting the following keys:
+Calling `machi.switcher.start()` will create a switcher supporting the following keys:
 
  - Arrow keys: move focus into other regions by the direction.
  - `Shift` + arrow keys: move the focused window to other regions by the direction.
@@ -112,7 +114,7 @@ So far, the key binding is not configurable. One has to modify the source code t
 
 ## Other functions
 
-`layout_machi.editor.fit_region(c, cycle = false)` will fit a floating client into the closest region.
+`machi.editor.fit_region(c, cycle = false)` will fit a floating client into the closest region.
 If `cycle` is true, it then moves the window by cycling all regions.
 
 ## Caveats
