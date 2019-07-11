@@ -120,6 +120,8 @@ If `cycle` is true, it then moves the window by cycling all regions.
 `beautiful.useless_gap` is handled differently in layout-machi and it doesn't cooperate well with the standard way.
 In my usage I set `gap = 0` for the tags and let machi to handle the gaps.
 
+Also, true transparency is required. Otherwise switcher and editor will block the clients.
+
 ## TODO
 
  - Tabs on regions?
