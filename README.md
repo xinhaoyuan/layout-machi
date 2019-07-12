@@ -24,7 +24,7 @@ Use `layout = machi.layout.create(name, editor)` to instantiate the layout with 
 `machi.default_editor` can be used, or see below on creating editors.
 You can also create multiple layouts with different names and share the same editor.
 The editor will restore the last setups of the layouts based on their names.
-The layout will be independent on different tags.
+The layout will be dependent on different tags.
 
 ## Editor
 
