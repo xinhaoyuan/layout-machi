@@ -98,7 +98,7 @@ Tada!
 
 ### Persistent history
 
-By default, the last 100 command sequences are stored in `~/.machi_history`.
+By default, the last 100 command sequences are stored in `.cache/awesome/history_machi`.
 To change that, please refer to `editor.lua`. (XXX more documents)
 
 ## Switcher
