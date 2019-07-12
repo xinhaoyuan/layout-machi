@@ -14,20 +14,17 @@ TL;DR --- I want the control of my layout.
 
 Suppose this git is checked out at `~/.config/awesome/layout-machi`
 
-```
-machi = require("layout-machi")
-machi_editor = machi.editor.create()
+`machi = require("layout-machi")`
 
-machi_layout = machi.layout.create("default", machi_editor)
-```
-
-Then add the `machi_layout` in your tag layouts
+The package provide a default layout `machi.default_layout` and editor `machi.default_editor`, which can be added into the layout list.
 
 ## Use the layout
 
-Use `layout = machi.layout.create(name, editor)` to instantiate the layout with an editor object (see below on creating the editor).
+Use `layout = machi.layout.create(name, editor)` to instantiate the layout with an editor object.
+`machi.default_editor` can be used, or see below on creating editors.
 You can also create multiple layouts with different names and share the same editor.
 The editor will restore the last setups of the layouts based on their names.
+The layout will be independent on different tags.
 
 ## Editor
 

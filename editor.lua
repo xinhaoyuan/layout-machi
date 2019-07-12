@@ -88,7 +88,7 @@ end
 -- @return       whether any actions have been taken on the client
 local function fit_region(c, cycle)
    local layout = api.layout.get(c.screen)
-   local regions = layout.machi_get_regions and layout.machi_get_regions(c.screen.workarea, c.screen)
+   local regions = layout.machi_get_regions and layout.machi_get_regions(c.screen.workarea, c.screen.selected_tag.name)
    if type(regions) ~= "table" or #regions < 1 then
       return false
    end
@@ -467,6 +467,7 @@ local function create(data)
    local function start_interactive(screen, layout)
       screen = screen or api.screen.focused()
       layout = layout or api.layout.get(screen)
+      local tag = screen.selected_tag
 
       if layout.machi_set_cmd == nil then
          api.naughty.notify({
@@ -651,7 +652,7 @@ local function create(data)
                         end
                         -- bring the current cmd to the front
                         data.cmds[#data.cmds + 1] = current_cmd
-                        data.last_cmd[layout.machi_get_instance_name(screen)] = current_cmd
+                        data.last_cmd[layout.machi_get_instance_name(tag.name)] = current_cmd
 
                         if data.history_file then
                            local file, err = io.open(data.history_file, "w")
@@ -681,7 +682,7 @@ local function create(data)
                   if to_exit then
                      print("interactive layout editing ends")
                      if to_apply then
-                        layout.machi_set_cmd(current_cmd, screen)
+                        layout.machi_set_cmd(current_cmd, tag.name)
                         api.layout.arrange(screen)
                         api.gears.timer{
                            timeout = 1,

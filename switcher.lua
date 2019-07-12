@@ -59,7 +59,7 @@ local function start(c)
    local layout = api.layout.get(screen)
    if c.floating or layout.machi_get_regions == nil then return end
 
-   local regions = layout.machi_get_regions(c.screen.workarea, c.screen)
+   local regions = layout.machi_get_regions(c.screen.workarea, c.screen.selected_tag.name)
 
    local infobox = api.wibox({
          screen = screen,
