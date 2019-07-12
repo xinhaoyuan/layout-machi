@@ -651,7 +651,7 @@ local function create(data)
                         end
                         -- bring the current cmd to the front
                         data.cmds[#data.cmds + 1] = current_cmd
-                        data.last_cmd[layout.machi_instance_name] = current_cmd
+                        data.last_cmd[layout.machi_get_instance_name(screen)] = current_cmd
 
                         if data.history_file then
                            local file, err = io.open(data.history_file, "w")

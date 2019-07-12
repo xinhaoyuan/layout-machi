@@ -52,6 +52,10 @@ local function create(name, editor)
       regions_cache = {}
    }
 
+   local function get_instance_name(_screen)
+      return name
+   end
+
    local function get_regions(workarea, _screen)
       if priv.cmd == nil then return {} end
       local key = tostring(workarea.width) .. "x" .. tostring(workarea.height) .. "+" .. tostring(workarea.x) .. "+" .. tostring(workarea.y)
@@ -140,7 +144,7 @@ local function create(name, editor)
       name = "machi",
       arrange = arrange,
       resize_handler = resize_handler,
-      machi_instance_name = name,
+      machi_get_instance_name = get_instance_name,
       machi_set_cmd = set_cmd,
       machi_get_regions = get_regions,
    }
