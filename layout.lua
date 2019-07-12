@@ -1,9 +1,17 @@
+local api = {
+   screen = screen,
+}
+
 local function min(a, b)
    if a < b then return a else return b end
 end
 
 local function max(a, b)
    if a < b then return b else return a end
+end
+
+local function get_screen(s)
+    return s and api.screen[s]
 end
 
 --- find the best region for the area-like object
@@ -44,7 +52,7 @@ local function create(name, editor)
       regions_cache = {}
    }
 
-   local function get_regions(workarea)
+   local function get_regions(workarea, _screen)
       if priv.cmd == nil then return {} end
       local key = tostring(workarea.width) .. "x" .. tostring(workarea.height) .. "+" .. tostring(workarea.x) .. "+" .. tostring(workarea.y)
       if priv.regions_cache[key] == nil then
@@ -53,10 +61,17 @@ local function create(name, editor)
       return priv.regions_cache[key]
    end
 
+   local function set_cmd(cmd, _screen)
+      if priv.cmd ~= cmd then
+         priv.cmd = cmd
+         priv.regions_cache = {}
+      end
+   end
+
    local function arrange(p)
       local wa = p.workarea
       local cls = p.clients
-      local regions = get_regions(wa)
+      local regions = get_regions(wa, get_screen(p.screen))
 
 
       if #regions == 0 then return end
@@ -87,19 +102,12 @@ local function create(name, editor)
       end
    end
 
-   local function set_cmd(cmd)
-      if priv.cmd ~= cmd then
-         priv.cmd = cmd
-         priv.regions_cache = {}
-      end
-   end
-
    -- move the closest region regardingly to the center distance
    local function resize_handler(c, context, h)
       if context ~= "mouse.move" then return end
 
       local workarea = c.screen.workarea
-      local regions = get_regions(workarea)
+      local regions = get_regions(workarea, c.screen)
 
       if #regions == 0 then return end
 

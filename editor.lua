@@ -88,7 +88,7 @@ end
 -- @return       whether any actions have been taken on the client
 local function fit_region(c, cycle)
    local layout = api.layout.get(c.screen)
-   local regions = layout.machi_get_regions and layout.machi_get_regions(c.screen.workarea)
+   local regions = layout.machi_get_regions and layout.machi_get_regions(c.screen.workarea, c.screen)
    if type(regions) ~= "table" or #regions < 1 then
       return false
    end
@@ -681,7 +681,7 @@ local function create(data)
                   if to_exit then
                      print("interactive layout editing ends")
                      if to_apply then
-                        layout.machi_set_cmd(current_cmd)
+                        layout.machi_set_cmd(current_cmd, screen)
                         api.layout.arrange(screen)
                         api.gears.timer{
                            timeout = 1,
