@@ -36,7 +36,7 @@ local function find_region(c, regions)
    return choice
 end
 
-function create(name, editor)
+local function create(name, editor)
    local priv = {
       name = name,
       editor = editor,
@@ -53,7 +53,7 @@ function create(name, editor)
       return priv.regions_cache[key]
    end
 
-   function arrange(p)
+   local function arrange(p)
       local wa = p.workarea
       local cls = p.clients
       local regions = get_regions(wa)
@@ -87,7 +87,7 @@ function create(name, editor)
       end
    end
 
-   function set_cmd(cmd)
+   local function set_cmd(cmd)
       if priv.cmd ~= cmd then
          priv.cmd = cmd
          priv.regions_cache = {}
@@ -129,11 +129,12 @@ function create(name, editor)
    end
 
    return {
-      name = name,
+      name = "machi",
       arrange = arrange,
-      set_cmd = set_cmd,
-      get_regions = get_regions,
       resize_handler = resize_handler,
+      machi_instance_name = name,
+      machi_set_cmd = set_cmd,
+      machi_get_regions = get_regions,
    }
 end
 

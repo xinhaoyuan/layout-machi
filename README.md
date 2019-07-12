@@ -32,8 +32,7 @@ The editor will restore the last setups of the layouts based on their names.
 ## Editor
 
 Call `editor = machi.editor.create()` to create an editor.
-To edit the current layout on screen `scr`, call `editor.start_interactive(scr)`.
-If `screen` is ignored, `screen.focused()` will be used.
+To edit the layout `l` on screen `s`, call `editor.start_interactive(s = awful.screen.focused(), l = awful.layout.get(s))`.
 
 ### The layout editing command
 

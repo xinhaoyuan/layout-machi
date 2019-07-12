@@ -34,7 +34,8 @@ local function max(a, b)
 end
 
 local function with_alpha(col, alpha)
-   _, r, g, b, a = col:get_rgba()
+   local r, g, b
+   _, r, g, b, _ = col:get_rgba()
    return api.lgi.cairo.SolidPattern.create_rgba(r, g, b, alpha)
 end
 
@@ -56,9 +57,9 @@ local function start(c)
    local screen_y = screen.geometry.y
 
    local layout = api.layout.get(screen)
-   if c.floating or layout.get_regions == nil then return end
+   if c.floating or layout.machi_get_regions == nil then return end
 
-   local regions = layout.get_regions(c.screen.workarea)
+   local regions = layout.machi_get_regions(c.screen.workarea)
 
    local infobox = api.wibox({
          screen = screen,

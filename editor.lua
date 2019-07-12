@@ -11,12 +11,14 @@ local api = {
    keygrabber = require("awful.keygrabber"),
    naughty    = require("naughty"),
    gears      = require("gears"),
+   gfs        = require("gears.filesystem"),
    lgi        = require("lgi"),
    dpi        = require("beautiful.xresources").apply_dpi,
 }
 
 local function with_alpha(col, alpha)
-   _, r, g, b, a = col:get_rgba()
+   local r, g, b
+   _, r, g, b, _ = col:get_rgba()
    return api.lgi.cairo.SolidPattern.create_rgba(r, g, b, alpha)
 end
 
@@ -69,12 +71,12 @@ end
 -- @param  cycle whether to cycle the region if the window is already in machi
 -- @return       whether any actions have been taken on the client
 local function fit_region(c, cycle)
-   layout = api.layout.get(c.screen)
-   regions = layout.get_regions and layout.get_regions(c.screen.workarea)
+   local layout = api.layout.get(c.screen)
+   local regions = layout.machi_get_regions and layout.machi_get_regions(c.screen.workarea)
    if type(regions) ~= "table" or #regions < 1 then
       return false
    end
-   current_region = c.machi_region or 1
+   local current_region = c.machi_region or 1
    if not is_tiling(c) then
       -- find out which region has the most intersection, calculated by a cap b / a cup b
       c.machi_region = machi.layout.find_region(c, regions)
@@ -157,7 +159,7 @@ end
 local function create(data)
    if data == nil then
       data = restore_data({
-            history_file = ".machi_history",
+            history_file = api.gfs.get_cache_dir() .. "/history_machi",
             history_save_max = 100,
             gap = api.beautiful.useless_gap,
       })
@@ -445,11 +447,21 @@ local function create(data)
       return key
    end
 
-   local function start_interactive(screen)
+   local function start_interactive(screen, layout)
+      screen = screen or api.screen.focused()
+      layout = layout or api.layout.get(screen)
+
+      if layout.machi_set_cmd == nil then
+         api.naughty.notify({
+            text = "The layout to edit is not machi",
+            timeout = 3,
+         })
+         return
+      end
+
       local cmd_index = #data.cmds + 1
       data.cmds[cmd_index] = ""
 
-      screen = screen or api.screen.focused()
       local screen_x = screen.geometry.x
       local screen_y = screen.geometry.y
 
@@ -577,7 +589,7 @@ local function create(data)
                      print("restore history #" .. tostring(cmd_index) .. ":" .. data.cmds[cmd_index])
                      init(screen.workarea)
                      for i = 1, #data.cmds[cmd_index] do
-                        cmd = data.cmds[cmd_index]:sub(i, i)
+                        local cmd = data.cmds[cmd_index]:sub(i, i)
 
                         push_history()
                         local ret = handle_command(cmd)
@@ -608,8 +620,6 @@ local function create(data)
                      end
                   else
                      if key == "Return" then
-                        local layout = api.layout.get(screen)
-
                         table.remove(data.cmds, #data.cmds)
                         -- remove duplicated entries
                         local j = 1
@@ -624,7 +634,7 @@ local function create(data)
                         end
                         -- bring the current cmd to the front
                         data.cmds[#data.cmds + 1] = current_cmd
-                        data.last_cmd[layout.name] = current_cmd
+                        data.last_cmd[layout.machi_instance_name] = current_cmd
 
                         if data.history_file then
                            local file, err = io.open(data.history_file, "w")
@@ -654,11 +664,8 @@ local function create(data)
                   if to_exit then
                      print("interactive layout editing ends")
                      if to_apply then
-                        local layout = api.layout.get(screen)
-                        if layout.set_cmd then
-                           layout.set_cmd(current_cmd)
-                           api.layout.arrange(screen)
-                        end
+                        layout.machi_set_cmd(current_cmd)
+                        api.layout.arrange(screen)
                         api.gears.timer{
                            timeout = 1,
                            autostart = true,
