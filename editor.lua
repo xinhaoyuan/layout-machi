@@ -50,6 +50,22 @@ local function set_tiling(c)
    c.fullscreen = false
 end
 
+local function fair_split(total, shares, shares_sum)
+   local ret = {}
+   local acc = 0
+   local acc_ret = 0
+   if shares_sum == nil then
+      shares_sum = 0
+      for i = 1, #shares do shares_sum = shares_sum + shares[i] end
+   end
+   for i = 1, #shares do
+      acc = acc + shares[i]
+      ret[i] = i < #shares and math.floor(total / shares_sum * acc - acc_ret + 0.5) or total - acc_ret
+      acc_ret = acc_ret + ret[i]
+   end
+   return ret
+end
+
 local function min(a, b)
    if a < b then return a else return b end
 end
@@ -259,7 +275,7 @@ local function create(data)
 
       print("split " .. method .. " " .. tostring(alt) .. " " .. args .. " " .. _area_tostring(a))
 
-      if method == "h" then
+      if method == "h" or method == "v" then
 
          if #args == 0 then
             args = "11"
@@ -268,7 +284,7 @@ local function create(data)
          end
 
          local total = 0
-         local offset = {}
+         local shares = { }
          for i = 1, #args do
             local arg
             if not alt then
@@ -277,72 +293,55 @@ local function create(data)
                arg = tonumber(args:sub(#args - i + 1, #args - i + 1))
             end
             if arg < 1 then arg = 1 end
-            offset[#offset + 1] = total
             total = total + arg
+            shares[i] = arg
          end
-         offset[#offset + 1] = total
          local children = {}
 
-         for i = 1, #offset - 1 do
-            local child = {
-               x = a.x + a.width / total * offset[i],
-               y = a.y,
-               width = a.width / total * (offset[i + 1] - offset[i]),
-               height = a.height,
-               depth = a.depth + 1,
-               group_id = split_count,
-               bl = i == 1 and a.bl or false,
-               br = i == #offset - 1 and a.br or false,
-               bu = a.bu,
-               bd = a.bd,
-            }
-            children[#children + 1] = child
-         end
-
-         for i = #children, 1, -1 do
-            open_areas[#open_areas + 1] = children[i]
-         end
-      elseif method == "v" then
-
-         if #args == 0 then
-            args = "11"
-         elseif #args == 1 then
-            args = args .. "1"
-         end
-
-         local total = 0
-         local offset = {}
-         for i = 1, #args do
-            local arg
-            if not alt then
-               arg = tonumber(args:sub(i, i))
-            else
-               arg = tonumber(args:sub(#args - i + 1, #args - i + 1))
+         if method == "h" then
+            shares = fair_split(a.width, shares, total)
+            for i = 1, #shares do
+               local child = {
+                  x = i == 1 and a.x or children[#children].x + children[#children].width,
+                  y = a.y,
+                  width = shares[i],
+                  height = a.height,
+                  depth = a.depth + 1,
+                  group_id = split_count,
+                  bl = i == 1 and a.bl or false,
+                  br = i == #shares and a.br or false,
+                  bu = a.bu,
+                  bd = a.bd,
+               }
+               children[#children + 1] = child
             end
-            if arg < 1 then arg = 1 end
-            offset[#offset + 1] = total
-            total = total + arg
-         end
-         offset[#offset + 1] = total
-         local children = {}
-
-         for i = 1, #offset - 1 do
-            local child = {
-               x = a.x,
-               y = a.y + a.height / total * offset[i],
-               width = a.width,
-               height = a.height / total * (offset[i + 1] - offset[i]),
-               depth = a.depth + 1,
-               group_id = split_count,
-               bl = a.bl,
-               br = a.br,
-               bu = i == 1 and a.bu or false,
-               bd = i == #offset - 1 and a.bd or false,
-            }
-            children[#children + 1] = child
+         else
+            shares = fair_split(a.height, shares, total)
+            for i = 1, #shares do
+               local child = {
+                  x = a.x,
+                  y = i == 1 and a.y or children[#children].y + children[#children].height,
+                  width = a.width,
+                  height = shares[i],
+                  depth = a.depth + 1,
+                  group_id = split_count,
+                  bl = a.bl,
+                  br = a.br,
+                  bu = i == 1 and a.bu or false,
+                  bd = i == #shares and a.bd or false,
+               }
+               children[#children + 1] = child
+            end
          end
 
          for i = #children, 1, -1 do
+            if children[i].x ~= math.floor(children[i].x)
+               or children[i].y ~= math.floor(children[i].y)
+               or children[i].width ~= math.floor(children[i].width)
+               or children[i].height ~= math.floor(children[i].height)
+            then
+               print("warning, splitting yields floating area " .. _area_tostring(children[i]))
+            end
             open_areas[#open_areas + 1] = children[i]
          end
 
@@ -358,29 +357,47 @@ local function create(data)
 
          local h_split = tonumber(args:sub(#args - 1, #args - 1))
          local v_split = tonumber(args:sub(#args, #args))
-
          if h_split < 1 then h_split = 1 end
          if v_split < 1 then v_split = 1 end
 
-         local x_interval = a.width / h_split
-         local y_interval = a.height / v_split
-         for y = v_split, 1, -1 do
-            for x = h_split, 1, -1 do
+         local x_shares = {}
+         local y_shares = {}
+         for i = 1, h_split do x_shares[i] = 1 end
+         for i = 1, v_split do y_shares[i] = 1 end
+
+         x_shares = fair_split(a.width, x_shares, h_split)
+         y_shares = fair_split(a.height, y_shares, v_split)
+
+         local children = {}
+         for y_index = 1, v_split do
+            for x_index = 1, h_split do
                local r = {
-                  x = a.x + x_interval * (x - 1),
-                  y = a.y + y_interval * (y - 1),
-                  width = x_interval,
-                  height = y_interval,
+                  x = x_index == 1 and a.x or children[#children].x + children[#children].width,
+                  y = y_index == 1 and a.y or (x_index == 1 and children[#children].y + children[#children].height or children[#children].y),
+                  width = x_shares[x_index],
+                  height = y_shares[y_index],
                   depth = a.depth + 1,
                   group_id = split_count,
                }
-               if x == 1 then r.bl = a.bl else r.bl = false end
-               if x == h_split then r.br = a.br else r.br = false end
-               if y == 1 then r.bu = a.bu else r.bu = false end
-               if y == v_split then r.bd = a.bd else r.bd = false end
-               open_areas[#open_areas + 1] = r
+               if x_index == 1 then r.bl = a.bl else r.bl = false end
+               if x_index == h_split then r.br = a.br else r.br = false end
+               if y_index == 1 then r.bu = a.bu else r.bu = false end
+               if y_index == v_split then r.bd = a.bd else r.bd = false end
+               children[#children + 1] = r
             end
          end
+
+         for i = #children, 1, -1 do
+            if children[i].x ~= math.floor(children[i].x)
+               or children[i].y ~= math.floor(children[i].y)
+               or children[i].width ~= math.floor(children[i].width)
+               or children[i].height ~= math.floor(children[i].height)
+            then
+               print("warning, splitting yields floating area " .. _area_tostring(children[i]))
+            end
+            open_areas[#open_areas + 1] = children[i]
+         end
+
       elseif method == "p" then
          -- XXX
       end
@@ -684,6 +701,7 @@ local function create(data)
             end
 
             if to_exit then
+               cleanup()
                keygrabber.stop(kg)
             end
          end
