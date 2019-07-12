@@ -687,7 +687,7 @@ local function create(data)
                            timeout = 1,
                            autostart = true,
                            singleshot = true,
-                           callback = cleanup
+                           callback = cleanup,
                         }
                      else
                         cleanup()
@@ -698,10 +698,10 @@ local function create(data)
             if not ok then
                print("Getting error in keygrabber: " .. err)
                to_exit = true
+               cleanup()
             end
 
             if to_exit then
-               cleanup()
                keygrabber.stop(kg)
             end
          end
