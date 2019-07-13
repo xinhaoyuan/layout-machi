@@ -11,7 +11,6 @@ if source:sub(1, 1) == "@" then
    local base = source:match("^@(.-)[^/]+$")
    beautiful.layout_machi = gcolor.recolor_image(
       base .. "icon.png", beautiful.fg_normal)
-   print(beautiful.layout_machi)
 end
 
 return {
