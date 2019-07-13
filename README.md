@@ -1,4 +1,5 @@
-# layout-machi
+# ![](icon.png) layout-machi
+
 
 A manual layout for Awesome with a rapid interactive editor.
 
