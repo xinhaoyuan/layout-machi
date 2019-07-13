@@ -26,17 +26,6 @@ local function max(a, b)
    if a < b then return b else return a end
 end
 
-local label_font_family = api.beautiful.get_font(
-   api.beautiful.mono_font or api.beautiful.font):get_family()
-local label_size = api.dpi(30)
-local info_size = api.dpi(60)
--- colors are in rgba
-local border_color = with_alpha(api.gears.color(api.beautiful.border_focus), 0.75)
-local active_color = with_alpha(api.gears.color(api.beautiful.bg_focus), 0.5)
-local open_color   = with_alpha(api.gears.color(api.beautiful.bg_normal), 0.5)
-local closed_color = open_color
-local init_max_depth = 2
-
 local function is_tiling(c)
    return
       not (c.tomb_floating or c.floating or c.maximized_horizontal or c.maximized_vertical or c.maximized or c.fullscreen)
@@ -88,7 +77,7 @@ end
 -- @return       whether any actions have been taken on the client
 local function fit_region(c, cycle)
    local layout = api.layout.get(c.screen)
-   local regions = layout.machi_get_regions and layout.machi_get_regions(c.screen.workarea, c.screen.selected_tag.name)
+   local regions = layout.machi_get_regions and layout.machi_get_regions(c.screen.workarea, c.screen.selected_tag)
    if type(regions) ~= "table" or #regions < 1 then
       return false
    end
@@ -190,6 +179,7 @@ local function create(data)
    end
 
    local gap = data.gap or 0
+   local init_max_depth = 2
 
    local closed_areas
    local open_areas
@@ -465,6 +455,16 @@ local function create(data)
    end
 
    local function start_interactive(screen, layout)
+      local label_font_family = api.beautiful.get_font(
+         api.beautiful.mono_font or api.beautiful.font):get_family()
+      local label_size = api.dpi(30)
+      local info_size = api.dpi(60)
+      -- colors are in rgba
+      local border_color = with_alpha(api.gears.color(api.beautiful.border_focus), 0.75)
+      local active_color = with_alpha(api.gears.color(api.beautiful.bg_focus), 0.5)
+      local open_color   = with_alpha(api.gears.color(api.beautiful.bg_normal), 0.5)
+      local closed_color = open_color
+
       screen = screen or api.screen.focused()
       layout = layout or api.layout.get(screen)
       local tag = screen.selected_tag
@@ -652,7 +652,9 @@ local function create(data)
                         end
                         -- bring the current cmd to the front
                         data.cmds[#data.cmds + 1] = current_cmd
-                        data.last_cmd[layout.machi_get_instance_name(tag.name)] = current_cmd
+                        if not layout.is_dynamic then
+                           data.last_cmd[layout.machi_get_instance_name(tag)] = current_cmd
+                        end
 
                         if data.history_file then
                            local file, err = io.open(data.history_file, "w")
@@ -682,7 +684,7 @@ local function create(data)
                   if to_exit then
                      print("interactive layout editing ends")
                      if to_apply then
-                        layout.machi_set_cmd(current_cmd, tag.name)
+                        layout.machi_set_cmd(current_cmd, tag)
                         api.layout.arrange(screen)
                         api.gears.timer{
                            timeout = 1,

@@ -47,27 +47,26 @@ end
 local function create(name, editor)
    local instances = {}
 
-   local function get_instance_name(suffix)
-      if suffix == nil then
-         return name
-      else
-         return name .. '+' .. suffix
-      end
+   local get_instance_name
+   if type(name) == "function" then
+      get_instance_name = name
+   else
+      get_instance_name = function (tag) return name end
    end
 
-   local function get_instance(suffix)
-      local instance_name = get_instance_name(suffix)
-      if instances[instance_name] == nil then
-         instances[instance_name] = {
-            cmd = editor.get_last_cmd(instance_name),
+   local function get_instance(tag)
+      local name = get_instance_name(tag)
+      if instances[name] == nil then
+         instances[name] = {
+            cmd = editor.get_last_cmd(name),
             regions_cache = {},
          }
       end
-      return instances[instance_name]
+      return instances[name]
    end
 
-   local function get_regions(workarea, suffix)
-      local instance = get_instance(suffix)
+   local function get_regions(workarea, tag)
+      local instance = get_instance(tag)
       if instance.cmd == nil then return {} end
 
       local key = tostring(workarea.width) .. "x" .. tostring(workarea.height) .. "+" .. tostring(workarea.x) .. "+" .. tostring(workarea.y)
@@ -77,8 +76,8 @@ local function create(name, editor)
       return instance.regions_cache[key]
    end
 
-   local function set_cmd(cmd, suffix)
-      local instance = get_instance(suffix)
+   local function set_cmd(cmd, tag)
+      local instance = get_instance(tag)
       if instance.cmd ~= cmd then
          instance.cmd = cmd
          instance.regions_cache = {}
@@ -88,7 +87,7 @@ local function create(name, editor)
    local function arrange(p)
       local wa = p.workarea
       local cls = p.clients
-      local regions = get_regions(wa, get_screen(p.screen).selected_tag.name)
+      local regions = get_regions(wa, get_screen(p.screen).selected_tag)
 
       if #regions == 0 then return end
 
@@ -123,7 +122,7 @@ local function create(name, editor)
       if context ~= "mouse.move" then return end
 
       local workarea = c.screen.workarea
-      local regions = get_regions(workarea, c.screen.selected_tag.name)
+      local regions = get_regions(workarea, c.screen.selected_tag)
 
       if #regions == 0 then return end
 

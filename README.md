@@ -21,13 +21,23 @@ Suppose this git is checked out at `~/.config/awesome/layout-machi`
 
 The package provide a default layout `machi.default_layout` and editor `machi.default_editor`, which can be added into the layout list.
 
+The package comes with the icon for `layoutbox`, which can be set with the following statement (after a theme has been loaded):
+
+`require("beautiful").layout_machi = machi.get_icon()`
+
 ## Use the layout
 
 Use `layout = machi.layout.create(name, editor)` to instantiate the layout with an editor object.
+
+`name` can be a string or a function taking a tag object and returning a string.
+This is used for having different actual layout dependent on tags.
+
+`editor` are used for editing and persisting the layouts.
 `machi.default_editor` can be used, or see below on creating editors.
-You can also create multiple layouts with different names and share the same editor.
-The editor will restore the last setups of the layouts based on their names.
-The layout will be dependent on different tags.
+You can create multiple layouts with different names and share the same editor.
+
+The default layout, `machi.default_layout`, uses `"default+" .. tag.name` as name, thus allows the actual layout to be tag-name-dependent.
+To differentiate tags with the same name, you may need a more advanced naming function.
 
 ## Editor
 
