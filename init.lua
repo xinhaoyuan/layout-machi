@@ -8,7 +8,7 @@ local gcolor = require("gears.color")
 local beautiful = require("beautiful")
 local source = debug.getinfo(1, "S").source
 if source:sub(1, 1) == "@" then
-   base = source:match("^@(.-)[^/]+$")
+   local base = source:match("^@(.-)[^/]+$")
    beautiful.layout_machi = gcolor.recolor_image(
       base .. "icon.png", beautiful.fg_normal)
    print(beautiful.layout_machi)
