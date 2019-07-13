@@ -36,7 +36,7 @@ This is used for having different actual layout dependent on tags.
 `machi.default_editor` can be used, or see below on creating editors.
 You can create multiple layouts with different names and share the same editor.
 
-The default layout, `machi.default_layout`, uses `"default+" .. tag.name` as name, thus allows the actual layout to be tag-name-dependent.
+The default layout, `machi.default_layout`, uses the screen geometry and the tag name for name, thus allows the actual layout to be tag- and screen-dependent.
 To differentiate tags with the same name, you may need a more advanced naming function.
 
 ## Editor
