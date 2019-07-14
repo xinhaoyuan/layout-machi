@@ -3,7 +3,7 @@ local editor = require(... .. ".editor")
 local switcher = require(... .. ".switcher")
 local default_editor = editor.create()
 local default_layout = layout.create(
-   function (tag)
+   function (tag, _persist)
       if tag.machi_name_cache == nil then
          tag.machi_name_cache =
             tostring(tag.screen.geometry.width) .. "x" .. tostring(tag.screen.geometry.height) .. "+" ..

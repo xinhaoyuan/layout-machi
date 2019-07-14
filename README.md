@@ -33,15 +33,12 @@ The package comes with the icon for `layoutbox`, which can be set with the follo
 
 Use `layout = machi.layout.create(name, editor)` to instantiate the layout with an editor object.
 
-`name` can be a string or a function taking a tag object and returning a string.
+`name` can be a string or a function returning a string (see `init.lua` and "Advanced" below).
 This is used for having different actual layout dependent on tags.
 
 `editor` are used for editing and persisting the layouts.
 `machi.default_editor` can be used, or see below on creating editors.
 You can create multiple layouts with different names and share the same editor.
-
-The default layout, `machi.default_layout`, uses the screen geometry and the tag name for name, thus allows the actual layout to be tag- and screen-dependent.
-To differentiate tags with the same name, you may need a more advanced naming function.
 
 ## Editor
 
@@ -129,6 +126,16 @@ So far, the key binding is not configurable. One has to modify the source code t
 
 `machi.editor.fit_region(c, cycle = false)` will fit a floating client into the closest region.
 If `cycle` is true, it then moves the window by cycling all regions.
+
+## Advanced
+
+# `name` as a function in `machi.layout.create`
+
+When passed in as a function, `name` takes the tag `t` and a boolean flag `p` and returns a function for the tag-dependent name of the layout.
+Flag `p` is set true when the name is used for persisting the layout. If the layout is not intented to persist, returning `nil` when `p` is true to skip persisting.
+
+The default layout, `machi.default_layout`, uses the screen geometry and the tag name for name, thus allows the actual layout to be tag- and screen-dependent.
+To differentiate tags with the same name, you may need a more advanced naming function.
 
 ## Caveats
 

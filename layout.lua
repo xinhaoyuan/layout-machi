@@ -51,11 +51,11 @@ local function create(name, editor)
    if type(name) == "function" then
       get_instance_name = name
    else
-      get_instance_name = function (tag) return name end
+      get_instance_name = function () return name end
    end
 
    local function get_instance(tag)
-      local name = get_instance_name(tag)
+      local name = get_instance_name(tag, false)
       if instances[name] == nil then
          instances[name] = {
             cmd = editor.get_last_cmd(name),

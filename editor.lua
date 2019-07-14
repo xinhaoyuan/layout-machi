@@ -652,25 +652,26 @@ local function create(data)
                         end
                         -- bring the current cmd to the front
                         data.cmds[#data.cmds + 1] = current_cmd
-                        if not layout.is_dynamic then
-                           data.last_cmd[layout.machi_get_instance_name(tag)] = current_cmd
-                        end
 
-                        if data.history_file then
-                           local file, err = io.open(data.history_file, "w")
-                           if err then
-                              print("cannot save history to " .. data.history_file)
-                           else
-                              for i = max(1, #data.cmds - data.history_save_max + 1), #data.cmds do
-                                 print("save cmd " .. data.cmds[i])
-                                 file:write(data.cmds[i] .. "\n")
+                        local instance_name = layout.machi_get_instance_name(tag, true)
+                        if instance_name ~= nil then
+                           data.last_cmd[instance_name] = current_cmd
+                           if data.history_file then
+                              local file, err = io.open(data.history_file, "w")
+                              if err then
+                                 print("cannot save history to " .. data.history_file)
+                              else
+                                 for i = max(1, #data.cmds - data.history_save_max + 1), #data.cmds do
+                                    print("save cmd " .. data.cmds[i])
+                                    file:write(data.cmds[i] .. "\n")
+                                 end
+                                 for name, cmd in pairs(data.last_cmd) do
+                                    print("save last cmd " .. cmd .. " for " .. name)
+                                    file:write("+" .. name .. "\n" .. cmd .. "\n")
+                                 end
                               end
-                              for name, cmd in pairs(data.last_cmd) do
-                                 print("save last cmd " .. cmd .. " for " .. name)
-                                 file:write("+" .. name .. "\n" .. cmd .. "\n")
-                              end
+                              file:close()
                            end
-                           file:close()
                         end
 
                         current_info = "Saved!"
