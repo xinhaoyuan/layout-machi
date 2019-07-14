@@ -129,7 +129,7 @@ If `cycle` is true, it then moves the window by cycling all regions.
 
 ## Advanced
 
-# `name` as a function in `machi.layout.create`
+### `name` as a function in `machi.layout.create`
 
 When passed in as a function, `name` takes the tag `t` and a boolean flag `p` and returns a function for the tag-dependent name of the layout.
 Flag `p` is set true when the name is used for persisting the layout. If the layout is not intented to persist, returning `nil` when `p` is true to skip persisting.
