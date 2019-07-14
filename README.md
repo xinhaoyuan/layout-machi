@@ -131,8 +131,7 @@ If `cycle` is true, it then moves the window by cycling all regions.
 
 ### `name` as a function in `machi.layout.create`
 
-When passed in as a function, `name` takes the tag `t` and a boolean flag `p` and returns a function for the tag-dependent name of the layout.
-Flag `p` is set true when the name is used for persisting the layout. If the layout is not intented to persist, returning `nil` when `p` is true to skip persisting.
+When passed in as a function, `name` takes the tag `t` and returns (1) a string for the tag-dependent name of the layout, and (2) a boolean indicating the persistence of the layout.
 
 The default layout, `machi.default_layout`, uses the screen geometry and the tag name for name, thus allows the actual layout to be tag- and screen-dependent.
 To differentiate tags with the same name, you may need a more advanced naming function.

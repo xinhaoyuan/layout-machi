@@ -653,8 +653,8 @@ local function create(data)
                         -- bring the current cmd to the front
                         data.cmds[#data.cmds + 1] = current_cmd
 
-                        local instance_name = layout.machi_get_instance_name(tag, true)
-                        if instance_name ~= nil then
+                        local instance_name, persistent = layout.machi_get_instance_name(tag)
+                        if persistent then
                            data.last_cmd[instance_name] = current_cmd
                            if data.history_file then
                               local file, err = io.open(data.history_file, "w")
