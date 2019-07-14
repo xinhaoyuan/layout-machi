@@ -1,6 +1,5 @@
 # ![](icon.png) layout-machi
 
-
 A manual layout for Awesome with a rapid interactive editor.
 
 Demos: https://imgur.com/a/OlM60iw
@@ -12,6 +11,11 @@ TL;DR --- I want the control of my layout.
 1. Dynamic tiling is an overkill, since tiling is only useful for persistent windows, and people extensively use hibernate/sleep these days.
 2. I don't want to have all windows moving around whenever a new window shows up.
 3. I want to have a flexible layout such that I can quickly adjust to whatever I need.
+
+## Compatibilities
+
+I developed it with Awesome 4.3.
+Please let me know if it does not work in other versions.
 
 ## Quick usage
 
