@@ -166,7 +166,6 @@ local function create(data)
       data = restore_data({
             history_file = api.gfs.get_cache_dir() .. "/history_machi",
             history_save_max = 100,
-            gap = api.beautiful.useless_gap,
       })
    end
 
@@ -178,7 +177,6 @@ local function create(data)
       data.last_cmd = {}
    end
 
-   local gap = data.gap or 0
    local init_max_depth = 2
 
    local closed_areas
@@ -455,6 +453,7 @@ local function create(data)
    end
 
    local function start_interactive(screen, layout)
+      local gap = data.gap or api.beautiful.useless_gap or 0
       local label_font_family = api.beautiful.get_font(
          api.beautiful.mono_font or api.beautiful.font):get_family()
       local label_size = api.dpi(30)
@@ -713,6 +712,7 @@ local function create(data)
    end
 
    local function run_cmd(init_area, cmd)
+      local gap = data.gap or api.beautiful.useless_gap or 0
       init(init_area)
       push_history()
 
