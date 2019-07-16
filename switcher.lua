@@ -239,6 +239,8 @@ local function start(c)
                if shift then
                   -- move the window
                   c.machi_region = choice
+                  c:emit_signal("request::activate", "mouse.move", {raise=false})
+                  c:raise()
                   api.layout.arrange(screen)
                   move_traverse = true
                else
