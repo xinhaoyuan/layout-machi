@@ -251,10 +251,10 @@ local function start(c)
                      then
                         c = tc
                         api.client.focus = c
-                        move_traverse = true
                         break
                      end
                   end
+                  move_traverse = true
                end
 
                if move_traverse then
