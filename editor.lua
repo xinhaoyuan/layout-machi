@@ -103,10 +103,10 @@ local function _area_tostring(wa)
    return "{x:" .. tostring(wa.x) .. ",y:" .. tostring(wa.y) .. ",w:" .. tostring(wa.width) .. ",h:" .. tostring(wa.height) .. "}"
 end
 
-local function shrink_area_with_gap(a, gap)
-   return { x = a.x + (a.bl and 0 or gap / 2), y = a.y + (a.bu and 0 or gap / 2),
-            width = a.width - (a.bl and 0 or gap / 2) - (a.br and 0 or gap / 2),
-            height = a.height - (a.bu and 0 or gap / 2) - (a.bd and 0 or gap / 2) }
+local function shrink_area_with_gap(a, inner_gap, outer_gap)
+   return { x = a.x + (a.bl and outer_gap or inner_gap / 2), y = a.y + (a.bu and outer_gap or inner_gap / 2),
+            width = a.width - (a.bl and outer_gap or inner_gap / 2) - (a.br and outer_gap or inner_gap / 2),
+            height = a.height - (a.bu and outer_gap or inner_gap / 2) - (a.bd and outer_gap or inner_gap / 2) }
 end
 
 -- local function parse(cmd)
@@ -452,8 +452,14 @@ local function create(data)
       return key
    end
 
+   local function set_gap(inner_gap, outer_gap)
+      data.inner_gap = inner_gap
+      data.outer_gap = outer_gap
+   end
+
    local function start_interactive(screen, layout)
-      local gap = data.gap or api.beautiful.useless_gap or 0
+      local outer_gap = data.outer_gap or data.gap or api.beautiful.useless_gap or 0
+      local inner_gap = data.inner_gap or data.gap or api.beautiful.useless_gap or 0
       local label_font_family = api.beautiful.get_font(
          api.beautiful.mono_font or api.beautiful.font):get_family()
       local label_size = api.dpi(30)
@@ -507,7 +513,7 @@ local function create(data)
          local msg, ext
 
          for i, a in ipairs(closed_areas) do
-            local sa = shrink_area_with_gap(a, gap)
+            local sa = shrink_area_with_gap(a, inner_gap, outer_gap)
             cr:rectangle(sa.x - screen_x, sa.y - screen_y, sa.width, sa.height)
             cr:clip()
             cr:set_source(closed_color)
@@ -521,7 +527,7 @@ local function create(data)
          end
 
          for i, a in ipairs(open_areas) do
-            local sa = shrink_area_with_gap(a, gap)
+            local sa = shrink_area_with_gap(a, inner_gap, outer_gap)
             cr:rectangle(sa.x - screen_x, sa.y - screen_y, sa.width, sa.height)
             cr:clip()
             if i == #open_areas then
@@ -712,7 +718,8 @@ local function create(data)
    end
 
    local function run_cmd(init_area, cmd)
-      local gap = data.gap or api.beautiful.useless_gap or 0
+      local outer_gap = data.outer_gap or data.gap or api.beautiful.useless_gap or 0
+      local inner_gap = data.inner_gap or data.gap or api.beautiful.useless_gap or 0
       init(init_area)
       push_history()
 
@@ -722,7 +729,7 @@ local function create(data)
 
       local areas_with_gap = {}
       for _, a in ipairs(closed_areas) do
-         areas_with_gap[#areas_with_gap + 1] = shrink_area_with_gap(a, gap)
+         areas_with_gap[#areas_with_gap + 1] = shrink_area_with_gap(a, inner_gap, outer_gap)
       end
       table.sort(
          areas_with_gap,
@@ -747,7 +754,8 @@ local function create(data)
    return {
       start_interactive = start_interactive,
       run_cmd = run_cmd,
-      get_last_cmd = get_last_cmd
+      get_last_cmd = get_last_cmd,
+      set_gap = set_gap,
    }
 end
 
