@@ -44,6 +44,7 @@ local function start(c)
    local tablist_font_desc = api.beautiful.get_merged_font(
       api.beautiful.mono_font or api.beautiful.font, api.dpi(10))
    local font_color = with_alpha(api.gears.color(api.beautiful.fg_normal), 1)
+   local font_color_hl = with_alpha(api.gears.color(api.beautiful.fg_focus), 1)
    local label_size = api.dpi(30)
    local border_color = with_alpha(api.gears.color(api.beautiful.border_focus), 0.75)
    local fill_color = with_alpha(api.gears.color(api.beautiful.bg_normal), 0.5)
@@ -143,11 +144,16 @@ local function start(c)
                   cr:rectangle(x_offset - ext.width / 2 - vpadding / 2, y_offset - vpadding / 2, ext.width + vpadding, ext.height + vpadding)
                   cr:set_source(fill_color_hl)
                   cr:fill()
+                  pl:set_text(label)
+                  cr:move_to(x_offset - ext.width / 2 - ext.x_bearing, y_offset - ext.y_bearing)
+                  cr:set_source(font_color_hl)
+                  cr:show_layout(pl)
+               else
+                  pl:set_text(label)
+                  cr:move_to(x_offset - ext.width / 2 - ext.x_bearing, y_offset - ext.y_bearing)
+                  cr:set_source(font_color)
+                  cr:show_layout(pl)
                end
-               pl:set_text(label)
-               cr:move_to(x_offset - ext.width / 2 - ext.x_bearing, y_offset - ext.y_bearing)
-               cr:set_source(font_color)
-               cr:show_layout(pl)
 
                y_offset = y_offset + ext.height + vpadding
             end
