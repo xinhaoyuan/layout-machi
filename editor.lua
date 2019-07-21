@@ -458,8 +458,8 @@ local function create(data)
    end
 
    local function start_interactive(screen, layout)
-      local outer_gap = data.outer_gap or data.gap or api.beautiful.useless_gap or 0
-      local inner_gap = data.inner_gap or data.gap or api.beautiful.useless_gap or 0
+      local outer_gap = data.outer_gap or data.gap or api.beautiful.useless_gap * 2 or 0
+      local inner_gap = data.inner_gap or data.gap or api.beautiful.useless_gap * 2 or 0
       local label_font_family = api.beautiful.get_font(
          api.beautiful.mono_font or api.beautiful.font):get_family()
       local label_size = api.dpi(30)
@@ -718,8 +718,8 @@ local function create(data)
    end
 
    local function run_cmd(init_area, cmd)
-      local outer_gap = data.outer_gap or data.gap or api.beautiful.useless_gap or 0
-      local inner_gap = data.inner_gap or data.gap or api.beautiful.useless_gap or 0
+      local outer_gap = data.outer_gap or data.gap or api.beautiful.useless_gap * 2 or 0
+      local inner_gap = data.inner_gap or data.gap or api.beautiful.useless_gap * 2 or 0
       init(init_area)
       push_history()
 

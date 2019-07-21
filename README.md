@@ -138,10 +138,9 @@ To differentiate tags with the same name, you may need a more advanced naming fu
 
 ## Caveats
 
-`beautiful.useless_gap` is handled differently in layout-machi and it doesn't cooperate well with the standard way.
-In my usage I set `gap = 0` for the tags and let machi handle the gaps.
+1. layout-machi handles `beautiful.useless_gap` slightly differently.
 
-Also, true transparency is required. Otherwise switcher and editor will block the clients.
+2. True transparency is required. Otherwise switcher and editor will block the clients.
 
 ## TODO
 

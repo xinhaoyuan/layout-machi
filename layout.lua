@@ -85,7 +85,8 @@ local function create(name, editor)
    end
 
    local function arrange(p)
-      local wa = p.workarea
+      local useless_gap = p.useless_gap
+      local wa = get_screen(p.screen).workarea -- get the real workarea without the gap (instead of p.workarea)
       local cls = p.clients
       local regions = get_regions(wa, get_screen(p.screen).selected_tag)
 
@@ -104,11 +105,13 @@ local function create(name, editor)
             end
             local region = c.machi_region
 
+            -- Editor already handled useless_gap in the stored regions.
+            -- We try to negate the gap of outer layer.
             p.geometries[c] = {
-               x = regions[region].x,
-               y = regions[region].y,
-               width = regions[region].width,
-               height = regions[region].height,
+               x = regions[region].x - useless_gap,
+               y = regions[region].y - useless_gap,
+               width = regions[region].width + useless_gap * 2,
+               height = regions[region].height + useless_gap * 2,
             }
 
             print("Put client " .. tostring(c) .. " to region " .. region)
@@ -146,8 +149,8 @@ local function create(name, editor)
          c.machi_region = choice
          c.x = regions[choice].x
          c.y = regions[choice].y
-         c.width = regions[choice].width
-         c.height = regions[choice].height
+         c.width = max(1, regions[choice].width - 2 * border_width)
+         c.height = max(1, regions[choice].height - 2 * border_width)
       end
    end
 
