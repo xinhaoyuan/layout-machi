@@ -149,8 +149,8 @@ local function create(name, editor)
          c.machi_region = choice
          c.x = regions[choice].x
          c.y = regions[choice].y
-         c.width = max(1, regions[choice].width - 2 * border_width)
-         c.height = max(1, regions[choice].height - 2 * border_width)
+         c.width = max(1, regions[choice].width - 2 * c.border_width)
+         c.height = max(1, regions[choice].height - 2 * c.border_width)
       end
    end
 
