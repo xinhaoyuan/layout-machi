@@ -115,7 +115,7 @@ local function start(c)
             pl:set_font_description(tablist_font_desc)
 
             local vpadding = api.dpi(10)
-            local height = vpadding
+            local list_height = vpadding
             local exts = {}
 
             for index, tc in ipairs(tablist) do
@@ -127,13 +127,13 @@ local function start(c)
                h = h / api.lgi.Pango.SCALE
                local ext = { width = w, height = h, x_bearing = 0, y_bearing = 0 }
                exts[#exts + 1] = ext
-               height = height + ext.height + vpadding
+               list_height = list_height + ext.height + vpadding
             end
 
             local x_offset = a.x + a.width / 2 - start_x
-            local y_offset = a.y + a.height / 2 - height / 2 + vpadding - start_y
+            local y_offset = a.y + a.height / 2 - list_height / 2 + vpadding - start_y
 
-            cr:rectangle(a.x - start_x, y_offset - vpadding - start_y, a.width, height)
+            cr:rectangle(a.x - start_x, y_offset - vpadding - start_y, a.width, list_height)
             cr:set_source(fill_color)
             cr:fill()
 
