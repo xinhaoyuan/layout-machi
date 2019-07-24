@@ -8,7 +8,6 @@ local api = {
    awful      = require("awful"),
    screen     = require("awful.screen"),
    layout     = require("awful.layout"),
-   keygrabber = require("awful.keygrabber"),
    naughty    = require("naughty"),
    gears      = require("gears"),
    gfs        = require("gears.filesystem"),
@@ -585,7 +584,7 @@ local function create(data)
       init(screen.workarea)
       refresh()
 
-      kg = keygrabber.run(
+      kg = api.awful.keygrabber.run(
          function (mod, key, event)
             if event == "release" then
                return
@@ -711,7 +710,7 @@ local function create(data)
             end
 
             if to_exit then
-               keygrabber.stop(kg)
+               api.awful.keygrabber.stop(kg)
             end
          end
       )

@@ -5,7 +5,6 @@ local api = {
    awful      = require("awful"),
    screen     = require("awful.screen"),
    layout     = require("awful.layout"),
-   keygrabber = require("awful.keygrabber"),
    naughty    = require("naughty"),
    gears      = require("gears"),
    lgi        = require("lgi"),
@@ -178,7 +177,7 @@ local function start(c)
    infobox.bgimage = draw_info
 
    local kg
-   kg = keygrabber.run(
+   kg = api.awful.keygrabber.run(
       function (mod, key, event)
          if event == "release" then return end
          if key == "Tab" then
@@ -275,7 +274,7 @@ local function start(c)
             end
          elseif key == "Escape" or key == "Return" then
             infobox.visible = false
-            keygrabber.stop(kg)
+            api.awful.keygrabber.stop(kg)
          else
             print("Unhandled key " .. key)
          end
