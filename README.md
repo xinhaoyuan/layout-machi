@@ -144,7 +144,7 @@ To change that, please refer to `editor.lua`. (XXX more documents)
 Calling `machi.switcher.start()` will create a switcher supporting the following keys:
 
  - Arrow keys: move focus into other regions by the direction.
- - `Shift` + arrow keys: move the focused window to other regions by the direction. In draft mode, move the upper-left region by direction.
+ - `Shift` + arrow keys: move the focused window to other regions by the direction. In draft mode, move the window while preserving its size.
  - `Control` + arrow keys: move the bottom-right region of the focused window by direction. Only work in draft mode.
  - `Tab`: switch beteen windows covering the current regions.
 

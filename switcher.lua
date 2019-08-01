@@ -98,8 +98,8 @@ local function start(c)
 
       local msg, ext
       for i, a in ipairs(regions) do
-         cr:rectangle(a.x - start_x, a.y - start_y, a.width, a.height)
-         cr:clip()
+         -- cr:rectangle(a.x - start_x, a.y - start_y, a.width, a.height)
+         -- cr:clip()
 
          if a.x <= traverse_x and traverse_x < a.x + a.width and
             a.y <= traverse_y and traverse_y < a.y + a.height then
@@ -271,20 +271,11 @@ local function start(c)
                tablist = nil
 
                if shift then
+                  -- move the window
                   if draft_mode then
-                     -- move the left-up region
-                     local lu = choice
-                     local rd = c.machi_rd
-                     if regions[rd].x + regions[rd].width <= regions[lu].x or
-                        regions[rd].y + regions[rd].height <= regions[lu].y
-                     then
-                        rd = lu
-                     end
-                     machi.layout.set_geometry(c, regions[lu], regions[rd], 0, c.border_width)
-                     c.machi_lu = lu
-                     c.machi_rd = rd
+                     c.x = regions[choice].x
+                     c.y = regions[choice].y
                   else
-                     -- move the window
                      machi.layout.set_geometry(c, regions[choice], regions[choice], 0, c.border_width)
                      c.machi_region = choice
                   end
