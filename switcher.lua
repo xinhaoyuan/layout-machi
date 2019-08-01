@@ -266,6 +266,10 @@ local function start(c)
             end
 
             if choice ~= nil then
+               traverse_x = max(regions[choice].x + traverse_radius, min(regions[choice].x + regions[choice].width - traverse_radius, traverse_x))
+               traverse_y = max(regions[choice].y + traverse_radius, min(regions[choice].y + regions[choice].height - traverse_radius, traverse_y))
+               tablist = nil
+
                if shift then
                   if draft_mode then
                      -- move the left-up region
@@ -305,11 +309,8 @@ local function start(c)
                   c:emit_signal("request::activate", "mouse.move", {raise=false})
                   c:raise()
                   api.layout.arrange(screen)
-
-                  tablist = nil
                else
                   -- move the focus
-                  tablist = nil
                   ensure_tablist()
                   if #tablist > 0 and tablist[1] ~= c then
                      c = tablist[1]
@@ -317,8 +318,6 @@ local function start(c)
                   end
                end
 
-               traverse_x = max(regions[choice].x + traverse_radius, min(regions[choice].x + regions[choice].width - traverse_radius, traverse_x))
-               traverse_y = max(regions[choice].y + traverse_radius, min(regions[choice].y + regions[choice].height - traverse_radius, traverse_y))
                infobox.bgimage = draw_info
             end
          elseif key == "Escape" or key == "Return" then
