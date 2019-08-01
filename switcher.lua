@@ -1,3 +1,7 @@
+local machi = {
+   layout = require((...):match("(.-)[^%.]+$") .. "layout"),
+}
+
 local api = {
    client     = client,
    beautiful  = require("beautiful"),
@@ -10,19 +14,6 @@ local api = {
    lgi        = require("lgi"),
    dpi        = require("beautiful.xresources").apply_dpi,
 }
-
--- -- Seems not needed?
--- local focus_timer = 0
--- api.client.connect_signal(
---    "focus",
---    function (c)
---       if c.focus_timer == nil or c.focus_timer < focus_timer then
---          c.focus_timer = focus_timer
---       end
---       focus_timer = c.focus_timer + 1
---       c.focus_timer = focus_timer
---    end
--- )
 
 local function min(a, b)
    if a < b then return a else return b end
@@ -59,7 +50,7 @@ local function start(c)
    local layout = api.layout.get(screen)
    if c.floating or layout.machi_get_regions == nil then return end
 
-   local regions = layout.machi_get_regions(c.screen.workarea, c.screen.selected_tag)
+   local regions, draft_mode = layout.machi_get_regions(c.screen.workarea, c.screen.selected_tag)
 
    local infobox = api.wibox({
          screen = screen,
@@ -73,6 +64,7 @@ local function start(c)
    })
    infobox.visible = true
 
+   local tablist_region = nil
    local tablist = nil
    local tablist_index = nil
 
@@ -83,12 +75,13 @@ local function start(c)
       if tablist == nil then
          tablist = {}
          for _, tc in ipairs(screen.tiled_clients) do
-            if tc.machi_region == c.machi_region
-               and not tc.maximized
-               and not tc.maximized_horizontal
-               and not tc.maximized_vertical
+            if not (tc.floating or tc.maximized or tc.maximized_horizontal or tc.maximized_vertical)
             then
-               tablist[#tablist + 1] = tc
+               if tc.x <= traverse_x and traverse_x < tc.x + tc.width and
+                  tc.y <= traverse_y and traverse_y < tc.y + tc.height
+               then
+                  tablist[#tablist + 1] = tc
+               end
             end
          end
 
@@ -108,7 +101,8 @@ local function start(c)
          cr:rectangle(a.x - start_x, a.y - start_y, a.width, a.height)
          cr:clip()
 
-         if i == c.machi_region then
+         if a.x <= traverse_x and traverse_x < a.x + a.width and
+            a.y <= traverse_y and traverse_y < a.y + a.height then
 
             local pl = api.lgi.Pango.Layout.create(cr)
             pl:set_font_description(tablist_font_desc)
@@ -132,7 +126,9 @@ local function start(c)
             local x_offset = a.x + a.width / 2 - start_x
             local y_offset = a.y + a.height / 2 - list_height / 2 + vpadding - start_y
 
-            cr:rectangle(a.x - start_x, y_offset - vpadding - start_y, a.width, list_height)
+            -- cr:rectangle(a.x - start_x, y_offset - vpadding - start_y, a.width, list_height)
+            -- cover the entire region
+            cr:rectangle(a.x - start_x, a.y - start_y, a.width, a.height)
             cr:set_source(fill_color)
             cr:fill()
 
@@ -192,10 +188,33 @@ local function start(c)
                infobox.bgimage = draw_info
             end
          elseif key == "Up" or key == "Down" or key == "Left" or key == "Right" then
+            local shift = false
+            local ctrl = false
+            for i, m in ipairs(mod) do
+               if m == "Shift" then shift = true
+               elseif m == "Control" then ctrl = true
+               end
+            end
+
+            if shift then
+               traverse_x = c.x + traverse_radius
+               traverse_y = c.y + traverse_radius
+            elseif ctrl then
+               traverse_x = c.x + c.width - c.border_width * 2 - traverse_radius
+               traverse_y = c.y + c.height - c.border_width * 2 - traverse_radius
+            end
+
             local choice = nil
             local choice_value
+            local current_region = nil
 
             for i, a in ipairs(regions) do
+               if a.x <= traverse_x and traverse_x < a.x + a.width and
+                  a.y <= traverse_y and traverse_y < a.y + a.height
+               then
+                  current_region = i
+               end
+
                local v
                if key == "Up" then
                   if a.x < traverse_x + threshold
@@ -233,43 +252,73 @@ local function start(c)
                end
             end
 
-            if choice ~= nil and choice_value > threshold then
-               local shift = false
-               for i, m in ipairs(mod) do
-                  if m == "Shift" then shift = true end
+            if choice == nil then
+               choice = current_region
+               if key == "Up" then
+                  traverse_y = screen.workarea.y
+               elseif key == "Down" then
+                  traverse_y = screen.workarea.y + screen.workarea.height
+               elseif key == "Left" then
+                  traverse_x = screen.workarea.x
+               else
+                  traverse_x = screen.workarea.x + screen.workarea.width
                end
+            end
 
-               local move_traverse = false
-
+            if choice ~= nil then
                if shift then
-                  -- move the window
-                  c.machi_region = choice
+                  if draft_mode then
+                     -- move the left-up region
+                     local lu = choice
+                     local rd = c.machi_rd
+                     if regions[rd].x + regions[rd].width <= regions[lu].x or
+                        regions[rd].y + regions[rd].height <= regions[lu].y
+                     then
+                        rd = lu
+                     end
+                     machi.layout.set_geometry(c, regions[lu], regions[rd], 0, c.border_width)
+                     c.machi_lu = lu
+                     c.machi_rd = rd
+                  else
+                     -- move the window
+                     machi.layout.set_geometry(c, regions[choice], regions[choice], 0, c.border_width)
+                     c.machi_region = choice
+                  end
                   c:emit_signal("request::activate", "mouse.move", {raise=false})
                   c:raise()
                   api.layout.arrange(screen)
-                  move_traverse = true
+
+                  tablist = nil
+               elseif ctrl and draft_mode then
+                  -- move the right-down region
+                  local lu = c.machi_lu
+                  local rd = choice
+                  if regions[rd].x + regions[rd].width <= regions[lu].x or
+                     regions[rd].y + regions[rd].height <= regions[lu].y
+                  then
+                     lu = rd
+                  end
+                  machi.layout.set_geometry(c, regions[lu], regions[rd], 0, c.border_width)
+                  c.machi_lu = lu
+                  c.machi_rd = rd
+
+                  c:emit_signal("request::activate", "mouse.move", {raise=false})
+                  c:raise()
+                  api.layout.arrange(screen)
+
+                  tablist = nil
                else
                   -- move the focus
-                  for _, tc in ipairs(screen.tiled_clients) do
-                     if tc.machi_region == choice
-                        and not tc.maximized
-                        and not tc.maximized_horizontal
-                        and not tc.maximized_vertical
-                     then
-                        c = tc
-                        api.client.focus = c
-                        break
-                     end
-                  end
-                  move_traverse = true
-               end
-
-               if move_traverse then
-                  traverse_x = max(regions[choice].x + traverse_radius, min(regions[choice].x + regions[choice].width - traverse_radius, traverse_x))
-                  traverse_y = max(regions[choice].y + traverse_radius, min(regions[choice].y + regions[choice].height - traverse_radius, traverse_y))
                   tablist = nil
+                  ensure_tablist()
+                  if #tablist > 0 and tablist[1] ~= c then
+                     c = tablist[1]
+                     api.client.focus = c
+                  end
                end
 
+               traverse_x = max(regions[choice].x + traverse_radius, min(regions[choice].x + regions[choice].width - traverse_radius, traverse_x))
+               traverse_y = max(regions[choice].y + traverse_radius, min(regions[choice].y + regions[choice].height - traverse_radius, traverse_y))
                infobox.bgimage = draw_info
             end
          elseif key == "Escape" or key == "Return" then

@@ -62,42 +62,6 @@ local function max(a, b)
    if a < b then return b else return a end
 end
 
-local function set_region(c, r)
-   c.floating = false
-   c.maximized = false
-   c.fullscreen = false
-   c.machi_region = r
-   api.layout.arrange(c.screen)
-end
-
---- fit the client into the machi of the screen
--- @param  c     the client to fit
--- @param  cycle whether to cycle the region if the window is already in machi
--- @return       whether any actions have been taken on the client
-local function fit_region(c, cycle)
-   local layout = api.layout.get(c.screen)
-   local regions = layout.machi_get_regions and layout.machi_get_regions(c.screen.workarea, c.screen.selected_tag)
-   if type(regions) ~= "table" or #regions < 1 then
-      return false
-   end
-   local current_region = c.machi_region or 1
-   if not is_tiling(c) then
-      -- find out which region has the most intersection, calculated by a cap b / a cup b
-      c.machi_region = machi.layout.find_region(c, regions)
-      set_tiling(c)
-   elseif cycle then
-      if current_region >= #regions then
-         c.machi_region = 1
-      else
-         c.machi_region = current_region + 1
-      end
-      api.layout.arrange(c.screen)
-   else
-      return false
-   end
-   return true
-end
-
 local function _area_tostring(wa)
    return "{x:" .. tostring(wa.x) .. ",y:" .. tostring(wa.y) .. ",w:" .. tostring(wa.width) .. ",h:" .. tostring(wa.height) .. "}"
 end
@@ -385,6 +349,64 @@ local function create(data)
             open_areas[#open_areas + 1] = children[i]
          end
 
+      elseif method == "d" then
+
+         local x_shares = {}
+         local y_shares = {}
+
+         local current = x_shares
+         for i = 1, #args do
+            local arg
+            if not alt then
+               arg = tonumber(args:sub(i, i))
+            else
+               arg = tonumber(args:sub(#args - i + 1, #args - i + 1))
+            end
+            if arg == 0 then
+               if current == x_shares then current = y_shares else break end
+            else
+               current[#current + 1] = arg
+            end
+         end
+
+         if #x_shares == 0 or #y_shares == 0 then
+            open_areas[#open_areas + 1] = a
+            return
+         end
+
+         x_shares = fair_split(a.width, x_shares)
+         y_shares = fair_split(a.height, y_shares)
+
+         local children = {}
+         for y_index = 1, #y_shares do
+            for x_index = 1, #x_shares do
+               local r = {
+                  x = x_index == 1 and a.x or children[#children].x + children[#children].width,
+                  y = y_index == 1 and a.y or (x_index == 1 and children[#children].y + children[#children].height or children[#children].y),
+                  width = x_shares[x_index],
+                  height = y_shares[y_index],
+                  depth = a.depth + 1,
+                  group_id = split_count,
+               }
+               if x_index == 1 then r.bl = a.bl else r.bl = false end
+               if x_index == #x_shares then r.br = a.br else r.br = false end
+               if y_index == 1 then r.bu = a.bu else r.bu = false end
+               if y_index == #y_shares then r.bd = a.bd else r.bd = false end
+               children[#children + 1] = r
+            end
+         end
+
+         for i = #children, 1, -1 do
+            if children[i].x ~= math.floor(children[i].x)
+               or children[i].y ~= math.floor(children[i].y)
+               or children[i].width ~= math.floor(children[i].width)
+               or children[i].height ~= math.floor(children[i].height)
+            then
+               print("warning, splitting yields floating area " .. _area_tostring(children[i]))
+            end
+            open_areas[#open_areas + 1] = children[i]
+         end
+
       elseif method == "p" then
          -- XXX
       end
@@ -407,6 +429,8 @@ local function create(data)
          else
             handle_split("w", key == "W")
          end
+      elseif key == "d" or key == "D" then
+         handle_split("d", key == "D")
       elseif key == "p" or key == "P" then
          handle_split("p", key == "P")
       elseif key == "s" or key == "S" then
@@ -577,7 +601,6 @@ local function create(data)
          end
          infobox.bgimage = draw_info
       end
-
 
       print("interactive layout editing starts")
 
@@ -760,8 +783,6 @@ end
 
 return
    {
-      set_region = set_region,
-      fit_region = fit_region,
       create = create,
       restore_data = restore_data,
    }

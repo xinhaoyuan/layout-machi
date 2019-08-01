@@ -1,17 +1,16 @@
 local layout = require(... .. ".layout")
 local editor = require(... .. ".editor")
 local switcher = require(... .. ".switcher")
+local function default_name(tag)
+   if tag.machi_name_cache == nil then
+      tag.machi_name_cache =
+         tostring(tag.screen.geometry.width) .. "x" .. tostring(tag.screen.geometry.height) .. "+" ..
+         tostring(tag.screen.geometry.x) .. "+" .. tostring(tag.screen.geometry.y) .. '+' .. tag.name
+   end
+   return tag.machi_name_cache, true
+end
 local default_editor = editor.create()
-local default_layout = layout.create(
-   function (tag)
-      if tag.machi_name_cache == nil then
-         tag.machi_name_cache =
-            tostring(tag.screen.geometry.width) .. "x" .. tostring(tag.screen.geometry.height) .. "+" ..
-            tostring(tag.screen.geometry.x) .. "+" .. tostring(tag.screen.geometry.y) .. '+' .. tag.name
-      end
-      return tag.machi_name_cache, true
-   end,
-   default_editor)
+local default_layout = layout.create(default_name, default_editor)
 local gcolor = require("gears.color")
 local beautiful = require("beautiful")
 

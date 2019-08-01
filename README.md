@@ -53,11 +53,12 @@ The editor is keyboard driven, each command is a key with optional digits (namel
 1. `Up`/`Down`: restore to the history command sequence
 2. `h`/`v`: split the current region horizontally/vertically into `#D` regions. The split will respect the ratio of digits in `D`.
 3. `w`: Take the last two digits from `D` as `D = ...AB` (1 if `D` is shorter than 2 digits), and split the current region equally into A rows and B columns. If no digits are provided at all, behave the same as `Space`.
-4. `s`: shift the current editing region with other open regions. If digits are provided, shift for that many times.
-5. `Space` or `-`: Without parameters, close the current region and move to the next open region. With digits, set the maximum depth of splitting (the default depth is 2).
-6. `Enter`/`.`: close all open regions. When all regions are closed, press `Enter` will save the layout and exit the editor.
-7. `Backspace`: undo the last command.
-8. `Escape`: exit the editor without saving the layout.
+4. `d`: Take the argument in the format of `A0B`, where `A` and `B` do not contain any `0`, apply `h` with argument `A` unless `A` is shorter than 2 digits. On each splitted region, apply `v` with argument `B` unless `B` is shorter than 2 digit. Does nothing if the argument is ill-formed.
+5. `s`: shift the current editing region with other open regions. If digits are provided, shift for that many times.
+6. `Space` or `-`: Without parameters, close the current region and move to the next open region. With digits, set the maximum depth of splitting (the default depth is 2).
+7. `Enter`/`.`: close all open regions. When all regions are closed, press `Enter` will save the layout and exit the editor.
+8. `Backspace`: undo the last command.
+9. `Escape`: exit the editor without saving the layout.
 
 For examples:
 
@@ -107,6 +108,32 @@ Tada!
 ```
 
 
+`12210121d`
+
+```
+11 2222 3333 44
+11 2222 3333 44
+
+55 6666 7777 88
+55 6666 7777 88
+55 6666 7777 88
+55 6666 7777 88
+
+99 AAAA BBBB CC
+99 AAAA BBBB CC
+```
+
+### Draft mode
+
+__This mode is experimental. Its usage may change fast.__
+
+Unlike the original machi layout, where a window fits in a single region, draft mode allows window to span across multiple regions.
+Each tiled window is associated with a upper-left region (ULR) and a bottom-right region (BRR).
+The geometry of the window is from the upper-left corner of the ULR to the bottom-right corner of the BRR.
+
+This is suppose to work with regions produced with `d` command.
+To enable draft mode in a layout, configure the layout with a command with a leading `d`, for example, `d12210121d`.
+
 ### Persistent history
 
 By default, the last 100 command sequences are stored in `.cache/awesome/history_machi`.
@@ -117,15 +144,11 @@ To change that, please refer to `editor.lua`. (XXX more documents)
 Calling `machi.switcher.start()` will create a switcher supporting the following keys:
 
  - Arrow keys: move focus into other regions by the direction.
- - `Shift` + arrow keys: move the focused window to other regions by the direction.
- - `Tab`: switch windows in the same regions.
+ - `Shift` + arrow keys: move the focused window to other regions by the direction. In draft mode, move the upper-left region by direction.
+ - `Control` + arrow keys: move the bottom-right region of the focused window by direction. Only work in draft mode.
+ - `Tab`: switch beteen windows covering the current regions.
 
 So far, the key binding is not configurable. One has to modify the source code to change it.
-
-## Other functions
-
-`machi.editor.fit_region(c, cycle = false)` will fit a floating client into the closest region.
-If `cycle` is true, it then moves the window by cycling all regions.
 
 ## Advanced
 
@@ -141,10 +164,6 @@ To differentiate tags with the same name, you may need a more advanced naming fu
 1. layout-machi handles `beautiful.useless_gap` slightly differently.
 
 2. True transparency is required. Otherwise switcher and editor will block the clients.
-
-## TODO
-
- - Tabs on regions?
 
 ## License
 
