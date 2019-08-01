@@ -98,9 +98,6 @@ local function start(c)
 
       local msg, ext
       for i, a in ipairs(regions) do
-         -- cr:rectangle(a.x - start_x, a.y - start_y, a.width, a.height)
-         -- cr:clip()
-
          if a.x <= traverse_x and traverse_x < a.x + a.width and
             a.y <= traverse_y and traverse_y < a.y + a.height then
 
@@ -154,6 +151,8 @@ local function start(c)
             end
          end
 
+         cr:rectangle(a.x - start_x, a.y - start_y, a.width, a.height)
+         cr:clip()
          -- cr:set_source(fill_color)
          -- cr:rectangle(a.x, a.y, a.width, a.height)
          -- cr:fill()
