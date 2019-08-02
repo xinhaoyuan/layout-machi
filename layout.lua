@@ -1,5 +1,6 @@
 local api = {
    screen = screen,
+   awful = require("awful"),
 }
 
 local function min(a, b)
@@ -13,6 +14,12 @@ end
 local function get_screen(s)
     return s and api.screen[s]
 end
+
+api.awful.mouse.resize.add_enter_callback(
+   function (c)
+      c.width_before_move = c.width
+      c.height_before_move = c.height
+   end, 'mouse.move')
 
 --- find the best region for the area-like object
 -- @param c       area-like object - table with properties x, y, width, and height
@@ -199,8 +206,8 @@ local function create(name, editor)
                local hh = {}
                hh.x = regions[lu].x
                hh.y = regions[lu].y
-               hh.width = h.width
-               hh.height = h.height
+               hh.width = c.width_before_move
+               hh.height = c.height_before_move
                rd = find_rd(hh, regions, lu)
             else
                rd = find_rd(h, regions, lu)
