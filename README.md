@@ -165,6 +165,8 @@ To differentiate tags with the same name, you may need a more advanced naming fu
 
 2. True transparency is required. Otherwise switcher and editor will block the clients.
 
+3. The resize handler of machi does not behave well in the default `awful.mouse.client.resize(c)` -- it is recommended to use `awful.mouse.client.resize(c, "bottom_right")`.
+
 ## License
 
 Apache 2.0 --- See LICENSE
