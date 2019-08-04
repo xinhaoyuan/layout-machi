@@ -520,7 +520,8 @@ local function create(data)
             height = screen.workarea.height,
             bg = "#ffffff00",
             opacity = 1,
-            ontop = true
+            ontop = true,
+            type = "dock",
       })
       infobox.visible = true
 

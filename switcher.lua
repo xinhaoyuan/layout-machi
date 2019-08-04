@@ -60,7 +60,8 @@ local function start(c)
          height = screen.workarea.height,
          bg = "#ffffff00",
          opacity = 1,
-         ontop = true
+         ontop = true,
+         type = "dock",
    })
    infobox.visible = true
 
