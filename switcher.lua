@@ -172,10 +172,20 @@ local function start(c)
 
    infobox.bgimage = draw_info
 
+   local key_translate_tab = {
+      ["w"] = "Up",
+      ["a"] = "Left",
+      ["s"] = "Down",
+      ["d"] = "Right",
+   }
+
    local kg
    kg = api.awful.keygrabber.run(
       function (mod, key, event)
          if event == "release" then return end
+         if key_translate_tab[key] ~= nil then
+            key = key_translate_tab[key]
+         end
          if key == "Tab" then
             ensure_tablist()
 
@@ -270,7 +280,34 @@ local function start(c)
                traverse_y = max(regions[choice].y + traverse_radius, min(regions[choice].y + regions[choice].height - traverse_radius, traverse_y))
                tablist = nil
 
-               if shift then
+               if ctrl and draft_mode then
+                  local lu = c.machi_lu
+                  local rd = c.machi_rd
+
+                  if shift then
+                     lu = choice
+                     if regions[rd].x + regions[rd].width <= regions[lu].x or
+                        regions[rd].y + regions[rd].height <= regions[lu].y
+                     then
+                        rd = lu
+                     end
+                  else
+                     rd = choice
+                     if regions[rd].x + regions[rd].width <= regions[lu].x or
+                        regions[rd].y + regions[rd].height <= regions[lu].y
+                     then
+                        lu = rd
+                     end
+                  end
+
+                  machi.layout.set_geometry(c, regions[lu], regions[rd], 0, c.border_width)
+                  c.machi_lu = lu
+                  c.machi_rd = rd
+
+                  c:emit_signal("request::activate", "mouse.move", {raise=false})
+                  c:raise()
+                  api.layout.arrange(screen)
+               elseif shift then
                   -- move the window
                   if draft_mode then
                      c.x = regions[choice].x
@@ -284,22 +321,6 @@ local function start(c)
                   api.layout.arrange(screen)
 
                   tablist = nil
-               elseif ctrl and draft_mode then
-                  -- move the right-down region
-                  local lu = c.machi_lu
-                  local rd = choice
-                  if regions[rd].x + regions[rd].width <= regions[lu].x or
-                     regions[rd].y + regions[rd].height <= regions[lu].y
-                  then
-                     lu = rd
-                  end
-                  machi.layout.set_geometry(c, regions[lu], regions[rd], 0, c.border_width)
-                  c.machi_lu = lu
-                  c.machi_rd = rd
-
-                  c:emit_signal("request::activate", "mouse.move", {raise=false})
-                  c:raise()
-                  api.layout.arrange(screen)
                else
                   -- move the focus
                   ensure_tablist()

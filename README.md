@@ -145,7 +145,7 @@ Calling `machi.switcher.start()` will create a switcher supporting the following
 
  - Arrow keys: move focus into other regions by the direction.
  - `Shift` + arrow keys: move the focused window to other regions by the direction. In draft mode, move the window while preserving its size.
- - `Control` + arrow keys: move the bottom-right region of the focused window by direction. Only work in draft mode.
+ - `Control`[ + `Shift`] + arrow keys: move the bottom-right (or top-left window if `Shift` is pressed) region of the focused window by direction. Only works in draft mode.
  - `Tab`: switch beteen windows covering the current regions.
 
 So far, the key binding is not configurable. One has to modify the source code to change it.
@@ -164,8 +164,6 @@ To differentiate tags with the same name, you may need a more advanced naming fu
 1. layout-machi handles `beautiful.useless_gap` slightly differently.
 
 2. True transparency is required. Otherwise switcher and editor will block the clients.
-
-3. The resize handler of machi does not behave well in the default `awful.mouse.client.resize(c)` -- it is recommended to use `awful.mouse.client.resize(c, "bottom_right")`.
 
 ## License
 
