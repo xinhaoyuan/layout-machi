@@ -4,6 +4,8 @@ A manual layout for Awesome with a rapid interactive editor.
 
 Demos: https://imgur.com/a/OlM60iw
 
+Draft mode: https://imgur.com/a/BOvMeQL
+
 ## Why?
 
 TL;DR --- I want the control of my layout.
