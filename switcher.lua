@@ -206,17 +206,43 @@ local function start(c)
                end
             end
 
-            if shift then
-               traverse_x = c.x + traverse_radius
-               traverse_y = c.y + traverse_radius
-            elseif ctrl then
-               traverse_x = c.x + c.width - c.border_width * 2 - traverse_radius
-               traverse_y = c.y + c.height - c.border_width * 2 - traverse_radius
+            local current_region = nil
+
+            if shift or ctrl then
+               for i, a in ipairs(regions) do
+                  if a.x <= traverse_x and traverse_x < a.x + a.width and
+                     a.y <= traverse_y and traverse_y < a.y + a.height
+                  then
+                     current_region = i
+                     break
+                  end
+               end
+
+               if current_region ~= nil then
+                  if shift then
+                     if regions[current_region].x ~= c.x or
+                        regions[current_region].y ~= c.y
+                     then
+                        traverse_x = c.x + traverse_radius
+                        traverse_y = c.y + traverse_radius
+                        current_region = nil
+                     end
+                  elseif ctrl then
+                     local ex = c.x + c.width + c.border_width * 2
+                     local ey = c.y + c.height + c.border_width * 2
+                     if regions[current_region].x + regions[current_region].width ~= ex or
+                        regions[current_region].y + regions[current_region].height ~= ey
+                     then
+                        traverse_x = ex - traverse_radius
+                        traverse_y = ey - traverse_radius
+                        current_region = nil
+                     end
+                  end
+               end
             end
 
             local choice = nil
             local choice_value
-            local current_region = nil
 
             for i, a in ipairs(regions) do
                if a.x <= traverse_x and traverse_x < a.x + a.width and
