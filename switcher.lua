@@ -218,25 +218,25 @@ local function start(c)
                   end
                end
 
-               if current_region ~= nil then
-                  if shift then
-                     if regions[current_region].x ~= c.x or
-                        regions[current_region].y ~= c.y
-                     then
-                        traverse_x = c.x + traverse_radius
-                        traverse_y = c.y + traverse_radius
-                        current_region = nil
-                     end
-                  elseif ctrl then
-                     local ex = c.x + c.width + c.border_width * 2
-                     local ey = c.y + c.height + c.border_width * 2
-                     if regions[current_region].x + regions[current_region].width ~= ex or
-                        regions[current_region].y + regions[current_region].height ~= ey
-                     then
-                        traverse_x = ex - traverse_radius
-                        traverse_y = ey - traverse_radius
-                        current_region = nil
-                     end
+               if shift then
+                  if current_region == nil or
+                     regions[current_region].x ~= c.x or
+                     regions[current_region].y ~= c.y
+                  then
+                     traverse_x = c.x + traverse_radius
+                     traverse_y = c.y + traverse_radius
+                     current_region = nil
+                  end
+               elseif ctrl then
+                  local ex = c.x + c.width + c.border_width * 2
+                  local ey = c.y + c.height + c.border_width * 2
+                  if current_region == nil or
+                     regions[current_region].x + regions[current_region].width ~= ex or
+                     regions[current_region].y + regions[current_region].height ~= ey
+                  then
+                     traverse_x = ex - traverse_radius
+                     traverse_y = ey - traverse_radius
+                     current_region = nil
                   end
                end
             end
