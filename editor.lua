@@ -526,6 +526,13 @@ local function create(data)
             end
          end
 
+      elseif method == "t" then
+
+         local n = tonumber(arg_str)
+         if n ~= nil then
+            max_depth = n
+         end
+
       elseif method == "-" then
 
          push_area()
@@ -560,6 +567,7 @@ local function create(data)
       ["w"] = 2, ["W"] = 2,
       ["d"] = 2, ["D"] = 2,
       ["s"] = 2, ["S"] = 2,
+      ["t"] = 2, ["T"] = 2,
       ["-"] = 1,
       ["."] = 1,
       [";"] = 1,

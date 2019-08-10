@@ -51,7 +51,7 @@ To edit the layout `l` on screen `s`, call `editor.start_interactive(s = awful.s
 
 ### Basic usage
 
-The editing command starts with the open region of the entire workarea, perform "operations" to split the current region into multiple sub-regions, then recursively edits each of them.
+The editing command starts with the open region of the entire workarea, perform "operations" to split the current region into multiple sub-regions, then recursively edits each of them (by default, the maximum split depth is 2).
 The layout is defined by a sequence of operations as a layout command.
 The layout editor allows users to interactively input their commands and shows the resulting layouts on screen, with the following auxiliary functions:
 
@@ -71,7 +71,7 @@ There are three kinds of operations:
 
 2. Operations taking argument string as a single number.
 
-   `s` (shifting active region)
+   `s` (shifting active region), `p` (setting the maximum split depth)
 
 3. Operation not taking argument.
 
