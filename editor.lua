@@ -41,7 +41,7 @@ end
 local function parse_arg_string(s, default)
    local ret = {}
    if #s == 0 then return ret end
-   index = 1
+   local index = 1
    local comma_mode = s:find(",") ~= nil
 
    local p = index
@@ -178,6 +178,7 @@ local function create(data)
    local max_depth
    local current_info
    local current_cmd
+   local pending_op
    local to_exit
    local to_apply
 
