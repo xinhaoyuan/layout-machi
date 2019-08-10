@@ -38,6 +38,57 @@ local function set_tiling(c)
    c.fullscreen = false
 end
 
+local function parse_arg_string(s, default)
+   local ret = {}
+   if #s == 0 then return ret end
+   index = 1
+   local comma_mode = s:find(",") ~= nil
+
+   local p = index
+   while index <= #s do
+      if comma_mode then
+         if s:sub(index, index) == "," then
+            local r = tonumber(s:sub(p, index - 1))
+            if r == nil then
+               ret[#ret + 1] = default
+            else
+               ret[#ret + 1] = r
+            end
+            p = index + 1
+         end
+      else
+         local r = tonumber(s:sub(index, index))
+         if r == nil then
+            ret[#ret + 1] = default
+         else
+            ret[#ret + 1] = r
+         end
+      end
+      index = index + 1
+   end
+
+   if comma_mode then
+      local r = tonumber(s:sub(p, index - 1))
+      if r == nil then
+         ret[#ret + 1] = default
+      else
+         ret[#ret + 1] = r
+      end
+      p = index + 1
+   end
+
+   return ret
+end
+
+local function test_parse_arg_string()
+   local x = parse_arg_string("12a3", "aha")
+   assert(#x == 4 and x[1] == 1 and x[2] == 2 and x[3] == "aha" and x[4] == 3)
+   local x = parse_arg_string("12,a3,4", "aha")
+   assert(#x == 3 and x[1] == 12 and x[2] == "aha" and x[3] == 4)
+end
+
+-- test_parse_arg_string()
+
 local function fair_split(total, shares, shares_sum)
    local ret = {}
    local acc = 0
@@ -71,28 +122,6 @@ local function shrink_area_with_gap(a, inner_gap, outer_gap)
             width = a.width - (a.bl and outer_gap or inner_gap / 2) - (a.br and outer_gap or inner_gap / 2),
             height = a.height - (a.bu and outer_gap or inner_gap / 2) - (a.bd and outer_gap or inner_gap / 2) }
 end
-
--- local function parse(cmd)
---    root = {}
---    args = ""
-
---    open_areas = { root }
-
---    for c = 1, #cmd do
---       char = cmd:sub(c, c)
-
---       if char == "w" then
---          local a = open_areas[#open_areas]
---          table.remove(open_areas, #open_areas)
-
---          root.type = "w"
---          root.
-
---       else if tonumber(char) ~= nil then
---          args = args .. char
---       end
---    end
--- end
 
 local function restore_data(data)
    if data.history_file then
@@ -145,7 +174,7 @@ local function create(data)
    local closed_areas
    local open_areas
    local history
-   local args
+   local arg_str
    local max_depth
    local current_info
    local current_cmd
@@ -168,7 +197,7 @@ local function create(data)
          }
       }
       history = {}
-      args = ""
+      arg_str = ""
       max_depth = init_max_depth
       current_info = ""
       current_cmd = ""
@@ -177,7 +206,7 @@ local function create(data)
    end
 
    local function push_history()
-      history[#history + 1] = {#closed_areas, #open_areas, {}, current_info, current_cmd, max_depth, args}
+      history[#history + 1] = {#closed_areas, #open_areas, {}, current_info, current_cmd, max_depth, arg_str}
    end
 
    local function discard_history()
@@ -201,7 +230,7 @@ local function create(data)
       current_info = history[#history][4]
       current_cmd = history[#history][5]
       max_depth = history[#history][6]
-      args = history[#history][7]
+      arg_str = history[#history][7]
 
       table.remove(history, #history)
    end
@@ -224,14 +253,15 @@ local function create(data)
 
       local a = pop_open_area()
 
-      print("split " .. method .. " " .. tostring(alt) .. " " .. args .. " " .. _area_tostring(a))
+      print("split " .. method .. " " .. tostring(alt) .. " " .. arg_str .. " " .. _area_tostring(a))
 
       if method == "h" or method == "v" then
 
+         local args = parse_arg_string(arg_str, 0)
          if #args == 0 then
-            args = "11"
+            args = {1, 1}
          elseif #args == 1 then
-            args = args .. "1"
+            args[2] = 1
          end
 
          local total = 0
@@ -239,9 +269,9 @@ local function create(data)
          for i = 1, #args do
             local arg
             if not alt then
-               arg = tonumber(args:sub(i, i))
+               arg = args[i]
             else
-               arg = tonumber(args:sub(#args - i + 1, #args - i + 1))
+               arg = args[#args - i + 1]
             end
             if arg < 1 then arg = 1 end
             total = total + arg
@@ -298,16 +328,23 @@ local function create(data)
 
       elseif method == "w" then
 
+         local args = parse_arg_string(arg_str, 0)
          if #args == 0 then
-            args = "11"
+            args = {1, 1}
          elseif #args == 1 then
-            args = "1" .. args
+            args[2] = 1
          end
 
-         if alt then args = string.reverse(args) end
+         if alt then arg_str = table.reverse(arg_str) end
 
-         local h_split = tonumber(args:sub(#args - 1, #args - 1))
-         local v_split = tonumber(args:sub(#args, #args))
+         local h_split, v_split
+         if alt then
+            h_split = args[#args]
+            v_split = args[#args - 1]
+         else
+            h_split = args[#args - 1]
+            v_split = args[#args]
+         end
          if h_split < 1 then h_split = 1 end
          if v_split < 1 then v_split = 1 end
 
@@ -351,18 +388,18 @@ local function create(data)
 
       elseif method == "d" then
 
+         local shares = parse_arg_string(arg_str, 0)
          local x_shares = {}
          local y_shares = {}
 
          local current = x_shares
-         for i = 1, #args do
-            local arg
+         for i = 1, #shares do
             if not alt then
-               arg = tonumber(args:sub(i, i))
+               arg = shares[i]
             else
-               arg = tonumber(args:sub(#args - i + 1, #args - i + 1))
+               arg = shares[#shares - i + 1]
             end
-            if arg == 0 then
+            if arg < 1 then
                if current == x_shares then current = y_shares else break end
             else
                current[#current + 1] = arg
@@ -411,7 +448,7 @@ local function create(data)
          -- XXX
       end
 
-      args = ""
+      arg_str = ""
    end
 
    local function push_area()
@@ -424,7 +461,7 @@ local function create(data)
       elseif key == "v" or key == "V" then
          handle_split("v", key == "V")
       elseif key == "w" or key == "W" then
-         if args == "" then
+         if arg_str == "" then
             push_area()
          else
             handle_split("w", key == "W")
@@ -436,7 +473,7 @@ local function create(data)
       elseif key == "s" or key == "S" then
          if #open_areas > 0 then
             key = "s"
-            local times = args == "" and 1 or tonumber(args)
+            local times = arg_str == "" and 1 or tonumber(arg_str)
             local t = {}
             while #open_areas > 0 do
                t[#t + 1] = pop_open_area()
@@ -444,26 +481,26 @@ local function create(data)
             for i = #t, 1, -1 do
                open_areas[#open_areas + 1] = t[(i + times - 1) % #t + 1]
             end
-            args = ""
+            arg_str = ""
          else
             return nil
          end
       elseif key == " " or key == "-" then
          key = "-"
-         if args == "" then
+         if arg_str == "" then
             push_area()
          else
-            max_depth = tonumber(args)
-            args = ""
+            max_depth = tonumber(arg_str)
+            arg_str = ""
          end
       elseif key == "Return" or key == "." then
          key = "."
          while #open_areas > 0 do
             push_area()
          end
-         args = ""
-      elseif tonumber(key) ~= nil then
-         args = args .. key
+         arg_str = ""
+      elseif key == "," or tonumber(key) ~= nil then
+         arg_str = arg_str .. key
       else
          return nil
       end
