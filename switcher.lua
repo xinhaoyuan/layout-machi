@@ -29,7 +29,6 @@ local function with_alpha(col, alpha)
    return api.lgi.cairo.SolidPattern.create_rgba(r, g, b, alpha)
 end
 
-
 local function start(c)
    local tablist_font_desc = api.beautiful.get_merged_font(
       api.beautiful.mono_font or api.beautiful.font, api.dpi(10))

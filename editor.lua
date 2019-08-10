@@ -201,20 +201,23 @@ local function create(data)
       max_depth = init_max_depth
       current_info = ""
       current_cmd = ""
+      pending_op = nil
       to_exit = false
       to_apply = false
    end
 
    local function push_history()
-      history[#history + 1] = {#closed_areas, #open_areas, {}, current_info, current_cmd, max_depth, arg_str}
+      if history == nil then return end
+      history[#history + 1] = {#closed_areas, #open_areas, {}, current_info, current_cmd, pending_op, max_depth, arg_str}
    end
 
    local function discard_history()
+      if history == nil then return end
       table.remove(history, #history)
    end
 
    local function pop_history()
-      if #history == 0 then return end
+      if history == nil or #history == 0 then return end
       for i = history[#history][1] + 1, #closed_areas do
          table.remove(closed_areas, #closed_areas)
       end
@@ -229,8 +232,9 @@ local function create(data)
 
       current_info = history[#history][4]
       current_cmd = history[#history][5]
-      max_depth = history[#history][6]
-      arg_str = history[#history][7]
+      pending_op = history[#history][6]
+      max_depth = history[#history][7]
+      arg_str = history[#history][8]
 
       table.remove(history, #history)
    end
@@ -238,6 +242,8 @@ local function create(data)
    local function pop_open_area()
       local a = open_areas[#open_areas]
       table.remove(open_areas, #open_areas)
+      if history == nil or #history == 0 then return a end
+
       local idx = history[#history][2] - #open_areas
       -- only save when the position has been firstly poped
       if idx > #history[#history][3] then
@@ -246,17 +252,38 @@ local function create(data)
       return a
    end
 
-   local split_count = 0
+   local function push_area()
+      closed_areas[#closed_areas + 1] = pop_open_area()
+   end
 
-   local function handle_split(method, alt)
-      split_count = split_count + 1
+   local function push_children(c)
+      for i = #c, 1, -1 do
+         if c[i] ~= false then
+            if c[i].x ~= math.floor(c[i].x)
+               or c[i].y ~= math.floor(c[i].y)
+               or c[i].width ~= math.floor(c[i].width)
+               or c[i].height ~= math.floor(c[i].height)
+            then
+               print("warning, splitting yields floating area " .. _area_tostring(c[i]))
+            end
+            open_areas[#open_areas + 1] = c[i]
+         end
+      end
+   end
 
-      local a = pop_open_area()
+   local op_count = 0
 
-      print("split " .. method .. " " .. tostring(alt) .. " " .. arg_str .. " " .. _area_tostring(a))
+   local function handle_op(method)
+      op_count = op_count + 1
 
+      local l = method:lower()
+      local alt = method ~= l
+      method = l
+
+      print("op " .. method .. " " .. tostring(alt) .. " " .. arg_str)
       if method == "h" or method == "v" then
 
+         local a = pop_open_area()
          local args = parse_arg_string(arg_str, 0)
          if #args == 0 then
             args = {1, 1}
@@ -288,7 +315,7 @@ local function create(data)
                   width = shares[i],
                   height = a.height,
                   depth = a.depth + 1,
-                  group_id = split_count,
+                  group_id = op_count,
                   bl = i == 1 and a.bl or false,
                   br = i == #shares and a.br or false,
                   bu = a.bu,
@@ -305,7 +332,7 @@ local function create(data)
                   width = a.width,
                   height = shares[i],
                   depth = a.depth + 1,
-                  group_id = split_count,
+                  group_id = op_count,
                   bl = a.bl,
                   br = a.br,
                   bu = i == 1 and a.bu or false,
@@ -315,19 +342,11 @@ local function create(data)
             end
          end
 
-         for i = #children, 1, -1 do
-            if children[i].x ~= math.floor(children[i].x)
-               or children[i].y ~= math.floor(children[i].y)
-               or children[i].width ~= math.floor(children[i].width)
-               or children[i].height ~= math.floor(children[i].height)
-            then
-               print("warning, splitting yields floating area " .. _area_tostring(children[i]))
-            end
-            open_areas[#open_areas + 1] = children[i]
-         end
+         push_children(children)
 
       elseif method == "w" then
 
+         local a = pop_open_area()
          local args = parse_arg_string(arg_str, 0)
          if #args == 0 then
             args = {1, 1}
@@ -335,15 +354,13 @@ local function create(data)
             args[2] = 1
          end
 
-         if alt then arg_str = table.reverse(arg_str) end
-
          local h_split, v_split
          if alt then
-            h_split = args[#args]
-            v_split = args[#args - 1]
+            h_split = args[2]
+            v_split = args[1]
          else
-            h_split = args[#args - 1]
-            v_split = args[#args]
+            h_split = args[1]
+            v_split = args[2]
          end
          if h_split < 1 then h_split = 1 end
          if v_split < 1 then v_split = 1 end
@@ -365,7 +382,7 @@ local function create(data)
                   width = x_shares[x_index],
                   height = y_shares[y_index],
                   depth = a.depth + 1,
-                  group_id = split_count,
+                  group_id = op_count,
                }
                if x_index == 1 then r.bl = a.bl else r.bl = false end
                if x_index == h_split then r.br = a.br else r.br = false end
@@ -375,19 +392,78 @@ local function create(data)
             end
          end
 
-         for i = #children, 1, -1 do
-            if children[i].x ~= math.floor(children[i].x)
-               or children[i].y ~= math.floor(children[i].y)
-               or children[i].width ~= math.floor(children[i].width)
-               or children[i].height ~= math.floor(children[i].height)
-            then
-               print("warning, splitting yields floating area " .. _area_tostring(children[i]))
+         local merged_children = {}
+         local start_index = 1
+         for i = 3, #args, 2 do
+            -- find the first index that is not merged
+            while start_index <= #children and children[start_index] == false do
+               start_index = start_index + 1
             end
-            open_areas[#open_areas + 1] = children[i]
+            if start_index > #children or children[start_index] == false then
+               break
+            end
+            local x = (start_index - 1) % h_split
+            local y = math.floor((start_index - 1) / h_split)
+            local w = args[i]
+            local h = args[i + 1]
+            if w < 1 then w = 1 end
+            if h == nil or h < 1 then h = 1 end
+            if alt then
+               local tmp = w
+               w = h
+               h = tmp
+            end
+            if x + w > h_split then w = h_split - x end
+            if y + h > v_split then h = v_split - y end
+            local end_index = start_index
+            for ty = y, y + h - 1 do
+               local succ = true
+               for tx = x, x + w - 1 do
+                  if children[ty * h_split + tx + 1] == false then
+                     succ = false
+                     break
+                  elseif ty == y then
+                     end_index = ty * h_split + tx + 1
+                  end
+               end
+
+               if not succ then
+                  break
+               elseif ty > y then
+                  end_index = ty * h_split + x + w
+               end
+            end
+
+            local r = {
+               x = children[start_index].x, y = children[start_index].y,
+               width = children[end_index].x + children[end_index].width - children[start_index].x,
+               height = children[end_index].y + children[end_index].height - children[start_index].y,
+               bu = children[start_index].bu, bl = children[start_index].bl,
+               bd = children[end_index].bd, br = children[end_index].br,
+               depth = a.depth + 1,
+               group_id = op_count
+            }
+            merged_children[#merged_children + 1] = r
+
+            for ty = y, y + h - 1 do
+               local succ = true
+               for tx = x, x + w - 1 do
+                  local index = ty * h_split + tx + 1
+                  if index <= end_index then
+                     children[index] = false
+                  else
+                     break
+                  end
+               end
+            end
          end
+
+         push_children(merged_children)
+         push_children(children)
 
       elseif method == "d" then
 
+         local a = pop_open_area()
          local shares = parse_arg_string(arg_str, 0)
          local x_shares = {}
          local y_shares = {}
@@ -406,9 +482,11 @@ local function create(data)
             end
          end
 
-         if #x_shares == 0 or #y_shares == 0 then
+         if #x_shares == 0 then
             open_areas[#open_areas + 1] = a
             return
+         elseif #y_shares == 0 then
+            y_shares = {1}
          end
 
          x_shares = fair_split(a.width, x_shares)
@@ -423,7 +501,7 @@ local function create(data)
                   width = x_shares[x_index],
                   height = y_shares[y_index],
                   depth = a.depth + 1,
-                  group_id = split_count,
+                  group_id = op_count,
                }
                if x_index == 1 then r.bl = a.bl else r.bl = false end
                if x_index == #x_shares then r.br = a.br else r.br = false end
@@ -433,46 +511,11 @@ local function create(data)
             end
          end
 
-         for i = #children, 1, -1 do
-            if children[i].x ~= math.floor(children[i].x)
-               or children[i].y ~= math.floor(children[i].y)
-               or children[i].width ~= math.floor(children[i].width)
-               or children[i].height ~= math.floor(children[i].height)
-            then
-               print("warning, splitting yields floating area " .. _area_tostring(children[i]))
-            end
-            open_areas[#open_areas + 1] = children[i]
-         end
+         push_children(children)
 
-      elseif method == "p" then
-         -- XXX
-      end
+      elseif method == "s" then
 
-      arg_str = ""
-   end
-
-   local function push_area()
-      closed_areas[#closed_areas + 1] = pop_open_area()
-   end
-
-   local function handle_command(key)
-      if key == "h" or key == "H" then
-         handle_split("h", key == "H")
-      elseif key == "v" or key == "V" then
-         handle_split("v", key == "V")
-      elseif key == "w" or key == "W" then
-         if arg_str == "" then
-            push_area()
-         else
-            handle_split("w", key == "W")
-         end
-      elseif key == "d" or key == "D" then
-         handle_split("d", key == "D")
-      elseif key == "p" or key == "P" then
-         handle_split("p", key == "P")
-      elseif key == "s" or key == "S" then
          if #open_areas > 0 then
-            key = "s"
             local times = arg_str == "" and 1 or tonumber(arg_str)
             local t = {}
             while #open_areas > 0 do
@@ -481,32 +524,74 @@ local function create(data)
             for i = #t, 1, -1 do
                open_areas[#open_areas + 1] = t[(i + times - 1) % #t + 1]
             end
-            arg_str = ""
-         else
-            return nil
          end
-      elseif key == " " or key == "-" then
-         key = "-"
-         if arg_str == "" then
-            push_area()
-         else
-            max_depth = tonumber(arg_str)
-            arg_str = ""
-         end
-      elseif key == "Return" or key == "." then
-         key = "."
+
+      elseif method == "-" then
+
+         push_area()
+
+      elseif method == "." then
+
          while #open_areas > 0 do
             push_area()
          end
-         arg_str = ""
-      elseif key == "," or tonumber(key) ~= nil then
-         arg_str = arg_str .. key
-      else
-         return nil
+
+      elseif method == ";" then
+
+         -- nothing
+
       end
 
       while #open_areas > 0 and open_areas[#open_areas].depth >= max_depth do
          push_area()
+      end
+
+      arg_str = ""
+   end
+
+   local key_translate_tab = {
+      ["Return"] = ".",
+      [" "] = "-",
+   }
+
+   local ch_info = {
+      ["h"] = 2, ["H"] = 2,
+      ["v"] = 2, ["V"] = 2,
+      ["w"] = 2, ["W"] = 2,
+      ["d"] = 2, ["D"] = 2,
+      ["s"] = 2, ["S"] = 2,
+      ["-"] = 1,
+      ["."] = 1,
+      [";"] = 1,
+      ["0"] = 0, ["1"] = 0, ["2"] = 0, ["3"] = 0, ["4"] = 0,
+      ["5"] = 0, ["6"] = 0, ["7"] = 0, ["8"] = 0, ["9"] = 0,
+      [","] = 0,
+   }
+
+   local function handle_ch(key)
+      if key_translate_tab[key] ~= nil then
+         key = key_translate_tab[key]
+      end
+      local t = ch_info[key]
+      if t == nil then
+         return nil
+      elseif t == 2 then
+         if pending_op ~= nil then
+            handle_op(pending_op)
+            pending_op = key
+         elseif arg_str == "" then
+            pending_op = key
+         else
+            handle_op(key)
+         end
+      elseif t == 1 then
+         if pending_op ~= nil then
+            handle_op(pending_op)
+            pending_op = nil
+         end
+         handle_op(key)
+      elseif t == 0 then
+         arg_str = arg_str .. key
       end
 
       return key
@@ -575,9 +660,17 @@ local function create(data)
 
          for i, a in ipairs(closed_areas) do
             local sa = shrink_area_with_gap(a, inner_gap, outer_gap)
+            local to_highlight = false
+            if pending_op ~= nil then
+               to_highlight = a.group_id == op_count
+            end
             cr:rectangle(sa.x - start_x, sa.y - start_y, sa.width, sa.height)
             cr:clip()
-            cr:set_source(closed_color)
+            if to_highlight then
+               cr:set_source(active_color)
+            else
+               cr:set_source(closed_color)
+            end
             cr:rectangle(sa.x - start_x, sa.y - start_y, sa.width, sa.height)
             cr:fill()
             cr:set_source(border_color)
@@ -589,12 +682,18 @@ local function create(data)
 
          for i, a in ipairs(open_areas) do
             local sa = shrink_area_with_gap(a, inner_gap, outer_gap)
+            local to_highlight = false
+            if pending_op == nil then
+               to_highlight = i == #open_areas
+            else
+               to_highlight = a.group_id == op_count
+            end
             cr:rectangle(sa.x - start_x, sa.y - start_y, sa.width, sa.height)
             cr:clip()
             if i == #open_areas then
-               cr:set_source(api.gears.color(active_color))
+               cr:set_source(active_color)
             else
-               cr:set_source(api.gears.color(open_color))
+               cr:set_source(open_color)
             end
             cr:rectangle(sa.x - start_x, sa.y - start_y, sa.width, sa.height)
             cr:fill()
@@ -602,12 +701,12 @@ local function create(data)
             cr:set_source(border_color)
             cr:rectangle(sa.x - start_x, sa.y - start_y, sa.width, sa.height)
             cr:set_line_width(10.0)
-            if i ~= #open_areas then
+            if to_highlight then
+               cr:stroke()
+            else
                cr:set_dash({5, 5}, 0)
                cr:stroke()
                cr:set_dash({}, 0)
-            else
-               cr:stroke()
             end
             cr:reset_clip()
          end
@@ -653,6 +752,10 @@ local function create(data)
 
             local ok, err = pcall(
                function ()
+                  if pending_op ~= nil then
+                     pop_history()
+                  end
+
                   if key == "BackSpace" then
                      pop_history()
                   elseif key == "Escape" then
@@ -675,7 +778,7 @@ local function create(data)
                         local cmd = data.cmds[cmd_index]:sub(i, i)
 
                         push_history()
-                        local ret = handle_command(cmd)
+                        local ret = handle_ch(cmd)
 
                         if ret == nil then
                            print("warning: ret is nil")
@@ -690,7 +793,7 @@ local function create(data)
                      end
                   elseif #open_areas > 0 then
                      push_history()
-                     local ret = handle_command(key)
+                     local ret = handle_ch(key)
                      if ret ~= nil then
                         current_info = current_info .. ret
                         current_cmd = current_cmd .. ret
@@ -745,6 +848,11 @@ local function create(data)
                      end
                   end
 
+                  if not to_exit and pending_op ~= nil then
+                     push_history()
+                     handle_op(pending_op)
+                  end
+
                   refresh()
 
                   if to_exit then
@@ -781,10 +889,9 @@ local function create(data)
       local outer_gap = data.outer_gap or data.gap or api.beautiful.useless_gap * 2 or 0
       local inner_gap = data.inner_gap or data.gap or api.beautiful.useless_gap * 2 or 0
       init(init_area)
-      push_history()
 
       for i = 1, #cmd do
-         local key = handle_command(cmd:sub(i, i))
+         handle_ch(cmd:sub(i, i))
       end
 
       local areas_with_gap = {}

@@ -23,7 +23,7 @@ Please let me know if it does not work in other versions.
 
 Suppose this git is checked out at `~/.config/awesome/layout-machi`
 
-`machi = require("layout-machi")`
+Use `local machi = require("layout-machi")` to load the module.
 
 The package provide a default layout `machi.default_layout` and editor `machi.default_editor`, which can be added into the layout list.
 
@@ -33,7 +33,7 @@ The package comes with the icon for `layoutbox`, which can be set with the follo
 
 ## Use the layout
 
-Use `layout = machi.layout.create(name, editor)` to instantiate the layout with an editor object.
+Use `local layout = machi.layout.create(name, editor)` to instantiate the layout with an editor object.
 
 `name` can be a string or a function returning a string (see `init.lua` and "Advanced" below).
 This is used for having different actual layout dependent on tags.
@@ -42,25 +42,46 @@ This is used for having different actual layout dependent on tags.
 `machi.default_editor` can be used, or see below on creating editors.
 You can create multiple layouts with different names and share the same editor.
 
-## Editor
+## The layout editor and commands
 
-Call `editor = machi.editor.create()` to create an editor.
+### Starting editor in lua
+
+Call `local editor = machi.editor.create()` to create an editor.
 To edit the layout `l` on screen `s`, call `editor.start_interactive(s = awful.screen.focused(), l = awful.layout.get(s))`.
 
-### The layout editing command
+### Basic usage
 
-The editing starts with the open area of the entire workarea, takes commands to split the current area into multiple sub-areas, then recursively edits each of them.
-The editor is keyboard driven, each command is a key with optional digits (namely `D`) before it as parameter (or multiple parameters depending on the command).
+The editing command starts with the open region of the entire workarea, perform "operations" to split the current region into multiple sub-regions, then recursively edits each of them.
+The layout is defined by a sequence of operations as a layout command.
+The layout editor allows users to interactively input their commands and shows the resulting layouts on screen, with the following auxiliary functions:
 
-1. `Up`/`Down`: restore to the history command sequence
-2. `h`/`v`: split the current region horizontally/vertically into `#D` regions. The split will respect the ratio of digits in `D`.
-3. `w`: Take the last two digits from `D` as `D = ...AB` (1 if `D` is shorter than 2 digits), and split the current region equally into A rows and B columns. If no digits are provided at all, behave the same as `Space`.
-4. `d`: Take the argument in the format of `A0B`, where `A` and `B` do not contain any `0`, apply `h` with argument `A` unless `A` is shorter than 2 digits. On each splitted region, apply `v` with argument `B` unless `B` is shorter than 2 digit. Does nothing if the argument is ill-formed.
-5. `s`: shift the current editing region with other open regions. If digits are provided, shift for that many times.
-6. `Space` or `-`: Without parameters, close the current region and move to the next open region. With digits, set the maximum depth of splitting (the default depth is 2).
-7. `Enter`/`.`: close all open regions. When all regions are closed, press `Enter` will save the layout and exit the editor.
-8. `Backspace`: undo the last command.
-9. `Escape`: exit the editor without saving the layout.
+1. `Up`/`Down`: restore to the history command
+2. `Backspace`: undo the last command.
+3. `Escape`: exit the editor without saving the layout.
+4. `Enter`: when all regions are defined, hit enter will save the layout.
+
+### Layout command
+
+As aforementioned, command a sequence of operations.
+There are three kinds of operations:
+
+1. Operations taking argument string and parsed as multiple numbers.
+
+   `h` (horizontally split), `v` (vertically split), `w` (grid split), `d` (draft split)
+
+2. Operations taking argument string as a single number.
+
+   `s` (shifting active region)
+
+3. Operation not taking argument.
+
+   `.` (Finish all regions), `-` (Finish the current region), `;` (No-op)
+
+Argument string are composed of numbers and `,`. If the string contains `,`, it will be used to split argument into multiple numbers.
+Otherwise, each digit in the string will be treated as a separated number in type 1 ops.
+
+Each operation may take argument string either from before (such as `22w`) or after (such as `w22`).
+When any ambiguity arises, operation before always take the argument after. So `h11v` is interpreted as `h11` and `v`.
 
 For examples:
 
@@ -125,6 +146,76 @@ Tada!
 99 AAAA BBBB CC
 ```
 
+### Advanced grid layout
+
+__More document coming soon. For now there is only a running example.__
+
+Simple grid, `w44`:
+```
+0 1 2 3
+
+4 5 6 7
+
+8 9 A B
+
+C D E F
+```
+
+Merge grid from the top-left corner, size 3x1, `w4431`:
+```
+0-0-0 1
+
+2 3 4 5
+
+6 7 8 9
+
+A B C D
+```
+
+Another merge, size 1x3, `w443113`:
+```
+0-0-0 1
+      |
+2 3 4 1
+      |
+5 6 7 1
+
+8 9 A B
+```
+
+Another merge, size 1x3, `w44311313`:
+```
+0-0-0 1
+      |
+2 3 4 1
+|     |
+2 5 6 1
+|
+2 7 8 9
+```
+
+Another merge, size 2x2, `w4431131322`:
+```
+0-0-0 1
+      |
+2 3-3 1
+| | | |
+2 3-3 1
+|
+2 4 5 6
+```
+
+Final merge, size 3x1, `w443113132231`:
+```
+0-0-0 1
+      |
+2 3-3 1
+| | | |
+2 3-3 1
+|
+2 4-4-4
+```
+
 ### Draft mode
 
 __This mode is experimental. Its usage may change fast.__
@@ -133,8 +224,8 @@ Unlike the original machi layout, where a window fits in a single region, draft 
 Each tiled window is associated with a upper-left region (ULR) and a bottom-right region (BRR).
 The geometry of the window is from the upper-left corner of the ULR to the bottom-right corner of the BRR.
 
-This is suppose to work with regions produced with `d` command.
-To enable draft mode in a layout, configure the layout with a command with a leading `d`, for example, `d12210121d`.
+This is suppose to work with regions produced with `d` or `w` operation.
+To enable draft mode in a layout, configure the layout with a command with a leading `d`, for example, `d12210121`, or `dw66`.
 
 ### Persistent history
 
