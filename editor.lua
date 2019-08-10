@@ -259,16 +259,14 @@ local function create(data)
 
    local function push_children(c)
       for i = #c, 1, -1 do
-         if c[i] ~= false then
-            if c[i].x ~= math.floor(c[i].x)
-               or c[i].y ~= math.floor(c[i].y)
-               or c[i].width ~= math.floor(c[i].width)
-               or c[i].height ~= math.floor(c[i].height)
-            then
-               print("warning, splitting yields floating area " .. _area_tostring(c[i]))
-            end
-            open_areas[#open_areas + 1] = c[i]
+         if c[i].x ~= math.floor(c[i].x)
+            or c[i].y ~= math.floor(c[i].y)
+            or c[i].width ~= math.floor(c[i].width)
+            or c[i].height ~= math.floor(c[i].height)
+         then
+            print("warning, splitting yields floating area " .. _area_tostring(c[i]))
          end
+         open_areas[#open_areas + 1] = c[i]
       end
    end
 
@@ -457,6 +455,18 @@ local function create(data)
                   end
                end
             end
+         end
+
+         -- clean up children, remove all `false'
+         local j = 1
+         for i = 1, #children do
+            if children[i] ~= false then
+               children[j] = children[i]
+               j = j + 1
+            end
+         end
+         for i = #children, j, -1 do
+            table.remove(children, i)
          end
 
          push_children(merged_children)
