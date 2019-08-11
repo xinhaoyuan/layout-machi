@@ -67,15 +67,15 @@ There are three kinds of operations:
 
 1. Operations taking argument string and parsed as multiple numbers.
 
-   `h` (horizontally split), `v` (vertically split), `w` (grid split), `d` (draft split)
+   `h` horizontally split, `v` vertically split, `w` grid split, `d` draft split
 
 2. Operations taking argument string as a single number.
 
-   `s` (shifting active region), `p` (setting the maximum split depth)
+   `s` shifting active region, `p` setting the maximum split depth
 
 3. Operation not taking argument.
 
-   `.` (Finish all regions), `-` (Finish the current region), `;` (No-op)
+   `.` finish all regions, `-` finish the current region, `/` remove the current region, `;` no-op
 
 Argument string are composed of numbers and `,`. If the string contains `,`, it will be used to split argument into multiple numbers.
 Otherwise, each digit in the string will be treated as a separated number in type 1 ops.
