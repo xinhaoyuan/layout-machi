@@ -71,13 +71,13 @@ There are three kinds of operations:
 
 2. Operations taking argument string as a single number.
 
-   `s` shifting active region, `p` setting the maximum split depth
+   `s` shift active region, `p` set the maximum split depth
 
 3. Operation not taking argument.
 
    `.` finish all regions, `-` finish the current region, `/` remove the current region, `;` no-op
 
-Argument string are composed of numbers and `,`. If the string contains `,`, it will be used to split argument into multiple numbers.
+Argument strings are composed of numbers and `,`. If the string contains `,`, it will be used to split argument into multiple numbers.
 Otherwise, each digit in the string will be treated as a separated number in type 1 ops.
 
 Each operation may take argument string either from before (such as `22w`) or after (such as `w22`).
