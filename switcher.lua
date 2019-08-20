@@ -15,6 +15,21 @@ local api = {
    dpi        = require("beautiful.xresources").apply_dpi,
 }
 
+local ERROR = 2
+local WARNING = 1
+local INFO = 0
+local DEBUG = -1
+
+local module = {
+   log_level = WARNING,
+}
+
+local function log(level, msg)
+   if level > module.log_level then
+      print(msg)
+   end
+end
+
 local function min(a, b)
    if a < b then return a else return b end
 end
@@ -29,7 +44,7 @@ local function with_alpha(col, alpha)
    return api.lgi.cairo.SolidPattern.create_rgba(r, g, b, alpha)
 end
 
-local function start(c)
+function module.start(c)
    local tablist_font_desc = api.beautiful.get_merged_font(
       api.beautiful.mono_font or api.beautiful.font, api.dpi(10))
    local font_color = with_alpha(api.gears.color(api.beautiful.fg_normal), 1)
@@ -369,12 +384,10 @@ local function start(c)
             infobox.visible = false
             api.awful.keygrabber.stop(kg)
          else
-            print("Unhandled key " .. key)
+            log(DEBUG, "Unhandled key " .. key)
          end
       end
    )
 end
 
-return {
-   start = start,
-}
+return module

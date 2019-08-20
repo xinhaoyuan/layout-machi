@@ -15,6 +15,21 @@ local api = {
    dpi        = require("beautiful.xresources").apply_dpi,
 }
 
+local ERROR = 2
+local WARNING = 1
+local INFO = 0
+local DEBUG = -1
+
+local module = {
+   log_level = WARNING,
+}
+
+local function log(level, msg)
+   if level > module.log_level then
+      print(msg)
+   end
+end
+
 local function with_alpha(col, alpha)
    local r, g, b
    _, r, g, b, _ = col:get_rgba()
@@ -123,11 +138,11 @@ local function shrink_area_with_gap(a, inner_gap, outer_gap)
             height = a.height - (a.bu and outer_gap or inner_gap / 2) - (a.bd and outer_gap or inner_gap / 2) }
 end
 
-local function restore_data(data)
+function module.restore_data(data)
    if data.history_file then
       local file, err = io.open(data.history_file, "r")
       if err then
-         print("cannot read history from " .. data.history_file)
+         log(INFO, "cannot read history from " .. data.history_file)
       else
          data.cmds = {}
          data.last_cmd = {}
@@ -137,11 +152,11 @@ local function restore_data(data)
                last_layout_name = line:sub(2, #line)
             else
                if last_layout_name ~= nil then
-                  print("restore last cmd " .. line .. " for " .. last_layout_name)
+                  log(DEBUG, "restore last cmd " .. line .. " for " .. last_layout_name)
                   data.last_cmd[last_layout_name] = line
                   last_layout_name = nil
                else
-                  print("restore cmd " .. line)
+                  log(DEBUG, "restore cmd " .. line)
                   data.cmds[#data.cmds + 1] = line
                end
             end
@@ -153,9 +168,9 @@ local function restore_data(data)
    return data
 end
 
-local function create(data)
+function module.create(data)
    if data == nil then
-      data = restore_data({
+      data = module.restore_data({
             history_file = api.gfs.get_cache_dir() .. "/history_machi",
             history_save_max = 100,
       })
@@ -264,7 +279,7 @@ local function create(data)
             or c[i].width ~= math.floor(c[i].width)
             or c[i].height ~= math.floor(c[i].height)
          then
-            print("warning, splitting yields floating area " .. _area_tostring(c[i]))
+            log(WARNING, "splitting yields floating area " .. _area_tostring(c[i]))
          end
          open_areas[#open_areas + 1] = c[i]
       end
@@ -279,7 +294,7 @@ local function create(data)
       local alt = method ~= l
       method = l
 
-      print("op " .. method .. " " .. tostring(alt) .. " " .. arg_str)
+      log(DEBUG, "op " .. method .. " " .. tostring(alt) .. " " .. arg_str)
       if method == "h" or method == "v" then
 
          local a = pop_open_area()
@@ -752,18 +767,18 @@ local function create(data)
       end
 
       local function refresh()
-         print("closed areas:")
+         log(DEBUG, "closed areas:")
          for i, a in ipairs(closed_areas) do
-            print("  " .. _area_tostring(a))
+            log(DEBUG, "  " .. _area_tostring(a))
          end
-         print("open areas:")
+         log(DEBUG, "open areas:")
          for i, a in ipairs(open_areas) do
-            print("  " .. _area_tostring(a))
+            log(DEBUG, "  " .. _area_tostring(a))
          end
          infobox.bgimage = draw_info
       end
 
-      print("interactive layout editing starts")
+      log(DEBUG, "interactive layout editing starts")
 
       init(screen.workarea)
       refresh()
@@ -796,7 +811,7 @@ local function create(data)
                         cmd_index = cmd_index + 1
                      end
 
-                     print("restore history #" .. tostring(cmd_index) .. ":" .. data.cmds[cmd_index])
+                     log(DEBUG, "restore history #" .. tostring(cmd_index) .. ":" .. data.cmds[cmd_index])
                      init(screen.workarea)
                      for i = 1, #data.cmds[cmd_index] do
                         local cmd = data.cmds[cmd_index]:sub(i, i)
@@ -805,7 +820,7 @@ local function create(data)
                         local ret = handle_ch(cmd)
 
                         if ret == nil then
-                           print("warning: ret is nil")
+                           log(WARNING, "ret is nil")
                         else
                            current_info = current_info .. ret
                            current_cmd = current_cmd .. ret
@@ -851,14 +866,14 @@ local function create(data)
                            if data.history_file then
                               local file, err = io.open(data.history_file, "w")
                               if err then
-                                 print("cannot save history to " .. data.history_file)
+                                 log(ERROR, "cannot save history to " .. data.history_file)
                               else
                                  for i = max(1, #data.cmds - data.history_save_max + 1), #data.cmds do
-                                    print("save cmd " .. data.cmds[i])
+                                    log(DEBUG, "save cmd " .. data.cmds[i])
                                     file:write(data.cmds[i] .. "\n")
                                  end
                                  for name, cmd in pairs(data.last_cmd) do
-                                    print("save last cmd " .. cmd .. " for " .. name)
+                                    log(DEBUG, "save last cmd " .. cmd .. " for " .. name)
                                     file:write("+" .. name .. "\n" .. cmd .. "\n")
                                  end
                               end
@@ -880,7 +895,7 @@ local function create(data)
                   refresh()
 
                   if to_exit then
-                     print("interactive layout editing ends")
+                     log(DEBUG, "interactive layout editing ends")
                      if to_apply then
                         layout.machi_set_cmd(current_cmd, tag)
                         api.layout.arrange(screen)
@@ -897,7 +912,7 @@ local function create(data)
             end)
 
             if not ok then
-               print("Getting error in keygrabber: " .. err)
+               log(ERROR, "Getting error in keygrabber: " .. err)
                to_exit = true
                cleanup()
             end
@@ -950,8 +965,4 @@ local function create(data)
    }
 end
 
-return
-   {
-      create = create,
-      restore_data = restore_data,
-   }
+return module

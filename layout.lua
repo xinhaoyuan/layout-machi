@@ -3,6 +3,21 @@ local api = {
    awful = require("awful"),
 }
 
+local ERROR = 2
+local WARNING = 1
+local INFO = 0
+local DEBUG = -1
+
+local module = {
+   log_level = WARNING,
+}
+
+local function log(level, msg)
+   if level > module.log_level then
+      print(msg)
+   end
+end
+
 local function min(a, b)
    if a < b then return a else return b end
 end
@@ -79,7 +94,7 @@ local function find_rd(c, regions, lu)
    return rd
 end
 
-local function set_geometry(c, region_lu, region_rd, useless_gap, border_width)
+function module.set_geometry(c, region_lu, region_rd, useless_gap, border_width)
    -- We try to negate the gap of outer layer
    if region_lu ~= nil then
       c.x = region_lu.x - useless_gap
@@ -92,7 +107,7 @@ local function set_geometry(c, region_lu, region_rd, useless_gap, border_width)
    end
 end
 
-local function create(name, editor)
+function module.create(name, editor)
    local instances = {}
 
    local get_instance_name
@@ -160,7 +175,7 @@ local function create(name, editor)
                local lu = nil
                local rd = nil
                if not skip then
-                  print("Compute regions for " .. c.name)
+                  log(DEBUG, "Compute regions for " .. c.name)
                   lu = find_lu(c, regions)
                   if lu ~= nil then
                      rd = find_rd(c, regions, lu)
@@ -170,14 +185,14 @@ local function create(name, editor)
                if lu ~= nil and rd ~= nil then
                   c.machi_lu, c.machi_rd = lu, rd
                   p.geometries[c] = {}
-                  set_geometry(p.geometries[c], regions[lu], regions[rd], useless_gap, 0)
+                  module.set_geometry(p.geometries[c], regions[lu], regions[rd], useless_gap, 0)
                end
             end
          end
       else
          for i, c in ipairs(cls) do
             if c.floating then
-               print("Ignore client " .. tostring(c))
+               log(DEBUG, "Ignore client " .. tostring(c))
             else
                if c.machi_region ~= nil and
                   regions[c.machi_region].x == c.x and
@@ -186,11 +201,11 @@ local function create(name, editor)
                   regions[c.machi_region].height - c.border_width * 2 == c.height
                then
                else
-                  print("Compute regions for " .. c.name)
+                  log(DEBUG, "Compute regions for " .. c.name)
                   local region = find_region(c, regions)
                   c.machi_region = region
                   p.geometries[c] = {}
-                  set_geometry(p.geometries[c], regions[region], regions[region], useless_gap, 0)
+                  module.set_geometry(p.geometries[c], regions[region], regions[region], useless_gap, 0)
                end
             end
          end
@@ -221,7 +236,7 @@ local function create(name, editor)
             if rd ~= nil then
                c.machi_lu = lu
                c.machi_rd = rd
-               set_geometry(c, regions[lu], regions[rd], 0, c.border_width)
+               module.set_geometry(c, regions[lu], regions[rd], 0, c.border_width)
             end
          end
       else
@@ -250,7 +265,7 @@ local function create(name, editor)
 
          if c.machi_region ~= choice then
             c.machi_region = choice
-            set_geometry(c, regions[choice], regions[choice], 0, c.border_width)
+            module.set_geometry(c, regions[choice], regions[choice], 0, c.border_width)
          end
       end
    end
@@ -265,7 +280,4 @@ local function create(name, editor)
    }
 end
 
-return {
-   create = create,
-   set_geometry = set_geometry,
-}
+return module
