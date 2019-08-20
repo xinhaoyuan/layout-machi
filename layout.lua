@@ -80,11 +80,16 @@ local function find_rd(c, regions, lu)
 end
 
 local function set_geometry(c, region_lu, region_rd, useless_gap, border_width)
-   -- We try to negate the gap of outer layer8
-   c.x = region_lu.x - useless_gap
-   c.y = region_lu.y - useless_gap
-   c.width = region_rd.x + region_rd.width - region_lu.x + (useless_gap - border_width) * 2
-   c.height = region_rd.y + region_rd.height - region_lu.y + (useless_gap - border_width) * 2
+   -- We try to negate the gap of outer layer
+   if region_lu ~= nil then
+      c.x = region_lu.x - useless_gap
+      c.y = region_lu.y - useless_gap
+   end
+
+   if region_rd ~= nil then
+      c.width = region_rd.x + region_rd.width - c.x + useless_gap - border_width * 2
+      c.height = region_rd.y + region_rd.height - c.y + useless_gap - border_width * 2
+   end
 end
 
 local function create(name, editor)

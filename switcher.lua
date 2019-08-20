@@ -314,18 +314,26 @@ local function start(c)
                      if regions[rd].x + regions[rd].width <= regions[lu].x or
                         regions[rd].y + regions[rd].height <= regions[lu].y
                      then
-                        rd = lu
+                        rd = nil
                      end
                   else
                      rd = choice
                      if regions[rd].x + regions[rd].width <= regions[lu].x or
                         regions[rd].y + regions[rd].height <= regions[lu].y
                      then
-                        lu = rd
+                        lu = nil
                      end
                   end
 
-                  machi.layout.set_geometry(c, regions[lu], regions[rd], 0, c.border_width)
+                  if lu ~= nil and rd ~= nil then
+                     machi.layout.set_geometry(c, regions[lu], regions[rd], 0, c.border_width)
+                  elseif lu ~= nil then
+                     machi.layout.set_geometry(c, regions[lu], nil, 0, c.border_width)
+                  elseif rd ~= nil then
+                     c.x = min(c.x, regions[rd].x)
+                     c.y = min(c.y, regions[rd].y)
+                     machi.layout.set_geometry(c, nil, regions[rd], 0, c.border_width)
+                  end
                   c.machi_lu = lu
                   c.machi_rd = rd
 
