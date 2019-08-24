@@ -92,8 +92,8 @@ function module.start(c)
          for _, tc in ipairs(screen.tiled_clients) do
             if not (tc.floating or tc.maximized or tc.maximized_horizontal or tc.maximized_vertical)
             then
-               if tc.x <= traverse_x and traverse_x < tc.x + tc.width and
-                  tc.y <= traverse_y and traverse_y < tc.y + tc.height
+               if tc.x <= traverse_x and traverse_x < tc.x + tc.width + tc.border_width * 2 and
+                  tc.y <= traverse_y and traverse_y < tc.y + tc.height + tc.border_width * 2
                then
                   tablist[#tablist + 1] = tc
                end
@@ -111,60 +111,8 @@ function module.start(c)
       cr:rectangle(0, 0, width, height)
       cr:fill()
 
-      local msg, ext
+      local msg, ext, active_region
       for i, a in ipairs(regions) do
-         if a.x <= traverse_x and traverse_x < a.x + a.width and
-            a.y <= traverse_y and traverse_y < a.y + a.height then
-
-            local pl = api.lgi.Pango.Layout.create(cr)
-            pl:set_font_description(tablist_font_desc)
-
-            local vpadding = api.dpi(10)
-            local list_height = vpadding
-            local exts = {}
-
-            for index, tc in ipairs(tablist) do
-               local label = tc.name
-               pl:set_text(label)
-               local w, h
-               w, h = pl:get_size()
-               w = w / api.lgi.Pango.SCALE
-               h = h / api.lgi.Pango.SCALE
-               local ext = { width = w, height = h, x_bearing = 0, y_bearing = 0 }
-               exts[#exts + 1] = ext
-               list_height = list_height + ext.height + vpadding
-            end
-
-            local x_offset = a.x + a.width / 2 - start_x
-            local y_offset = a.y + a.height / 2 - list_height / 2 + vpadding - start_y
-
-            -- cr:rectangle(a.x - start_x, y_offset - vpadding - start_y, a.width, list_height)
-            -- cover the entire region
-            cr:rectangle(a.x - start_x, a.y - start_y, a.width, a.height)
-            cr:set_source(fill_color)
-            cr:fill()
-
-            for index, tc in ipairs(tablist) do
-               local label = tc.name
-               local ext = exts[index]
-               if index == tablist_index then
-                  cr:rectangle(x_offset - ext.width / 2 - vpadding / 2, y_offset - vpadding / 2, ext.width + vpadding, ext.height + vpadding)
-                  cr:set_source(fill_color_hl)
-                  cr:fill()
-                  pl:set_text(label)
-                  cr:move_to(x_offset - ext.width / 2 - ext.x_bearing, y_offset - ext.y_bearing)
-                  cr:set_source(font_color_hl)
-                  cr:show_layout(pl)
-               else
-                  pl:set_text(label)
-                  cr:move_to(x_offset - ext.width / 2 - ext.x_bearing, y_offset - ext.y_bearing)
-                  cr:set_source(font_color)
-                  cr:show_layout(pl)
-               end
-
-               y_offset = y_offset + ext.height + vpadding
-            end
-         end
 
          cr:rectangle(a.x - start_x, a.y - start_y, a.width, a.height)
          cr:clip()
@@ -176,6 +124,64 @@ function module.start(c)
          cr:set_line_width(10.0)
          cr:stroke()
          cr:reset_clip()
+
+         if a.x <= traverse_x and traverse_x < a.x + a.width and
+            a.y <= traverse_y and traverse_y < a.y + a.height
+         then
+            active_region = i
+         end
+      end
+
+      do
+         local a = regions[active_region]
+         local pl = api.lgi.Pango.Layout.create(cr)
+         pl:set_font_description(tablist_font_desc)
+
+         local vpadding = api.dpi(10)
+         local list_height = vpadding
+         local exts = {}
+
+         for index, tc in ipairs(tablist) do
+            local label = tc.name
+            pl:set_text(label)
+            local w, h
+            w, h = pl:get_size()
+            w = w / api.lgi.Pango.SCALE
+            h = h / api.lgi.Pango.SCALE
+            local ext = { width = w, height = h, x_bearing = 0, y_bearing = 0 }
+            exts[#exts + 1] = ext
+            list_height = list_height + ext.height + vpadding
+         end
+
+         local x_offset = a.x + a.width / 2 - start_x
+         local y_offset = a.y + a.height / 2 - list_height / 2 + vpadding - start_y
+
+         -- cr:rectangle(a.x - start_x, y_offset - vpadding - start_y, a.width, list_height)
+         -- cover the entire region
+         cr:rectangle(a.x - start_x, a.y - start_y, a.width, a.height)
+         cr:set_source(fill_color)
+         cr:fill()
+
+         for index, tc in ipairs(tablist) do
+            local label = tc.name
+            local ext = exts[index]
+            if index == tablist_index then
+               cr:rectangle(x_offset - ext.width / 2 - vpadding / 2, y_offset - vpadding / 2, ext.width + vpadding, ext.height + vpadding)
+               cr:set_source(fill_color_hl)
+               cr:fill()
+               pl:set_text(label)
+               cr:move_to(x_offset - ext.width / 2 - ext.x_bearing, y_offset - ext.y_bearing)
+               cr:set_source(font_color_hl)
+               cr:show_layout(pl)
+            else
+               pl:set_text(label)
+               cr:move_to(x_offset - ext.width / 2 - ext.x_bearing, y_offset - ext.y_bearing)
+               cr:set_source(font_color)
+               cr:show_layout(pl)
+            end
+
+            y_offset = y_offset + ext.height + vpadding
+         end
       end
 
       -- show the traverse point
