@@ -65,6 +65,9 @@ function module.start(c)
    if c.floating or layout.machi_get_regions == nil then return end
 
    local regions, draft_mode = layout.machi_get_regions(c.screen.workarea, c.screen.selected_tag)
+   if regions == nil or #regions == 0 then
+      return
+   end
 
    local infobox = api.wibox({
          screen = screen,
