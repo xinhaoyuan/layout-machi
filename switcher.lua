@@ -89,9 +89,10 @@ function module.start(c)
    local traverse_x = c.x + traverse_radius
    local traverse_y = c.y + traverse_radius
 
-   local function ensure_tablist()
+   local function maintain_tablist()
       if tablist == nil then
          tablist = {}
+
          for _, tc in ipairs(screen.tiled_clients) do
             if not (tc.floating or tc.maximized or tc.maximized_horizontal or tc.maximized_vertical)
             then
@@ -104,11 +105,32 @@ function module.start(c)
          end
 
          tablist_index = 1
+
+      else
+
+         local j = 0
+         for i = 1, #tablist do
+            if tablist[i].valid then
+               j = j + 1
+               tablist[j] = tablist[i]
+            elseif i <= tablist_index and tablist_index > 0 then
+               tablist_index = tablist_index - 1
+            end
+         end
+
+         for i = #tablist, j + 1, -1 do
+            table.remove(tablist, i)
+         end
+      end
+
+      if c and not c.valid then c = nil end
+      if c == nil and #tablist > 0 then
+         c = tablist[tablist_index]
       end
    end
 
    local function draw_info(context, cr, width, height)
-      ensure_tablist()
+      maintain_tablist()
 
       cr:set_source_rgba(0, 0, 0, 0)
       cr:rectangle(0, 0, width, height)
@@ -209,9 +231,11 @@ function module.start(c)
          if key_translate_tab[key] ~= nil then
             key = key_translate_tab[key]
          end
-         if key == "Tab" then
-            ensure_tablist()
 
+         maintain_tablist()
+         assert(tablist ~= nil)
+
+         if key == "Tab" then
             if #tablist > 0 then
                tablist_index = tablist_index % #tablist + 1
                c = tablist[tablist_index]
@@ -231,7 +255,7 @@ function module.start(c)
 
             local current_region = nil
 
-            if shift or ctrl then
+            if c and (shift or ctrl) then
                for i, a in ipairs(regions) do
                   if a.x <= traverse_x and traverse_x < a.x + a.width and
                      a.y <= traverse_y and traverse_y < a.y + a.height
@@ -329,7 +353,7 @@ function module.start(c)
                traverse_y = max(regions[choice].y + traverse_radius, min(regions[choice].y + regions[choice].height - traverse_radius, traverse_y))
                tablist = nil
 
-               if ctrl and draft_mode then
+               if c and ctrl and draft_mode then
                   local lu = c.machi_lu
                   local rd = c.machi_rd
 
@@ -364,7 +388,7 @@ function module.start(c)
                   c:emit_signal("request::activate", "mouse.move", {raise=false})
                   c:raise()
                   api.layout.arrange(screen)
-               elseif shift then
+               elseif c and shift then
                   -- move the window
                   if draft_mode then
                      c.x = regions[choice].x
@@ -379,8 +403,8 @@ function module.start(c)
 
                   tablist = nil
                else
+                  maintain_tablist()
                   -- move the focus
-                  ensure_tablist()
                   if #tablist > 0 and tablist[1] ~= c then
                      c = tablist[1]
                      api.client.focus = c
