@@ -52,6 +52,7 @@ function module.start(c)
    local label_size = api.dpi(30)
    local border_color = with_alpha(api.gears.color(api.beautiful.border_focus), 0.25)
    local fill_color = with_alpha(api.gears.color(api.beautiful.bg_normal), 0.25)
+   local box_bg = with_alpha(api.gears.color(api.beautiful.bg_normal), 0.85)
    local fill_color_hl = with_alpha(api.gears.color(api.beautiful.bg_focus), 1)
    -- for comparing floats
    local threshold = 0.1
@@ -164,6 +165,7 @@ function module.start(c)
 
          local vpadding = api.dpi(10)
          local list_height = vpadding
+         local list_width = 2 * vpadding
          local exts = {}
 
          for index, tc in ipairs(tablist) do
@@ -176,6 +178,7 @@ function module.start(c)
             local ext = { width = w, height = h, x_bearing = 0, y_bearing = 0 }
             exts[#exts + 1] = ext
             list_height = list_height + ext.height + vpadding
+            list_width = max(list_width, w + 2 * vpadding)
          end
 
          local x_offset = a.x + a.width / 2 - start_x
@@ -185,6 +188,10 @@ function module.start(c)
          -- cover the entire region
          cr:rectangle(a.x - start_x, a.y - start_y, a.width, a.height)
          cr:set_source(fill_color)
+         cr:fill()
+
+         cr:rectangle(a.x + (a.width - list_width) / 2 - start_x, a.y + (a.height - list_height) / 2 - start_y, list_width, list_height)
+         cr:set_source(box_bg)
          cr:fill()
 
          for index, tc in ipairs(tablist) do
