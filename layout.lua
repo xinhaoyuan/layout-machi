@@ -83,10 +83,12 @@ end
 
 local function find_rd(c, regions, lu)
    assert(lu ~= nil)
+   local x = regions[lu].x + c.width + c.border_width
+   local y = regions[lu].y + c.height + c.border_width
    local rd = nil
    for i, a in ipairs(regions) do
       if a.x + a.width > regions[lu].x and a.y + a.height > regions[lu].y then
-         if rd == nil or distance(c.x + c.width, c.y + c.height, a.x + a.width, a.y + a.height) < distance(c.x + c.width, c.y + c.height, regions[rd].x + regions[rd].width, regions[rd].y + regions[rd].height) then
+         if rd == nil or distance(x, y, a.x + a.width, a.y + a.height) < distance(x, y, regions[rd].x + regions[rd].width, regions[rd].y + regions[rd].height) then
             rd = i
          end
       end
@@ -223,11 +225,13 @@ function module.create(name, editor)
          local rd = nil
          if lu ~= nil then
             if context == "mouse.move" then
+               -- Use the initial width and height since it may change in undesired way.
                local hh = {}
                hh.x = regions[lu].x
                hh.y = regions[lu].y
                hh.width = c.width_before_move
                hh.height = c.height_before_move
+               hh.border_width = c.border_width
                rd = find_rd(hh, regions, lu)
             else
                rd = find_rd(h, regions, lu)
