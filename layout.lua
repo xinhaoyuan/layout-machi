@@ -83,8 +83,9 @@ end
 
 local function find_rd(c, regions, lu)
    assert(lu ~= nil)
-   local x = regions[lu].x + c.width + c.border_width
-   local y = regions[lu].y + c.height + c.border_width
+   local x, y
+   x = c.x + c.width + c.border_width
+   y = c.y + c.height + c.border_width
    local rd = nil
    for i, a in ipairs(regions) do
       if a.x + a.width > regions[lu].x and a.y + a.height > regions[lu].y then
@@ -180,6 +181,8 @@ function module.create(name, editor)
                   log(DEBUG, "Compute regions for " .. c.name)
                   lu = find_lu(c, regions)
                   if lu ~= nil then
+                     c.x = regions[lu].x
+                     c.y = regions[lu].y
                      rd = find_rd(c, regions, lu)
                   end
                end
@@ -234,7 +237,13 @@ function module.create(name, editor)
                hh.border_width = c.border_width
                rd = find_rd(hh, regions, lu)
             else
-               rd = find_rd(h, regions, lu)
+               local hh = {}
+               hh.x = h.x
+               hh.y = h.y
+               hh.width = h.width
+               hh.height = h.height
+               hh.border_width = c.border_width
+               rd = find_rd(hh, regions, lu)
             end
 
             if rd ~= nil then

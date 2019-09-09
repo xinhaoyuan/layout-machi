@@ -158,7 +158,7 @@ function module.start(c)
          end
       end
 
-      do
+      if #tablist > 0 then
          local a = regions[active_region]
          local pl = api.lgi.Pango.Layout.create(cr)
          pl:set_font_description(tablist_font_desc)
