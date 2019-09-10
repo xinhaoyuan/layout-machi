@@ -46,7 +46,7 @@ end
 
 function module.start(c)
    local tablist_font_desc = api.beautiful.get_merged_font(
-      api.beautiful.mono_font or api.beautiful.font, api.dpi(10))
+      api.beautiful.font, api.dpi(10))
    local font_color = with_alpha(api.gears.color(api.beautiful.fg_normal), 1)
    local font_color_hl = with_alpha(api.gears.color(api.beautiful.fg_focus), 1)
    local label_size = api.dpi(30)

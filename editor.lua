@@ -645,7 +645,7 @@ function module.create(data)
       local outer_gap = data.outer_gap or data.gap or api.beautiful.useless_gap * 2 or 0
       local inner_gap = data.inner_gap or data.gap or api.beautiful.useless_gap * 2 or 0
       local label_font_family = api.beautiful.get_font(
-         api.beautiful.mono_font or api.beautiful.font):get_family()
+         api.beautiful.font):get_family()
       local label_size = api.dpi(30)
       local info_size = api.dpi(60)
       -- colors are in rgba
