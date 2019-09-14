@@ -31,6 +31,9 @@ The package comes with the icon for `layoutbox`, which can be set with the follo
 
 `require("beautiful").layout_machi = machi.get_icon()`
 
+By default, any machi layout will use the layout command from `machi.layout.default_cmd`, which is initialized as `dw66.` (see interpretation below).
+You can change it after loading the module.
+
 ## Use the layout
 
 Use `local layout = machi.layout.create(name, editor)` to instantiate the layout with an editor object.

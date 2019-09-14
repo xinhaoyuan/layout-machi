@@ -10,6 +10,7 @@ local DEBUG = -1
 
 local module = {
    log_level = WARNING,
+   default_cmd = "dw66.",
 }
 
 local function log(level, msg)
@@ -120,7 +121,7 @@ function module.create(name, editor)
       get_instance_name = function () return name, true end
    end
 
-   local function get_instance(tag)
+   local function get_instance_(tag)
       local name, persistent = get_instance_name(tag)
       if instances[name] == nil then
          instances[name] = {
@@ -132,18 +133,19 @@ function module.create(name, editor)
    end
 
    local function get_regions(workarea, tag)
-      local instance = get_instance(tag)
-      if instance.cmd == nil then return {}, false end
+      local instance = get_instance_(tag)
+      local cmd = instance.cmd or module.default_cmd
+      if cmd == nil then return {}, false end
 
       local key = tostring(workarea.width) .. "x" .. tostring(workarea.height) .. "+" .. tostring(workarea.x) .. "+" .. tostring(workarea.y)
       if instance.regions_cache[key] == nil then
-         instance.regions_cache[key] = editor.run_cmd(workarea, instance.cmd)
+         instance.regions_cache[key] = editor.run_cmd(workarea, cmd)
       end
-      return instance.regions_cache[key], instance.cmd:sub(1,1) == "d"
+      return instance.regions_cache[key], cmd:sub(1,1) == "d"
    end
 
    local function set_cmd(cmd, tag)
-      local instance = get_instance(tag)
+      local instance = get_instance_(tag)
       if instance.cmd ~= cmd then
          instance.cmd = cmd
          instance.regions_cache = {}
