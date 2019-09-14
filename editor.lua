@@ -197,18 +197,16 @@ function module.create(data)
    local to_exit
    local to_apply
 
-   local function init(init_area)
+   local function init(init_area, extend)
       closed_areas = {}
       open_areas = {
          {
-            x = init_area.x,
-            y = init_area.y,
-            width = init_area.width,
-            height = init_area.height,
-            border = 15,
+            x = init_area.x - extend,
+            y = init_area.y - extend,
+            width = init_area.width + extend * 2,
+            height = init_area.height + extend * 2,
             depth = 0,
             group_id = 0,
-            -- we do not want to rely on BitOp
             bl = true, br = true, bu = true, bd = true,
          }
       }
@@ -698,7 +696,7 @@ function module.create(data)
          local msg, ext
 
          for i, a in ipairs(closed_areas) do
-            local sa = shrink_area_with_gap(a, inner_gap, outer_gap)
+            local sa = shrink_area_with_gap(a, inner_gap, inner_gap / 2)
             local to_highlight = false
             if pending_op ~= nil then
                to_highlight = a.group_id == op_count
@@ -720,7 +718,7 @@ function module.create(data)
          end
 
          for i, a in ipairs(open_areas) do
-            local sa = shrink_area_with_gap(a, inner_gap, outer_gap)
+            local sa = shrink_area_with_gap(a, inner_gap, inner_gap / 2)
             local to_highlight = false
             if pending_op == nil then
                to_highlight = i == #open_areas
@@ -780,7 +778,7 @@ function module.create(data)
 
       log(DEBUG, "interactive layout editing starts")
 
-      init(screen.workarea)
+      init(screen.workarea, inner_gap / 2 - outer_gap)
       refresh()
 
       kg = api.awful.keygrabber.run(
@@ -812,7 +810,7 @@ function module.create(data)
                      end
 
                      log(DEBUG, "restore history #" .. tostring(cmd_index) .. ":" .. data.cmds[cmd_index])
-                     init(screen.workarea)
+                     init(screen.workarea, inner_gap / 2 - outer_gap)
                      for i = 1, #data.cmds[cmd_index] do
                         local cmd = data.cmds[cmd_index]:sub(i, i)
 
@@ -927,7 +925,7 @@ function module.create(data)
    local function run_cmd(init_area, cmd)
       local outer_gap = data.outer_gap or data.gap or api.beautiful.useless_gap * 2 or 0
       local inner_gap = data.inner_gap or data.gap or api.beautiful.useless_gap * 2 or 0
-      init(init_area)
+      init(init_area, inner_gap / 2 - outer_gap)
 
       for i = 1, #cmd do
          handle_ch(cmd:sub(i, i))
@@ -935,7 +933,7 @@ function module.create(data)
 
       local areas_with_gap = {}
       for _, a in ipairs(closed_areas) do
-         areas_with_gap[#areas_with_gap + 1] = shrink_area_with_gap(a, inner_gap, outer_gap)
+         areas_with_gap[#areas_with_gap + 1] = shrink_area_with_gap(a, inner_gap, inner_gap / 2)
       end
       table.sort(
          areas_with_gap,
