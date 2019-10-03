@@ -180,7 +180,7 @@ function module.create(name, editor)
                local lu = nil
                local rd = nil
                if not skip then
-                  log(DEBUG, "Compute regions for " .. c.name)
+                  log(DEBUG, "Compute regions for " .. c.name or ("<untitled:" .. tostring(c) .. ">"))
                   lu = find_lu(c, regions)
                   if lu ~= nil then
                      c.x = regions[lu].x
@@ -208,7 +208,7 @@ function module.create(name, editor)
                   regions[c.machi_region].height - c.border_width * 2 == c.height
                then
                else
-                  log(DEBUG, "Compute regions for " .. c.name)
+                  log(DEBUG, "Compute regions for " .. c.name or ("<untitled:" .. tostring(c) .. ">"))
                   local region = find_region(c, regions)
                   c.machi_region = region
                   p.geometries[c] = {}
