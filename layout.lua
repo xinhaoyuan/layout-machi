@@ -33,8 +33,8 @@ end
 
 api.awful.mouse.resize.add_enter_callback(
    function (c)
-      c.width_before_move = c.width
-      c.height_before_move = c.height
+      c.full_width_before_move = c.width + c.border_width * 2
+      c.full_height_before_move = c.height + c.border_width * 2
    end, 'mouse.move')
 
 --- find the best region for the area-like object
@@ -72,24 +72,25 @@ local function distance(x1, y1, x2, y2)
    return math.abs(x1 - x2) + math.abs(y1 - y2)
 end
 
-local function find_lu(c, regions)
+local function find_lu(c, regions, rd)
    local lu = nil
    for i, a in ipairs(regions) do
-      if lu == nil or distance(c.x, c.y, a.x, a.y) < distance(c.x, c.y, regions[lu].x, regions[lu].y) then
-         lu = i
+      if rd == nil or (a.x < regions[rd].x + regions[rd].width and a.y < regions[lu].y + regions[lu].height) then
+         if lu == nil or distance(c.x, c.y, a.x, a.y) < distance(c.x, c.y, regions[lu].x, regions[lu].y) then
+            lu = i
+         end
       end
    end
    return lu
 end
 
 local function find_rd(c, regions, lu)
-   assert(lu ~= nil)
    local x, y
-   x = c.x + c.width + c.border_width
-   y = c.y + c.height + c.border_width
+   x = c.x + c.width + (c.border_width or 0)
+   y = c.y + c.height + (c.border_width or 0)
    local rd = nil
    for i, a in ipairs(regions) do
-      if a.x + a.width > regions[lu].x and a.y + a.height > regions[lu].y then
+      if lu == nil or (a.x + a.width > regions[lu].x and a.y + a.height > regions[lu].y) then
          if rd == nil or distance(x, y, a.x + a.width, a.y + a.height) < distance(x, y, regions[rd].x + regions[rd].width, regions[rd].y + regions[rd].height) then
             rd = i
          end
@@ -234,10 +235,17 @@ function module.create(name, editor)
                local hh = {}
                hh.x = regions[lu].x
                hh.y = regions[lu].y
-               hh.width = c.width_before_move
-               hh.height = c.height_before_move
-               hh.border_width = c.border_width
+               hh.width = c.full_width_before_move
+               hh.height = c.full_height_before_move
                rd = find_rd(hh, regions, lu)
+
+               if rd ~= nil and
+                  (regions[rd].x + regions[rd].width - regions[lu].x < c.full_width_before_move or
+                   regions[rd].y + regions[rd].height - regions[lu].y < c.full_height_before_move) then
+                     hh.x = regions[rd].x + regions[rd].width - c.full_width_before_move
+                     hh.y = regions[rd].y + regions[rd].height - c.full_height_before_move
+                     lu = find_lu(hh, regions)
+               end
             else
                local hh = {}
                hh.x = h.x
@@ -248,7 +256,7 @@ function module.create(name, editor)
                rd = find_rd(hh, regions, lu)
             end
 
-            if rd ~= nil then
+            if lu ~= nil and rd ~= nil then
                c.machi_lu = lu
                c.machi_rd = rd
                module.set_geometry(c, regions[lu], regions[rd], 0, c.border_width)
