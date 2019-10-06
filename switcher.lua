@@ -58,14 +58,14 @@ function module.start(c)
    local threshold = 0.1
    local traverse_radius = api.dpi(5)
 
-   local screen = c.screen
+   local screen = c and c.screen or api.screen.focused()
    local start_x = screen.workarea.x
    local start_y = screen.workarea.y
 
    local layout = api.layout.get(screen)
-   if c.floating or layout.machi_get_regions == nil then return end
+   if (c ~= nil and c.floating) or layout.machi_get_regions == nil then return end
 
-   local regions, draft_mode = layout.machi_get_regions(c.screen.workarea, c.screen.selected_tag)
+   local regions, draft_mode = layout.machi_get_regions(screen.workarea, screen.selected_tag)
    if regions == nil or #regions == 0 then
       return
    end
@@ -87,8 +87,14 @@ function module.start(c)
    local tablist = nil
    local tablist_index = nil
 
-   local traverse_x = c.x + traverse_radius
-   local traverse_y = c.y + traverse_radius
+   local traverse_x, traverse_y
+   if c then
+      traverse_x = c.x + traverse_radius
+      traverse_y = c.y + traverse_radius
+   else
+      traverse_x = screen.workarea.x + screen.workarea.width / 2
+      traverse_y = screen.workarea.y + screen.workarea.height / 2
+   end
 
    local function maintain_tablist()
       if tablist == nil then
@@ -143,7 +149,7 @@ function module.start(c)
          cr:rectangle(a.x - start_x, a.y - start_y, a.width, a.height)
          cr:clip()
          cr:set_source(fill_color)
-         cr:rectangle(a.x, a.y, a.width, a.height)
+         cr:rectangle(a.x - start_x, a.y - start_y, a.width, a.height)
          cr:fill()
          cr:set_source(border_color)
          cr:rectangle(a.x - start_x, a.y - start_y, a.width, a.height)
