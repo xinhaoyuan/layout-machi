@@ -19,6 +19,10 @@ TL;DR --- I want the control of my layout.
 I developed it with Awesome 4.3.
 Please let me know if it does not work in other versions.
 
+## Really quick usage
+
+See `rc.patch` for adding layout-machi to the default 4.3 config.
+
 ## Quick usage
 
 Suppose this git is checked out at `~/.config/awesome/layout-machi`
