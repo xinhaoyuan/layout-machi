@@ -237,6 +237,8 @@ function module.start(c)
       ["d"] = "Right",
    }
 
+   api.awful.client.focus.history.disable_tracking()
+
    local kg
    kg = api.awful.keygrabber.run(
       function (mod, key, event)
@@ -427,6 +429,10 @@ function module.start(c)
                infobox.bgimage = draw_info
             end
          elseif key == "Escape" or key == "Return" then
+            if api.client.focus then
+               api.awful.client.focus.history.add(api.client.focus)
+            end
+            api.awful.client.focus.history.enable_tracking()
             infobox.visible = false
             api.awful.keygrabber.stop(kg)
          else
