@@ -44,7 +44,7 @@ local function with_alpha(col, alpha)
    return api.lgi.cairo.SolidPattern.create_rgba(r, g, b, alpha)
 end
 
-function module.start(c)
+function module.start(c, exit_keys)
    local tablist_font_desc = api.beautiful.get_merged_font(
       api.beautiful.font, api.dpi(10))
    local font_color = with_alpha(api.gears.color(api.beautiful.fg_normal), 1)
@@ -240,9 +240,23 @@ function module.start(c)
    api.awful.client.focus.history.disable_tracking()
 
    local kg
+   local function exit()
+      if api.client.focus then
+         api.awful.client.focus.history.add(api.client.focus)
+      end
+      api.awful.client.focus.history.enable_tracking()
+      infobox.visible = false
+      api.awful.keygrabber.stop(kg)
+   end
+
    kg = api.awful.keygrabber.run(
       function (mod, key, event)
-         if event == "release" then return end
+         if event == "release" then
+            if exit_keys and exit_keys[key] then
+               exit()
+            end
+            return
+         end
          if key_translate_tab[key] ~= nil then
             key = key_translate_tab[key]
          end
@@ -429,12 +443,7 @@ function module.start(c)
                infobox.bgimage = draw_info
             end
          elseif key == "Escape" or key == "Return" then
-            if api.client.focus then
-               api.awful.client.focus.history.add(api.client.focus)
-            end
-            api.awful.client.focus.history.enable_tracking()
-            infobox.visible = false
-            api.awful.keygrabber.stop(kg)
+            exit()
          else
             log(DEBUG, "Unhandled key " .. key)
          end
