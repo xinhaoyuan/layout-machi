@@ -249,204 +249,209 @@ function module.start(c, exit_keys)
       api.awful.keygrabber.stop(kg)
    end
 
-   kg = api.awful.keygrabber.run(
-      function (mod, key, event)
-         if event == "release" then
-            if exit_keys and exit_keys[key] then
-               exit()
-            end
-            return
+   local function handle_key(mod, key, event)
+      if event == "release" then
+         if exit_keys and exit_keys[key] then
+            exit()
          end
-         if key_translate_tab[key] ~= nil then
-            key = key_translate_tab[key]
+         return
+      end
+      if key_translate_tab[key] ~= nil then
+         key = key_translate_tab[key]
+      end
+
+      maintain_tablist()
+      assert(tablist ~= nil)
+
+      if key == "Tab" then
+         if #tablist > 0 then
+            tablist_index = tablist_index % #tablist + 1
+            c = tablist[tablist_index]
+            c:emit_signal("request::activate", "mouse.move", {raise=false})
+            c:raise()
+
+            infobox.bgimage = draw_info
+         end
+      elseif key == "Up" or key == "Down" or key == "Left" or key == "Right" then
+         local shift = false
+         local ctrl = false
+         for i, m in ipairs(mod) do
+            if m == "Shift" then shift = true
+            elseif m == "Control" then ctrl = true
+            end
          end
 
-         maintain_tablist()
-         assert(tablist ~= nil)
+         local current_region = nil
 
-         if key == "Tab" then
-            if #tablist > 0 then
-               tablist_index = tablist_index % #tablist + 1
-               c = tablist[tablist_index]
-               c:emit_signal("request::activate", "mouse.move", {raise=false})
-               c:raise()
-
-               infobox.bgimage = draw_info
-            end
-         elseif key == "Up" or key == "Down" or key == "Left" or key == "Right" then
-            local shift = false
-            local ctrl = false
-            for i, m in ipairs(mod) do
-               if m == "Shift" then shift = true
-               elseif m == "Control" then ctrl = true
-               end
-            end
-
-            local current_region = nil
-
-            if c and (shift or ctrl) then
-               for i, a in ipairs(regions) do
-                  if a.x <= traverse_x and traverse_x < a.x + a.width and
-                     a.y <= traverse_y and traverse_y < a.y + a.height
-                  then
-                     current_region = i
-                     break
-                  end
-               end
-
-               if shift then
-                  if current_region == nil or
-                     regions[current_region].x ~= c.x or
-                     regions[current_region].y ~= c.y
-                  then
-                     traverse_x = c.x + traverse_radius
-                     traverse_y = c.y + traverse_radius
-                     current_region = nil
-                  end
-               elseif ctrl then
-                  local ex = c.x + c.width + c.border_width * 2
-                  local ey = c.y + c.height + c.border_width * 2
-                  if current_region == nil or
-                     regions[current_region].x + regions[current_region].width ~= ex or
-                     regions[current_region].y + regions[current_region].height ~= ey
-                  then
-                     traverse_x = ex - traverse_radius
-                     traverse_y = ey - traverse_radius
-                     current_region = nil
-                  end
-               end
-            end
-
-            local choice = nil
-            local choice_value
-
+         if c and (shift or ctrl) then
             for i, a in ipairs(regions) do
                if a.x <= traverse_x and traverse_x < a.x + a.width and
                   a.y <= traverse_y and traverse_y < a.y + a.height
                then
                   current_region = i
-               end
-
-               local v
-               if key == "Up" then
-                  if a.x < traverse_x + threshold
-                  and traverse_x < a.x + a.width + threshold then
-                     v = traverse_y - a.y - a.height
-                  else
-                     v = -1
-                  end
-               elseif key == "Down" then
-                  if a.x < traverse_x + threshold
-                  and traverse_x < a.x + a.width + threshold then
-                     v = a.y - traverse_y
-                  else
-                     v = -1
-                  end
-               elseif key == "Left" then
-                  if a.y < traverse_y + threshold
-                  and traverse_y < a.y + a.height + threshold then
-                     v = traverse_x - a.x - a.width
-                  else
-                     v = -1
-                  end
-               elseif key == "Right" then
-                  if a.y < traverse_y + threshold
-                  and traverse_y < a.y + a.height + threshold then
-                     v = a.x - traverse_x
-                  else
-                     v = -1
-                  end
-               end
-
-               if (v > threshold) and (choice_value == nil or choice_value > v) then
-                  choice = i
-                  choice_value = v
+                  break
                end
             end
 
-            if choice == nil then
-               choice = current_region
-               if key == "Up" then
-                  traverse_y = screen.workarea.y
-               elseif key == "Down" then
-                  traverse_y = screen.workarea.y + screen.workarea.height
-               elseif key == "Left" then
-                  traverse_x = screen.workarea.x
-               else
-                  traverse_x = screen.workarea.x + screen.workarea.width
+            if shift then
+               if current_region == nil or
+                  regions[current_region].x ~= c.x or
+                  regions[current_region].y ~= c.y
+               then
+                  traverse_x = c.x + traverse_radius
+                  traverse_y = c.y + traverse_radius
+                  current_region = nil
+               end
+            elseif ctrl then
+               local ex = c.x + c.width + c.border_width * 2
+               local ey = c.y + c.height + c.border_width * 2
+               if current_region == nil or
+                  regions[current_region].x + regions[current_region].width ~= ex or
+                  regions[current_region].y + regions[current_region].height ~= ey
+               then
+                  traverse_x = ex - traverse_radius
+                  traverse_y = ey - traverse_radius
+                  current_region = nil
                end
             end
-
-            if choice ~= nil then
-               traverse_x = max(regions[choice].x + traverse_radius, min(regions[choice].x + regions[choice].width - traverse_radius, traverse_x))
-               traverse_y = max(regions[choice].y + traverse_radius, min(regions[choice].y + regions[choice].height - traverse_radius, traverse_y))
-               tablist = nil
-
-               if c and ctrl and draft_mode then
-                  local lu = c.machi_lu
-                  local rd = c.machi_rd
-
-                  if shift then
-                     lu = choice
-                     if regions[rd].x + regions[rd].width <= regions[lu].x or
-                        regions[rd].y + regions[rd].height <= regions[lu].y
-                     then
-                        rd = nil
-                     end
-                  else
-                     rd = choice
-                     if regions[rd].x + regions[rd].width <= regions[lu].x or
-                        regions[rd].y + regions[rd].height <= regions[lu].y
-                     then
-                        lu = nil
-                     end
-                  end
-
-                  if lu ~= nil and rd ~= nil then
-                     machi.layout.set_geometry(c, regions[lu], regions[rd], 0, c.border_width)
-                  elseif lu ~= nil then
-                     machi.layout.set_geometry(c, regions[lu], nil, 0, c.border_width)
-                  elseif rd ~= nil then
-                     c.x = min(c.x, regions[rd].x)
-                     c.y = min(c.y, regions[rd].y)
-                     machi.layout.set_geometry(c, nil, regions[rd], 0, c.border_width)
-                  end
-                  c.machi_lu = lu
-                  c.machi_rd = rd
-
-                  c:emit_signal("request::activate", "mouse.move", {raise=false})
-                  c:raise()
-                  api.layout.arrange(screen)
-               elseif c and shift then
-                  -- move the window
-                  if draft_mode then
-                     c.x = regions[choice].x
-                     c.y = regions[choice].y
-                  else
-                     machi.layout.set_geometry(c, regions[choice], regions[choice], 0, c.border_width)
-                     c.machi_region = choice
-                  end
-                  c:emit_signal("request::activate", "mouse.move", {raise=false})
-                  c:raise()
-                  api.layout.arrange(screen)
-
-                  tablist = nil
-               else
-                  maintain_tablist()
-                  -- move the focus
-                  if #tablist > 0 and tablist[1] ~= c then
-                     c = tablist[1]
-                     api.client.focus = c
-                  end
-               end
-
-               infobox.bgimage = draw_info
-            end
-         elseif key == "Escape" or key == "Return" then
-            exit()
-         else
-            log(DEBUG, "Unhandled key " .. key)
          end
+
+         local choice = nil
+         local choice_value
+
+         for i, a in ipairs(regions) do
+            if a.x <= traverse_x and traverse_x < a.x + a.width and
+               a.y <= traverse_y and traverse_y < a.y + a.height
+            then
+               current_region = i
+            end
+
+            local v
+            if key == "Up" then
+               if a.x < traverse_x + threshold
+               and traverse_x < a.x + a.width + threshold then
+                  v = traverse_y - a.y - a.height
+               else
+                  v = -1
+               end
+            elseif key == "Down" then
+               if a.x < traverse_x + threshold
+               and traverse_x < a.x + a.width + threshold then
+                  v = a.y - traverse_y
+               else
+                  v = -1
+               end
+            elseif key == "Left" then
+               if a.y < traverse_y + threshold
+               and traverse_y < a.y + a.height + threshold then
+                  v = traverse_x - a.x - a.width
+               else
+                  v = -1
+               end
+            elseif key == "Right" then
+               if a.y < traverse_y + threshold
+               and traverse_y < a.y + a.height + threshold then
+                  v = a.x - traverse_x
+               else
+                  v = -1
+               end
+            end
+
+            if (v > threshold) and (choice_value == nil or choice_value > v) then
+               choice = i
+               choice_value = v
+            end
+         end
+
+         if choice == nil then
+            choice = current_region
+            if key == "Up" then
+               traverse_y = screen.workarea.y
+            elseif key == "Down" then
+               traverse_y = screen.workarea.y + screen.workarea.height
+            elseif key == "Left" then
+               traverse_x = screen.workarea.x
+            else
+               traverse_x = screen.workarea.x + screen.workarea.width
+            end
+         end
+
+         if choice ~= nil then
+            traverse_x = max(regions[choice].x + traverse_radius, min(regions[choice].x + regions[choice].width - traverse_radius, traverse_x))
+            traverse_y = max(regions[choice].y + traverse_radius, min(regions[choice].y + regions[choice].height - traverse_radius, traverse_y))
+            tablist = nil
+
+            if c and ctrl and draft_mode then
+               local lu = c.machi_lu
+               local rd = c.machi_rd
+
+               if shift then
+                  lu = choice
+                  if regions[rd].x + regions[rd].width <= regions[lu].x or
+                     regions[rd].y + regions[rd].height <= regions[lu].y
+                  then
+                     rd = nil
+                  end
+               else
+                  rd = choice
+                  if regions[rd].x + regions[rd].width <= regions[lu].x or
+                     regions[rd].y + regions[rd].height <= regions[lu].y
+                  then
+                     lu = nil
+                  end
+               end
+
+               if lu ~= nil and rd ~= nil then
+                  machi.layout.set_geometry(c, regions[lu], regions[rd], 0, c.border_width)
+               elseif lu ~= nil then
+                  machi.layout.set_geometry(c, regions[lu], nil, 0, c.border_width)
+               elseif rd ~= nil then
+                  c.x = min(c.x, regions[rd].x)
+                  c.y = min(c.y, regions[rd].y)
+                  machi.layout.set_geometry(c, nil, regions[rd], 0, c.border_width)
+               end
+               c.machi_lu = lu
+               c.machi_rd = rd
+
+               c:emit_signal("request::activate", "mouse.move", {raise=false})
+               c:raise()
+               api.layout.arrange(screen)
+            elseif c and shift then
+               -- move the window
+               if draft_mode then
+                  c.x = regions[choice].x
+                  c.y = regions[choice].y
+               else
+                  machi.layout.set_geometry(c, regions[choice], regions[choice], 0, c.border_width)
+                  c.machi_region = choice
+               end
+               c:emit_signal("request::activate", "mouse.move", {raise=false})
+               c:raise()
+               api.layout.arrange(screen)
+
+               tablist = nil
+            else
+               maintain_tablist()
+               -- move the focus
+               if #tablist > 0 and tablist[1] ~= c then
+                  c = tablist[1]
+                  api.client.focus = c
+               end
+            end
+
+            infobox.bgimage = draw_info
+         end
+      elseif key == "Escape" or key == "Return" then
+         exit()
+      else
+         log(DEBUG, "Unhandled key " .. key)
+      end
+   end
+
+   kg = api.awful.keygrabber.run(
+      function (...)
+         ok, _ = pcall(handle_key, ...)
+         if not ok then exit() end
       end
    )
 end
