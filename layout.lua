@@ -11,6 +11,7 @@ local DEBUG = -1
 local module = {
    log_level = WARNING,
    default_cmd = "dw66.",
+   allowing_shrinking_by_mouse_moving = false,
 }
 
 local function log(level, msg)
@@ -75,7 +76,7 @@ end
 local function find_lu(c, regions, rd)
    local lu = nil
    for i, a in ipairs(regions) do
-      if rd == nil or (a.x < regions[rd].x + regions[rd].width and a.y < regions[lu].y + regions[lu].height) then
+      if rd == nil or (a.x < regions[rd].x + regions[rd].width and a.y < regions[rd].y + regions[rd].height) then
          if lu == nil or distance(c.x, c.y, a.x, a.y) < distance(c.x, c.y, regions[lu].x, regions[lu].y) then
             lu = i
          end
@@ -239,12 +240,12 @@ function module.create(name, editor)
                hh.height = c.full_height_before_move
                rd = find_rd(hh, regions, lu)
 
-               if rd ~= nil and
+               if rd ~= nil and not module.allowing_shrinking_by_mouse_moving and
                   (regions[rd].x + regions[rd].width - regions[lu].x < c.full_width_before_move or
                    regions[rd].y + regions[rd].height - regions[lu].y < c.full_height_before_move) then
                      hh.x = regions[rd].x + regions[rd].width - c.full_width_before_move
                      hh.y = regions[rd].y + regions[rd].height - c.full_height_before_move
-                     lu = find_lu(hh, regions)
+                     lu = find_lu(hh, regions, rd)
                end
             else
                local hh = {}
