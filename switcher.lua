@@ -241,10 +241,10 @@ function module.start(c, exit_keys)
 
    local kg
    local function exit()
-      if api.client.focus then
-         api.awful.client.focus.history.add(api.client.focus)
-      end
       api.awful.client.focus.history.enable_tracking()
+      if api.client.focus then
+         api.client.emit_signal("focus", api.client.focus)
+      end
       infobox.visible = false
       api.awful.keygrabber.stop(kg)
    end
