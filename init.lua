@@ -7,10 +7,10 @@ local function default_name(tag)
          tostring(tag.screen.geometry.width) .. "x" .. tostring(tag.screen.geometry.height) .. "+" ..
          tostring(tag.screen.geometry.x) .. "+" .. tostring(tag.screen.geometry.y) .. '+' .. tag.name
    end
-   return tag.machi_name_cache, true
+   return tag.machi_name_cache
 end
 local default_editor = editor.create()
-local default_layout = layout.create(default_name, default_editor)
+local default_layout = layout.create{ name_func = default_name, editor = default_editor }
 local gcolor = require("gears.color")
 local beautiful = require("beautiful")
 

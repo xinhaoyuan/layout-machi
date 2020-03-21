@@ -839,7 +839,7 @@ function module.create(data)
                      end
 
                      if #open_areas == 0 then
-                        current_info = current_info .. " (enter to save)"
+                        current_info = current_info .. " (enter to apply)"
                      end
                   else
                      if key == "Return" then
@@ -858,7 +858,7 @@ function module.create(data)
                         -- bring the current cmd to the front
                         data.cmds[#data.cmds + 1] = current_cmd
 
-                        local instance_name, persistent = layout.machi_get_instance_name(tag)
+                        local instance_name, persistent = layout.machi_get_instance_info(tag)
                         if persistent then
                            data.last_cmd[instance_name] = current_cmd
                            if data.history_file then
@@ -877,9 +877,11 @@ function module.create(data)
                               end
                               file:close()
                            end
+                           current_info = "Saved!"
+                        else
+                           current_info = "Applied!"
                         end
 
-                        current_info = "Saved!"
                         to_exit = true
                         to_apply = true
                      end

@@ -113,23 +113,38 @@ function module.set_geometry(c, region_lu, region_rd, useless_gap, border_width)
    end
 end
 
-function module.create(name, editor, default_cmd)
-   local instances = {}
+function module.create(args_or_name, editor, default_cmd)
+    local args
+    if type(args_or_name) == "string" then
+        args = {
+            name = args_or_name
+        }
+    elseif type(args_or_name) == "function" then
+        args = {
+            name_func = args_or_name
+        }
+    elseif type(args_or_name) == "table" then
+        args = args_or_name
+    else
+        return nil
+    end
+    args.editor = args.editor or editor
+    args.default_cmd = args.default_cmd or default_cmd or global_default_cmd
+    args.persistent = args.persistent == nil or args.persistent
 
-   local get_instance_name
-   if type(name) == "function" then
-      get_instance_name = name
-   else
-      get_instance_name = function () return name, true end
-   end
+    local instances = {}
+
+    local function get_instance_info(tag)
+        return (args.name_func and args.name_func(tag) or args.name), args.persistent
+    end
 
    local function get_instance_(tag)
-      local name, persistent = get_instance_name(tag)
-      if instances[name] == nil then
-         instances[name] = {
-            cmd = persistent and editor.get_last_cmd(name) or nil,
-            regions_cache = {},
-         }
+       local name, persistent = get_instance_info(tag)
+       if instances[name] == nil then
+           instances[name] = {
+               cmd = persistent and args.editor.get_last_cmd(name) or nil,
+               regions_cache = {},
+           }
          if instances[name].cmd == nil then
              instances[name].cmd = default_cmd
          end
@@ -144,7 +159,7 @@ function module.create(name, editor, default_cmd)
 
       local key = tostring(workarea.width) .. "x" .. tostring(workarea.height) .. "+" .. tostring(workarea.x) .. "+" .. tostring(workarea.y)
       if instance.regions_cache[key] == nil then
-         instance.regions_cache[key] = editor.run_cmd(workarea, cmd)
+         instance.regions_cache[key] = args.editor.run_cmd(workarea, cmd)
       end
       return instance.regions_cache[key], cmd:sub(1,1) == "d"
    end
@@ -301,7 +316,7 @@ function module.create(name, editor, default_cmd)
       name = "machi",
       arrange = arrange,
       resize_handler = resize_handler,
-      machi_get_instance_name = get_instance_name,
+      machi_get_instance_info = get_instance_info,
       machi_set_cmd = set_cmd,
       machi_get_regions = get_regions,
    }

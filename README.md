@@ -40,16 +40,14 @@ You can change it after loading the module.
 
 ## Use the layout
 
-Use `local layout = machi.layout.create(name, editor[, default_cmd])` to instantiate the layout with an editor object.
+Use `local layout = machi.layout.create(args)` to instantiate the layout with an editor object. `args` is a table of arguments, where the followings can be used:
 
-`name` can be a string or a function returning a string (see `init.lua` and "Advanced" below).
-This is used for having different actual layout dependent on tags.
+  - `name`: the constant name of the layout
+  - `name_func`: a `function(t)` closure that returns a string for tag `t`. `name_func` overrides `name`
+  - `persistent`: whether to keep a history of the command for the layout. Default is `true`
+  - `default_cmd`: the command to use if there is no persistent history for this layout.
 
-`editor` are used for editing and persisting the layouts.
-You can use the exsiting `machi.default_editor`, or see below on creating editors.
-You can create multiple layouts with different names and share the same editor.
-
-`default_cmd` is the initial command if no history command exists for the layout.
+The function is compatible with the previous `machi.layout.create(name, editor, default_cmd)` calls.
 
 ## The layout editor and commands
 
@@ -251,15 +249,6 @@ Calling `machi.switcher.start()` will create a switcher supporting the following
  - `Tab`: switch beteen windows covering the current regions.
 
 So far, the key binding is not configurable. One has to modify the source code to change it.
-
-## Advanced
-
-### `name` as a function in `machi.layout.create`
-
-When passed in as a function, `name` takes the tag `t` and returns (1) a string for the tag-dependent name of the layout, and (2) a boolean indicating the persistence of the layout.
-
-The default layout, `machi.default_layout`, uses the screen geometry and the tag name for name, thus allows the actual layout to be tag- and screen-dependent.
-To differentiate tags with the same name, you may need a more advanced naming function.
 
 ## Caveats
 
