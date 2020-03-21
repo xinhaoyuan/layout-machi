@@ -1,7 +1,3 @@
-local machi = {
-   layout = require((...):match("(.-)[^%.]+$") .. "layout"),
-}
-
 local api = {
    beautiful  = require("beautiful"),
    wibox      = require("wibox"),
@@ -964,5 +960,7 @@ function module.create(data)
       set_gap = set_gap,
    }
 end
+
+module.default_editor = module.create()
 
 return module

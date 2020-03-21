@@ -42,10 +42,13 @@ You can change it after loading the module.
 
 Use `local layout = machi.layout.create(args)` to instantiate the layout with an editor object. `args` is a table of arguments, where the followings can be used:
 
-  - `name`: the constant name of the layout
-  - `name_func`: a `function(t)` closure that returns a string for tag `t`. `name_func` overrides `name`
-  - `persistent`: whether to keep a history of the command for the layout. Default is `true`
+  - `name`: the constant name of the layout.
+  - `name_func`: a `function(t)` closure that returns a string for tag `t`. `name_func` overrides `name`.
+  - `persistent`: whether to keep a history of the command for the layout. The default is `true`.
   - `default_cmd`: the command to use if there is no persistent history for this layout.
+  - `editor`: the editor used for the layout. The default is `machi.default_editor` (or `machi.editor.default_editor`).
+
+Either `name` or `name_func` must be set - others are optional.
 
 The function is compatible with the previous `machi.layout.create(name, editor, default_cmd)` calls.
 

@@ -9,8 +9,8 @@ local function default_name(tag)
    end
    return tag.machi_name_cache
 end
-local default_editor = editor.create()
-local default_layout = layout.create{ name_func = default_name, editor = default_editor }
+local default_editor = editor.default_editor
+local default_layout = layout.create{ name_func = default_name }
 local gcolor = require("gears.color")
 local beautiful = require("beautiful")
 

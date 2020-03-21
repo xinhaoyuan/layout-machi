@@ -1,3 +1,7 @@
+local machi = {
+   editor = require((...):match("(.-)[^%.]+$") .. "editor"),
+}
+
 local api = {
    screen = screen,
    awful = require("awful"),
@@ -128,7 +132,7 @@ function module.create(args_or_name, editor, default_cmd)
     else
         return nil
     end
-    args.editor = args.editor or editor
+    args.editor = args.editor or editor or machi.editor.default_editor
     args.default_cmd = args.default_cmd or default_cmd or global_default_cmd
     args.persistent = args.persistent == nil or args.persistent
 
