@@ -10,7 +10,7 @@ local DEBUG = -1
 
 local module = {
    log_level = WARNING,
-   default_cmd = "dw66.",
+   global_default_cmd = "dw66.",
    allowing_shrinking_by_mouse_moving = false,
 }
 
@@ -113,7 +113,7 @@ function module.set_geometry(c, region_lu, region_rd, useless_gap, border_width)
    end
 end
 
-function module.create(name, editor)
+function module.create(name, editor, default_cmd)
    local instances = {}
 
    local get_instance_name
@@ -130,13 +130,16 @@ function module.create(name, editor)
             cmd = persistent and editor.get_last_cmd(name) or nil,
             regions_cache = {},
          }
+         if instances[name].cmd == nil then
+             instances[name].cmd = default_cmd
+         end
       end
       return instances[name]
    end
 
    local function get_regions(workarea, tag)
       local instance = get_instance_(tag)
-      local cmd = instance.cmd or module.default_cmd
+      local cmd = instance.cmd or module.global_default_cmd
       if cmd == nil then return {}, false end
 
       local key = tostring(workarea.width) .. "x" .. tostring(workarea.height) .. "+" .. tostring(workarea.x) .. "+" .. tostring(workarea.y)

@@ -40,14 +40,16 @@ You can change it after loading the module.
 
 ## Use the layout
 
-Use `local layout = machi.layout.create(name, editor)` to instantiate the layout with an editor object.
+Use `local layout = machi.layout.create(name, editor[, default_cmd])` to instantiate the layout with an editor object.
 
 `name` can be a string or a function returning a string (see `init.lua` and "Advanced" below).
 This is used for having different actual layout dependent on tags.
 
 `editor` are used for editing and persisting the layouts.
-`machi.default_editor` can be used, or see below on creating editors.
+You can use the exsiting `machi.default_editor`, or see below on creating editors.
 You can create multiple layouts with different names and share the same editor.
+
+`default_cmd` is the initial command if no history command exists for the layout.
 
 ## The layout editor and commands
 
@@ -78,7 +80,7 @@ There are three kinds of operations:
 
 2. Operations taking argument string as a single number.
 
-   `s` shift active region, `p` set the maximum split depth
+   `s` shift active region, `t` set the maximum split depth
 
 3. Operation not taking argument.
 
