@@ -585,16 +585,20 @@ function module.create(data)
       [" "] = "-",
    }
 
+   -- 3 for taking the arg string and an open area
+   -- 2 for taking an open area
+   -- 1 for taking nothing
+   -- 0 for args
    local ch_info = {
-      ["h"] = 2, ["H"] = 2,
-      ["v"] = 2, ["V"] = 2,
-      ["w"] = 2, ["W"] = 2,
-      ["d"] = 2, ["D"] = 2,
-      ["s"] = 2, ["S"] = 2,
-      ["t"] = 2, ["T"] = 2,
-      ["-"] = 1,
+      ["h"] = 3, ["H"] = 3,
+      ["v"] = 3, ["V"] = 3,
+      ["w"] = 3, ["W"] = 3,
+      ["d"] = 3, ["D"] = 3,
+      ["s"] = 3, ["S"] = 3,
+      ["t"] = 3, ["T"] = 3,
+      ["-"] = 2,
+      ["/"] = 2,
       ["."] = 1,
-      ["/"] = 1,
       [";"] = 1,
       ["0"] = 0, ["1"] = 0, ["2"] = 0, ["3"] = 0, ["4"] = 0,
       ["5"] = 0, ["6"] = 0, ["7"] = 0, ["8"] = 0, ["9"] = 0,
@@ -608,20 +612,23 @@ function module.create(data)
       local t = ch_info[key]
       if t == nil then
          return nil
-      elseif t == 2 then
-         if pending_op ~= nil then
-            handle_op(pending_op)
-            pending_op = key
-         elseif arg_str == "" then
-            pending_op = key
-         else
-            handle_op(key)
-         end
-      elseif t == 1 then
+      elseif t == 3 then
          if pending_op ~= nil then
             handle_op(pending_op)
             pending_op = nil
          end
+         if #open_areas == 0 then return nil end
+         if arg_str == "" then
+            pending_op = key
+         else
+            handle_op(key)
+         end
+      elseif t == 2 or t == 1 then
+         if pending_op ~= nil then
+            handle_op(pending_op)
+            pending_op = nil
+         end
+         if #open_areas == 0 and t == 2 then return nil end
          handle_op(key)
       elseif t == 0 then
          arg_str = arg_str .. key
@@ -831,7 +838,7 @@ function module.create(data)
                         current_info = current_info .. ret
                         current_cmd = current_cmd .. ret
                      else
-                        discard_history()
+                        pop_history()
                      end
 
                      if #open_areas == 0 then
