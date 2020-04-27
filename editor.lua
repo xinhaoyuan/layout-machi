@@ -402,7 +402,7 @@ function module.create(data)
 
          local merged_children = {}
          local start_index = 1
-         for i = 3, #args, 2 do
+         for i = 3, #args - 1, 2 do
             -- find the first index that is not merged
             while start_index <= #children and children[start_index] == false do
                start_index = start_index + 1
