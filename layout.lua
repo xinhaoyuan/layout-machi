@@ -186,7 +186,8 @@ function module.create(args_or_name, editor, default_cmd)
 
       if draft_mode then
          for i, c in ipairs(cls) do
-            if c.floating then
+            if c.floating or c.immobilized then
+                 log(DEBUG, "Ignore client " .. tostring(c))
             else
                local skip = false
                if c.machi_lu ~= nil and c.machi_rd ~= nil and
@@ -222,7 +223,7 @@ function module.create(args_or_name, editor, default_cmd)
          end
       else
          for i, c in ipairs(cls) do
-            if c.floating then
+            if c.floating or c.immobilized then
                log(DEBUG, "Ignore client " .. tostring(c))
             else
                if c.machi_region ~= nil and
