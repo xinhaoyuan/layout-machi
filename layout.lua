@@ -150,7 +150,7 @@ function module.create(args_or_name, editor, default_cmd)
                regions_cache = {},
            }
          if instances[name].cmd == nil then
-             instances[name].cmd = default_cmd
+             instances[name].cmd = args.default_cmd
          end
       end
       return instances[name]
