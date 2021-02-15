@@ -18,6 +18,12 @@ local DEBUG = -1
 
 local module = {
    log_level = WARNING,
+   nested_layouts = {
+      ["0"] = api.layout.suit.tile,
+      ["1"] = api.layout.suit.spiral,
+      ["2"] = api.layout.suit.fair,
+      ["3"] = api.layout.suit.fair.horizontal,
+   },
 }
 
 local function log(level, msg)
@@ -131,7 +137,8 @@ end
 local function shrink_area_with_gap(a, inner_gap, outer_gap)
    return { x = a.x + (a.bl and outer_gap or inner_gap / 2), y = a.y + (a.bu and outer_gap or inner_gap / 2),
             width = a.width - (a.bl and outer_gap or inner_gap / 2) - (a.br and outer_gap or inner_gap / 2),
-            height = a.height - (a.bu and outer_gap or inner_gap / 2) - (a.bd and outer_gap or inner_gap / 2) }
+            height = a.height - (a.bu and outer_gap or inner_gap / 2) - (a.bd and outer_gap or inner_gap / 2),
+            layout = a.layout }
 end
 
 function module.restore_data(data)
@@ -553,6 +560,11 @@ function module.create(data)
             max_depth = n
          end
 
+      elseif method == "x" then
+
+         push_area()
+         closed_areas[#closed_areas].layout = module.nested_layouts[arg_str]
+
       elseif method == "-" then
 
          push_area()
@@ -596,6 +608,7 @@ function module.create(data)
       ["d"] = 3, ["D"] = 3,
       ["s"] = 3, ["S"] = 3,
       ["t"] = 3, ["T"] = 3,
+      ["x"] = 3,
       ["-"] = 2,
       ["/"] = 2,
       ["."] = 1,

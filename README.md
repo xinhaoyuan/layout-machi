@@ -1,4 +1,4 @@
-# ![](icon.png) layout-machi
+# ![machi icon](icon.png) layout-machi
 
 A manual layout for Awesome with a rapid interactive editor.
 
@@ -8,16 +8,16 @@ Draft mode: https://imgur.com/a/BOvMeQL
 
 ## Why?
 
-TL;DR --- I want the control of my layout.
+TL;DR --- To bring back control the window layout.
 
-1. Dynamic tiling is an overkill, since tiling is only useful for persistent windows, and people extensively use hibernate/sleep these days.
-2. I don't want to have all windows moving around whenever a new window shows up.
-3. I want to have a flexible layout such that I can quickly adjust to whatever I need.
+1. Dynamic tiling can be an overkill, since tiling is only useful for persistent windows, and people extensively use hibernate/sleep these days.
+2. Having window moving around can be annoying whenever a new window shows up.
+3. I want a flexible layout such that I can quickly adjust to whatever I need.
 
 ## Compatibilities
 
-I developed it with Awesome 4.3.
-Please let me know if it does not work in other versions.
+I developed it with Awesome git version. Hopefully it works with 4.3 stable.
+Please let me know if it does not work in 4.3 or older versions.
 
 ## Really quick usage
 
@@ -228,7 +228,7 @@ Final merge, size 3x1, `w443113132231`:
 
 ### Draft mode
 
-__This mode is experimental. Its usage may change fast.__
+__This mode is somewhat usable, yet it may change in the future.__
 
 Unlike the original machi layout, where a window fits in a single region, draft mode allows window to span across multiple regions.
 Each tiled window is associated with a upper-left region (ULR) and a bottom-right region (BRR).
@@ -236,6 +236,20 @@ The geometry of the window is from the upper-left corner of the ULR to the botto
 
 This is suppose to work with regions produced with `d` or `w` operation.
 To enable draft mode in a layout, configure the layout with a command with a leading `d`, for example, `d12210121`, or `dw66`.
+
+### Nested layouts
+
+__This feature is a toy. It may come with performance and usability issues - you have been warned.__
+
+__This feature is not available in draft mode.__
+
+To set up nested layouts, you first need to check/modify `machi.editor.nested_layouts` array, which maps an argument string (`[0-9,]+`) to a layout object.
+In machi command, use the argument string with command `x` will set up the nested layout of the region to the mapped one.
+
+For example, since by default `machi.editor.nested_layouts["0"]` is `awful.layout.suit.tile` and `machi.editor.nested_layouts["1"]` is `awful.layout.suit.spiral`,
+the command `11h0x1x` will split the screen horizontally apply the layouts accordingly - see the figure below.
+
+![nested layout screenshot](nested_layout_screenshot.png)
 
 ### Persistent history
 

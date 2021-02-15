@@ -183,6 +183,7 @@ function module.create(args_or_name, editor, default_cmd)
       local regions, draft_mode = get_regions(wa, get_screen(p.screen).selected_tag)
 
       if #regions == 0 then return end
+      local nested_clients = {}
 
       if draft_mode then
          for i, c in ipairs(cls) do
@@ -227,6 +228,7 @@ function module.create(args_or_name, editor, default_cmd)
                log(DEBUG, "Ignore client " .. tostring(c))
             else
                if c.machi_region ~= nil and
+                  regions[c.machi_region].layout == nil and
                   regions[c.machi_region].x == c.x and
                   regions[c.machi_region].y == c.y and
                   regions[c.machi_region].width - c.border_width * 2 == c.width and
@@ -237,9 +239,51 @@ function module.create(args_or_name, editor, default_cmd)
                   local region = find_region(c, regions)
                   c.machi_region = region
                   p.geometries[c] = {}
-                  module.set_geometry(p.geometries[c], regions[region], regions[region], useless_gap, 0)
+                  if regions[region].layout ~= nil then
+                      local clients = nested_clients[region]
+                      if clients == nil then clients = {}; nested_clients[region] = clients end
+                      clients[#clients + 1] = c
+                  else
+                      module.set_geometry(p.geometries[c], regions[region], regions[region], useless_gap, 0)
+                  end
                end
             end
+         end
+
+         for region, clients in pairs(nested_clients) do
+             local nested_params = {
+                 tags = {
+                     -- Any tag properties to fake?
+                     useless_gap = 0,
+                 },
+                 screen = p.screen,
+                 clients = clients,
+                 padding = 0,
+                 geometry = {
+                     x = regions[region].x,
+                     y = regions[region].y,
+                     width = regions[region].width,
+                     height = regions[region].height,
+                 },
+                 -- Not sure how useless_gap adjustment works here. It seems to work anyway.
+                 workarea = {
+                     x = regions[region].x - useless_gap / 2,
+                     y = regions[region].y - useless_gap / 2,
+                     width = regions[region].width + useless_gap,
+                     height = regions[region].height + useless_gap,
+                 },
+                 useless_gap = 0,
+                 geometries = {},
+             }
+             regions[region].layout.arrange(nested_params)
+             for _, c in ipairs(clients) do
+                 p.geometries[c] = {
+                     x = nested_params.geometries[c].x - useless_gap / 2,
+                     y = nested_params.geometries[c].y - useless_gap / 2,
+                     width = nested_params.geometries[c].width + useless_gap,
+                     height = nested_params.geometries[c].height + useless_gap,
+                 }
+             end
          end
       end
    end
@@ -288,9 +332,6 @@ function module.create(args_or_name, editor, default_cmd)
          end
       else
          if context ~= "mouse.move" then return end
-
-         local workarea = c.screen.workarea
-         local regions = get_regions(workarea, c.screen.selected_tag)
 
          if #regions == 0 then return end
 
