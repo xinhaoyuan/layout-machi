@@ -8,7 +8,7 @@ Draft mode: https://imgur.com/a/BOvMeQL
 
 ## Why?
 
-TL;DR --- To bring back control the window layout.
+TL;DR --- To bring back the control of the window layout.
 
 1. Dynamic tiling can be an overkill, since tiling is only useful for persistent windows, and people extensively use hibernate/sleep these days.
 2. Having window moving around can be annoying whenever a new window shows up.
