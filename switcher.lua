@@ -391,8 +391,8 @@ function module.start(c, exit_keys)
             tablist = nil
 
             if c and ctrl and draft_mode then
-               local lu = c.machi_lu
-               local rd = c.machi_rd
+               local lu = c.machi.lu
+               local rd = c.machi.rd
 
                if shift then
                   lu = choice
@@ -419,8 +419,8 @@ function module.start(c, exit_keys)
                   c.y = min(c.y, regions[rd].y)
                   machi.layout.set_geometry(c, nil, regions[rd], 0, c.border_width)
                end
-               c.machi_lu = lu
-               c.machi_rd = rd
+               c.machi.lu = lu
+               c.machi.rd = rd
 
                c:emit_signal("request::activate", "mouse.move", {raise=false})
                c:raise()
@@ -432,7 +432,7 @@ function module.start(c, exit_keys)
                   c.y = regions[choice].y
                else
                   machi.layout.set_geometry(c, regions[choice], regions[choice], 0, c.border_width)
-                  c.machi_region = choice
+                  c.machi.region = choice
                end
                c:emit_signal("request::activate", "mouse.move", {raise=false})
                c:raise()

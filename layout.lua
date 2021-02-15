@@ -136,6 +136,7 @@ function module.create(args_or_name, editor, default_cmd)
     args.default_cmd = args.default_cmd or default_cmd or global_default_cmd
     args.persistent = args.persistent == nil or args.persistent
 
+    local layout = {}
     local instances = {}
 
     local function get_instance_info(tag)
@@ -146,8 +147,10 @@ function module.create(args_or_name, editor, default_cmd)
        local name, persistent = get_instance_info(tag)
        if instances[name] == nil then
            instances[name] = {
+               layout = layout,
                cmd = persistent and args.editor.get_last_cmd(name) or nil,
                regions_cache = {},
+               tag_data = {},
            }
          if instances[name].cmd == nil then
              instances[name].cmd = args.default_cmd
@@ -180,10 +183,18 @@ function module.create(args_or_name, editor, default_cmd)
       local useless_gap = p.useless_gap
       local wa = get_screen(p.screen).workarea -- get the real workarea without the gap (instead of p.workarea)
       local cls = p.clients
-      local regions, draft_mode = get_regions(wa, get_screen(p.screen).selected_tag)
+      local tag = get_screen(p.screen).selected_tag
+      local instance = get_instance_(tag)
+      local regions, draft_mode = get_regions(wa, tag)
 
       if #regions == 0 then return end
       local nested_clients = {}
+
+      for _, c in ipairs(cls) do
+          if c.machi == nil then
+              c.machi = setmetatable({}, {__mode = "v"})
+          end
+      end
 
       if draft_mode then
          for i, c in ipairs(cls) do
@@ -191,13 +202,13 @@ function module.create(args_or_name, editor, default_cmd)
                  log(DEBUG, "Ignore client " .. tostring(c))
             else
                local skip = false
-               if c.machi_lu ~= nil and c.machi_rd ~= nil and
-                  c.machi_lu <= #regions and c.machi_rd <= #regions
+               if c.machi.lu ~= nil and c.machi.rd ~= nil and
+                  c.machi.lu <= #regions and c.machi.rd <= #regions
                then
-                  if regions[c.machi_lu].x == c.x and
-                     regions[c.machi_lu].y == c.y and
-                     regions[c.machi_rd].x + regions[c.machi_rd].width - c.border_width * 2 == c.x + c.width and
-                     regions[c.machi_rd].y + regions[c.machi_rd].height - c.border_width * 2 == c.y + c.height
+                  if regions[c.machi.lu].x == c.x and
+                     regions[c.machi.lu].y == c.y and
+                     regions[c.machi.rd].x + regions[c.machi.rd].width - c.border_width * 2 == c.x + c.width and
+                     regions[c.machi.rd].y + regions[c.machi.rd].height - c.border_width * 2 == c.y + c.height
                   then
                      skip = true
                   end
@@ -216,7 +227,8 @@ function module.create(args_or_name, editor, default_cmd)
                end
 
                if lu ~= nil and rd ~= nil then
-                  c.machi_lu, c.machi_rd = lu, rd
+                  c.machi.instance = instance
+                  c.machi.region, c.machi.lu, c.machi.rd = nil, lu, rd
                   p.geometries[c] = {}
                   module.set_geometry(p.geometries[c], regions[lu], regions[rd], useless_gap, 0)
                end
@@ -227,17 +239,18 @@ function module.create(args_or_name, editor, default_cmd)
             if c.floating or c.immobilized then
                log(DEBUG, "Ignore client " .. tostring(c))
             else
-               if c.machi_region ~= nil and
-                  regions[c.machi_region].layout == nil and
-                  regions[c.machi_region].x == c.x and
-                  regions[c.machi_region].y == c.y and
-                  regions[c.machi_region].width - c.border_width * 2 == c.width and
-                  regions[c.machi_region].height - c.border_width * 2 == c.height
+               if c.machi.region ~= nil and
+                  regions[c.machi.region].layout == nil and
+                  regions[c.machi.region].x == c.x and
+                  regions[c.machi.region].y == c.y and
+                  regions[c.machi.region].width - c.border_width * 2 == c.width and
+                  regions[c.machi.region].height - c.border_width * 2 == c.height
                then
                else
                   log(DEBUG, "Compute regions for " .. (c.name or ("<untitled:" .. tostring(c) .. ">")))
                   local region = find_region(c, regions)
-                  c.machi_region = region
+                  c.machi.instance = instance
+                  c.machi.region, c.machi.lu, c.machi.rd = region, nil, nil
                   p.geometries[c] = {}
                   if regions[region].layout ~= nil then
                       local clients = nested_clients[region]
@@ -251,11 +264,22 @@ function module.create(args_or_name, editor, default_cmd)
          end
 
          for region, clients in pairs(nested_clients) do
-             local nested_params = {
-                 tags = {
-                     -- Any tag properties to fake?
+             if instance.tag_data[region] == nil then
+                 -- TODO: Make the default more flexible.
+                 instance.tag_data[region] = {
+                     column_count = 1,
+                     master_count = 1,
+                     master_fill_policy = "expand",
                      useless_gap = 0,
-                 },
+                     master_width_factor = 0.5,
+                     _private = {
+                         awful_tag_properties = {
+                         },
+                     },
+                 }
+             end
+             local nested_params = {
+                 tag = instance.tag_data[region],
                  screen = p.screen,
                  clients = clients,
                  padding = 0,
@@ -325,8 +349,8 @@ function module.create(args_or_name, editor, default_cmd)
             end
 
             if lu ~= nil and rd ~= nil then
-               c.machi_lu = lu
-               c.machi_rd = rd
+               c.machi.lu = lu
+               c.machi.rd = rd
                module.set_geometry(c, regions[lu], regions[rd], 0, c.border_width)
             end
          end
@@ -351,21 +375,20 @@ function module.create(args_or_name, editor, default_cmd)
             end
          end
 
-         if c.machi_region ~= choice then
-            c.machi_region = choice
+         if c.machi.region ~= choice then
+            c.machi.region = choice
             module.set_geometry(c, regions[choice], regions[choice], 0, c.border_width)
          end
       end
    end
 
-   return {
-      name = "machi",
-      arrange = arrange,
-      resize_handler = resize_handler,
-      machi_get_instance_info = get_instance_info,
-      machi_set_cmd = set_cmd,
-      machi_get_regions = get_regions,
-   }
+   layout.name = "machi"
+   layout.arrange = arrange
+   layout.resize_handler = resize_handler
+   layout.machi_get_instance_info = get_instance_info
+   layout.machi_set_cmd = set_cmd
+   layout.machi_get_regions = get_regions
+   return layout
 end
 
 return module
