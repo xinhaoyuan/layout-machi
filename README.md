@@ -241,6 +241,12 @@ To enable draft mode in a layout, configure the layout with a command with a lea
 
 __This feature is a toy. It may come with performance and usability issues - you have been warned.__
 
+Known caveats include:
+
+1. `arrange()` of the nested layouts are always called when the machi `arrange()` is called. This could be optimized with caching.
+2. `client.*wfact` and other layout related operations don't work as machi fakes tag data to the nested layout engine.
+    But it hopefully works if one changes the fields in the faked tag data.
+
 __This feature is not available in draft mode.__
 
 To set up nested layouts, you first need to check/modify `machi.editor.nested_layouts` array, which maps an argument string (`[0-9,]+`) to a layout object.
