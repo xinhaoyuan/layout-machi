@@ -111,8 +111,8 @@ function module.start(c, exit_keys)
          for _, tc in ipairs(screen.tiled_clients) do
             if not (tc.floating or tc.immobilized)
             then
-               if regions[active_region].x <= tc.x and tc.x + tc.width + tc.border_width * 2 <= regions[active_region].x + regions[active_region].width and
-                  regions[active_region].y <= tc.y and tc.y + tc.height + tc.border_width * 2 <= regions[active_region].y + regions[active_region].height
+               if regions[active_region].x <= tc.x + tc.width + tc.border_width * 2 and tc.x <= regions[active_region].x + regions[active_region].width and
+                  regions[active_region].y <= tc.y + tc.height + tc.border_width * 2 and tc.y <= regions[active_region].y + regions[active_region].height
                then
                   tablist[#tablist + 1] = tc
                end
