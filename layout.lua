@@ -176,6 +176,7 @@ function module.create(args_or_name, editor, default_cmd)
       if instance.cmd ~= cmd then
          instance.cmd = cmd
          instance.regions_cache = {}
+         instance.tag_data = {}
       end
    end
 
