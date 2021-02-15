@@ -100,11 +100,19 @@ function module.start(c, exit_keys)
       if tablist == nil then
          tablist = {}
 
-         for _, tc in ipairs(screen.tiled_clients) do
-            if not (tc.floating or tc.maximized or tc.maximized_horizontal or tc.maximized_vertical)
+         for i, a in ipairs(regions) do
+            if a.x <= traverse_x and traverse_x < a.x + a.width and
+               a.y <= traverse_y and traverse_y < a.y + a.height
             then
-               if tc.x <= traverse_x and traverse_x < tc.x + tc.width + tc.border_width * 2 and
-                  tc.y <= traverse_y and traverse_y < tc.y + tc.height + tc.border_width * 2
+               active_region = i
+            end
+         end
+
+         for _, tc in ipairs(screen.tiled_clients) do
+            if not (tc.floating or tc.immobilized)
+            then
+               if regions[active_region].x <= tc.x and tc.x + tc.width + tc.border_width * 2 <= regions[active_region].x + regions[active_region].width and
+                  regions[active_region].y <= tc.y and tc.y + tc.height + tc.border_width * 2 <= regions[active_region].y + regions[active_region].height
                then
                   tablist[#tablist + 1] = tc
                end
@@ -157,6 +165,7 @@ function module.start(c, exit_keys)
          cr:stroke()
          cr:reset_clip()
 
+         -- TODO deduplicate this with code in maintain_tablist()
          if a.x <= traverse_x and traverse_x < a.x + a.width and
             a.y <= traverse_y and traverse_y < a.y + a.height
          then
