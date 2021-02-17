@@ -81,7 +81,7 @@ There are three kinds of operations:
 
 2. Operations taking argument string as a single number.
 
-   `s` shift active region, `t` set the maximum split depth
+   `s` shift active region, `t` set the maximum split depth, `x` set the nested layout of the current region.
 
 3. Operation not taking argument.
 
@@ -253,7 +253,7 @@ To set up nested layouts, you first need to check/modify `machi.editor.nested_la
 In machi command, use the argument string with command `x` will set up the nested layout of the region to the mapped one.
 
 For example, since by default `machi.editor.nested_layouts["0"]` is `awful.layout.suit.tile` and `machi.editor.nested_layouts["1"]` is `awful.layout.suit.spiral`,
-the command `11h0x1x` will split the screen horizontally apply the layouts accordingly - see the figure below.
+the command `11h0x1x` will split the screen horizontally and apply the layouts accordingly - see the figure below.
 
 ![nested layout screenshot](nested_layout_screenshot.png)
 
@@ -277,7 +277,7 @@ So far, the key binding is not configurable. One has to modify the source code t
 
 1. layout-machi handles `beautiful.useless_gap` slightly differently.
 
-2. True transparency is required. Otherwise switcher and editor will block the clients.
+2. A compositor (e.g. picom, compton, xcompmgr) is required. Otherwise switcher and editor will block the clients.
 
 ## License
 
