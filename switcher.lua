@@ -50,10 +50,18 @@ function module.start(c, exit_keys)
    local font_color = with_alpha(api.gears.color(api.beautiful.fg_normal), 1)
    local font_color_hl = with_alpha(api.gears.color(api.beautiful.fg_focus), 1)
    local label_size = api.dpi(30)
-   local border_color = with_alpha(api.gears.color(api.beautiful.border_focus), 0.25)
-   local fill_color = with_alpha(api.gears.color(api.beautiful.bg_normal), 0.25)
-   local box_bg = with_alpha(api.gears.color(api.beautiful.bg_normal), 0.85)
-   local fill_color_hl = with_alpha(api.gears.color(api.beautiful.bg_focus), 1)
+   local border_color = with_alpha(api.gears.color(
+      api.beautiful.switcher_border_color or api.beautiful.border_focus), 
+      api.beautiful.switcher_border_opacity or 0.25)
+   local fill_color = with_alpha(api.gears.color(
+      api.beautiful.switcher_fill_color or api.beautiful.bg_normal), 
+      api.beautiful.switcher_fill_opacity or 0.25)
+   local box_bg = with_alpha(api.gears.color(
+      api.beautiful.switcher_box_bg or api.beautiful.bg_normal), 
+      api.beautiful.switcher_box_opacity or 0.85)
+   local fill_color_hl = with_alpha(api.gears.color(
+      api.beautiful.switcher_fill_color_hl or api.beautiful.bg_focus), 
+      api.beautiful.switcher_fill_hl_opacity or 1)
    -- for comparing floats
    local threshold = 0.1
    local traverse_radius = api.dpi(5)
