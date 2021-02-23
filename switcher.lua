@@ -1,5 +1,6 @@
 local machi = {
-   layout = require((...):match("(.-)[^%.]+$") .. "layout"),
+    layout = require((...):match("(.-)[^%.]+$") .. "layout"),
+    engine = require((...):match("(.-)[^%.]+$") .. "engine"),
 }
 
 local api = {
@@ -14,6 +15,8 @@ local api = {
    lgi        = require("lgi"),
    dpi        = require("beautiful.xresources").apply_dpi,
 }
+
+local gtimer = require("gears.timer")
 
 local ERROR = 2
 local WARNING = 1
@@ -53,6 +56,9 @@ function module.start(c, exit_keys)
    local border_color = with_alpha(api.gears.color(
       api.beautiful.machi_switcher_border_color or api.beautiful.border_focus), 
       api.beautiful.machi_switcher_border_opacity or 0.25)
+   local border_color_hl = with_alpha(api.gears.color(
+      api.beautiful.machi_switcher_border_hl_color or api.beautiful.border_focus),
+      api.beautiful.machi_switcher_border_hl_opacity or 0.75)
    local fill_color = with_alpha(api.gears.color(
       api.beautiful.machi_switcher_fill_color or api.beautiful.bg_normal), 
       api.beautiful.machi_switcher_fill_opacity or 0.25)
@@ -67,14 +73,16 @@ function module.start(c, exit_keys)
    local traverse_radius = api.dpi(5)
 
    local screen = c and c.screen or api.screen.focused()
+   local tag = screen.selected_tag
+   local layout = tag.layout
+   local gap = tag.gap
    local start_x = screen.workarea.x
    local start_y = screen.workarea.y
 
-   local layout = api.layout.get(screen)
-   if (c ~= nil and c.floating) or layout.machi_get_regions == nil then return end
+   if (c ~= nil and c.floating) or layout.machi_get_areas == nil then return end
 
-   local regions, draft_mode = layout.machi_get_regions(screen.workarea, screen.selected_tag)
-   if regions == nil or #regions == 0 then
+   local areas, draft_mode = layout.machi_get_areas(screen, screen.selected_tag)
+   if areas == nil or #areas == 0 then
       return
    end
 
@@ -91,7 +99,6 @@ function module.start(c, exit_keys)
    })
    infobox.visible = true
 
-   local tablist_region = nil
    local tablist = nil
    local tablist_index = nil
 
@@ -104,23 +111,35 @@ function module.start(c, exit_keys)
       traverse_y = screen.workarea.y + screen.workarea.height / 2
    end
 
+   local selected_area_ = nil
+   local function selected_area()
+       if selected_area_ == nil then
+           for i, a in ipairs(areas) do
+               if not a.inhabitable and
+                   a.x <= traverse_x and traverse_x < a.x + a.width and
+                   a.y <= traverse_y and traverse_y < a.y + a.height
+               then
+                   selected_area_ = i
+               end
+           end
+       end
+       return selected_area_
+   end
+
+   local function set_selected_area(a)
+       selected_area_ = a
+   end
+
    local function maintain_tablist()
       if tablist == nil then
          tablist = {}
 
-         for i, a in ipairs(regions) do
-            if a.x <= traverse_x and traverse_x < a.x + a.width and
-               a.y <= traverse_y and traverse_y < a.y + a.height
-            then
-               active_region = i
-            end
-         end
-
+         local active_area = selected_area()
          for _, tc in ipairs(screen.tiled_clients) do
             if not (tc.floating or tc.immobilized)
             then
-               if regions[active_region].x <= tc.x + tc.width + tc.border_width * 2 and tc.x <= regions[active_region].x + regions[active_region].width and
-                  regions[active_region].y <= tc.y + tc.height + tc.border_width * 2 and tc.y <= regions[active_region].y + regions[active_region].height
+               if areas[active_area].x <= tc.x + tc.width + tc.border_width * 2 and tc.x <= areas[active_area].x + areas[active_area].width and
+                  areas[active_area].y <= tc.y + tc.height + tc.border_width * 2 and tc.y <= areas[active_area].y + areas[active_area].height
                then
                   tablist[#tablist + 1] = tc
                end
@@ -159,30 +178,25 @@ function module.start(c, exit_keys)
       cr:rectangle(0, 0, width, height)
       cr:fill()
 
-      local msg, ext, active_region
-      for i, a in ipairs(regions) do
-
-         cr:rectangle(a.x - start_x, a.y - start_y, a.width, a.height)
-         cr:clip()
-         cr:set_source(fill_color)
-         cr:rectangle(a.x - start_x, a.y - start_y, a.width, a.height)
-         cr:fill()
-         cr:set_source(border_color)
-         cr:rectangle(a.x - start_x, a.y - start_y, a.width, a.height)
-         cr:set_line_width(10.0)
-         cr:stroke()
-         cr:reset_clip()
-
-         -- TODO deduplicate this with code in maintain_tablist()
-         if a.x <= traverse_x and traverse_x < a.x + a.width and
-            a.y <= traverse_y and traverse_y < a.y + a.height
-         then
-            active_region = i
+      local msg, ext
+      local active_area = selected_area()
+      for i, a in ipairs(areas) do
+         if not a.inhabitable or i == active_area then
+            cr:rectangle(a.x - start_x, a.y - start_y, a.width, a.height)
+            cr:clip()
+            cr:set_source(fill_color)
+            cr:rectangle(a.x - start_x, a.y - start_y, a.width, a.height)
+            cr:fill()
+            cr:set_source(i == active_area and border_color_hl or border_color)
+            cr:rectangle(a.x - start_x, a.y - start_y, a.width, a.height)
+            cr:set_line_width(10.0)
+            cr:stroke()
+            cr:reset_clip()
          end
       end
 
       if #tablist > 0 then
-         local a = regions[active_region]
+         local a = areas[active_area]
          local pl = api.lgi.Pango.Layout.create(cr)
          pl:set_font_description(tablist_font_desc)
 
@@ -192,7 +206,7 @@ function module.start(c, exit_keys)
          local exts = {}
 
          for index, tc in ipairs(tablist) do
-            local label = tc.name
+            local label = tc.name or "<unnamed>"
             pl:set_text(label)
             local w, h
             w, h = pl:get_size()
@@ -208,7 +222,7 @@ function module.start(c, exit_keys)
          local y_offset = a.y + a.height / 2 - list_height / 2 + vpadding - start_y
 
          -- cr:rectangle(a.x - start_x, y_offset - vpadding - start_y, a.width, list_height)
-         -- cover the entire region
+         -- cover the entire area
          cr:rectangle(a.x - start_x, a.y - start_y, a.width, a.height)
          cr:set_source(fill_color)
          cr:fill()
@@ -218,7 +232,7 @@ function module.start(c, exit_keys)
          cr:fill()
 
          for index, tc in ipairs(tablist) do
-            local label = tc.name
+            local label = tc.name or "<unnamed>"
             local ext = exts[index]
             if index == tablist_index then
                cr:rectangle(x_offset - ext.width / 2 - vpadding / 2, y_offset - vpadding / 2, ext.width + vpadding, ext.height + vpadding)
@@ -298,37 +312,28 @@ function module.start(c, exit_keys)
             end
          end
 
-         local current_region = nil
+         local current_area = selected_area()
 
          if c and (shift or ctrl) then
-            for i, a in ipairs(regions) do
-               if a.x <= traverse_x and traverse_x < a.x + a.width and
-                  a.y <= traverse_y and traverse_y < a.y + a.height
-               then
-                  current_region = i
-                  break
-               end
-            end
-
             if shift then
-               if current_region == nil or
-                  regions[current_region].x ~= c.x or
-                  regions[current_region].y ~= c.y
+               if current_area == nil or
+                  areas[current_area].x ~= c.x or
+                  areas[current_area].y ~= c.y
                then
                   traverse_x = c.x + traverse_radius
                   traverse_y = c.y + traverse_radius
-                  current_region = nil
+                  set_selected_area(nil)
                end
             elseif ctrl then
                local ex = c.x + c.width + c.border_width * 2
                local ey = c.y + c.height + c.border_width * 2
-               if current_region == nil or
-                  regions[current_region].x + regions[current_region].width ~= ex or
-                  regions[current_region].y + regions[current_region].height ~= ey
+               if current_area == nil or
+                  areas[current_area].x + areas[current_area].width ~= ex or
+                  areas[current_area].y + areas[current_area].height ~= ey
                then
                   traverse_x = ex - traverse_radius
                   traverse_y = ey - traverse_radius
-                  current_region = nil
+                  set_selected_area(nil)
                end
             end
          end
@@ -336,12 +341,10 @@ function module.start(c, exit_keys)
          local choice = nil
          local choice_value
 
-         for i, a in ipairs(regions) do
-            if a.x <= traverse_x and traverse_x < a.x + a.width and
-               a.y <= traverse_y and traverse_y < a.y + a.height
-            then
-               current_region = i
-            end
+         current_area = selected_area()
+
+         for i, a in ipairs(areas) do
+            if a.inhabitable then goto continue end
 
             local v
             if key == "Up" then
@@ -378,10 +381,11 @@ function module.start(c, exit_keys)
                choice = i
                choice_value = v
             end
+            ::continue::
          end
 
          if choice == nil then
-            choice = current_region
+            choice = current_area
             if key == "Up" then
                traverse_y = screen.workarea.y
             elseif key == "Down" then
@@ -394,9 +398,10 @@ function module.start(c, exit_keys)
          end
 
          if choice ~= nil then
-            traverse_x = max(regions[choice].x + traverse_radius, min(regions[choice].x + regions[choice].width - traverse_radius, traverse_x))
-            traverse_y = max(regions[choice].y + traverse_radius, min(regions[choice].y + regions[choice].height - traverse_radius, traverse_y))
+            traverse_x = max(areas[choice].x + traverse_radius, min(areas[choice].x + areas[choice].width - traverse_radius, traverse_x))
+            traverse_y = max(areas[choice].y + traverse_radius, min(areas[choice].y + areas[choice].height - traverse_radius, traverse_y))
             tablist = nil
+            set_selected_area(nil)
 
             if c and ctrl and draft_mode then
                local lu = c.machi.lu
@@ -404,28 +409,28 @@ function module.start(c, exit_keys)
 
                if shift then
                   lu = choice
-                  if regions[rd].x + regions[rd].width <= regions[lu].x or
-                     regions[rd].y + regions[rd].height <= regions[lu].y
+                  if areas[rd].x + areas[rd].width <= areas[lu].x or
+                     areas[rd].y + areas[rd].height <= areas[lu].y
                   then
                      rd = nil
                   end
                else
                   rd = choice
-                  if regions[rd].x + regions[rd].width <= regions[lu].x or
-                     regions[rd].y + regions[rd].height <= regions[lu].y
+                  if areas[rd].x + areas[rd].width <= areas[lu].x or
+                     areas[rd].y + areas[rd].height <= areas[lu].y
                   then
                      lu = nil
                   end
                end
 
                if lu ~= nil and rd ~= nil then
-                  machi.layout.set_geometry(c, regions[lu], regions[rd], 0, c.border_width)
+                  machi.layout.set_geometry(c, areas[lu], areas[rd], 0, c.border_width)
                elseif lu ~= nil then
-                  machi.layout.set_geometry(c, regions[lu], nil, 0, c.border_width)
+                  machi.layout.set_geometry(c, areas[lu], nil, 0, c.border_width)
                elseif rd ~= nil then
-                  c.x = min(c.x, regions[rd].x)
-                  c.y = min(c.y, regions[rd].y)
-                  machi.layout.set_geometry(c, nil, regions[rd], 0, c.border_width)
+                  c.x = min(c.x, areas[rd].x)
+                  c.y = min(c.y, areas[rd].y)
+                  machi.layout.set_geometry(c, nil, areas[rd], 0, c.border_width)
                end
                c.machi.lu = lu
                c.machi.rd = rd
@@ -436,11 +441,11 @@ function module.start(c, exit_keys)
             elseif c and shift then
                -- move the window
                if draft_mode then
-                  c.x = regions[choice].x
-                  c.y = regions[choice].y
+                  c.x = areas[choice].x
+                  c.y = areas[choice].y
                else
-                  machi.layout.set_geometry(c, regions[choice], regions[choice], 0, c.border_width)
-                  c.machi.region = choice
+                  machi.layout.set_geometry(c, areas[choice], areas[choice], 0, c.border_width)
+                  c.machi.area = choice
                end
                c:emit_signal("request::activate", "mouse.move", {raise=false})
                c:raise()
@@ -458,6 +463,42 @@ function module.start(c, exit_keys)
 
             infobox.bgimage = draw_info
          end
+      elseif (key == "u" or key == "Prior") and not draft_mode then
+          local current_area = selected_area()
+          if areas[current_area].parent_id then
+              tablist = nil
+              set_selected_area(areas[current_area].parent_id)
+              infobox.bgimage = draw_info
+          end
+      elseif key == "/" and not draft_mode then
+          local current_area = selected_area()
+          areas[current_area].hole = true
+          local prefix, suffix = machi.engine.areas_to_command(
+              areas, true):match("(.*)|(.*)")
+          print(prefix, suffix)
+
+          areas[current_area].hole = nil
+
+          workarea = {
+              x = areas[current_area].x - gap * 2,
+              y = areas[current_area].y - gap * 2,
+              width = areas[current_area].width + gap * 4,
+              height = areas[current_area].height + gap * 4,
+          }
+          gtimer.delayed_call(
+              function ()
+                  print(layout.editor)
+                  layout.editor.start_interactive(
+                      screen,
+                      {
+                          workarea = workarea,
+                          cmd_prefix = prefix,
+                          cmd_suffix = suffix,
+                      }
+                  )
+              end
+          )
+          exit()
       elseif key == "Escape" or key == "Return" then
          exit()
       else
