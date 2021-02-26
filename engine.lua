@@ -782,8 +782,9 @@ local function areas_from_command(command, workarea, minimum)
     return closed_areas, open_areas, pending_op ~= nil
 end
 
-local function areas_to_command(areas, to_embed)
-    if #areas == 0 then return nil end
+local function areas_to_command(areas, to_embed, root_area)
+    root_area = root_area or 1
+    if #areas < root_area then return nil end
 
     local function shares_to_arg_str(shares)
         local arg_str = ""
@@ -880,7 +881,7 @@ local function areas_to_command(areas, to_embed)
                 end
             end
 
-            if a.parent_id then
+            if area_id ~= root_area then
                 if a.expansion ~= areas[a.parent_id].expansion - 1 then
                     r = "t"..tostring(a.expansion)..r
                 end
@@ -900,9 +901,14 @@ local function areas_to_command(areas, to_embed)
         return r
     end
 
-    local r = get_command(1)
+    local r = get_command(root_area)
     if not to_embed then
-        r = r:gsub("[\\c]+$", ".")
+        if r == "-" then
+            r = "."
+        else
+            -- The last . may be redundant, but it makes sure no pending op.
+            r = r:gsub("[\\c]+$", "").."."
+        end
     end
     return r
 end
@@ -921,14 +927,15 @@ if not in_module then
             assert(false)
         end
     end
-    check_transcoded_command("t.", "-")
+    check_transcoded_command(".", ".")
+    check_transcoded_command("3t.", ".")
     check_transcoded_command("121h.", "h1,2,1.")
     check_transcoded_command("1_10,2,1h1s131v.", "h1_10,2,1-v1,3,1.")
     check_transcoded_command("332111w.", "w3,3,2,1,1,1.")
     check_transcoded_command("1310111d.", ";d1,3,1,,1,1,1.")
-    check_transcoded_command("dw66.", "dw6,6")
-    check_transcoded_command(";dw66.", ";dw6,6")
-    check_transcoded_command("101dw66.", ";dw6,6")
+    check_transcoded_command("dw66.", "dw6,6.")
+    check_transcoded_command(";dw66.", ";dw6,6.")
+    check_transcoded_command("101dw66.", ";dw6,6.")
     check_transcoded_command("3tdw66.", "t3;dw6,6.")
     print("Passed.")
 end
