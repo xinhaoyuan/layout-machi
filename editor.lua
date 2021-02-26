@@ -456,7 +456,7 @@ function module.create(data)
 
    local function run_cmd(cmd, screen, tag)
        local gap = tag.gap
-       local areas = machi_engine.areas_from_command(
+       local areas, closed = machi_engine.areas_from_command(
            cmd,
            {
                x = screen.workarea.x + gap,
@@ -465,7 +465,7 @@ function module.create(data)
                height = screen.workarea.height - gap * 2
            },
            gap * 2 + data.minimum_size)
-       if not areas then
+       if not areas or #closed > 0 then
            return nil
        end
        for _, a in ipairs(areas) do

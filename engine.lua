@@ -859,32 +859,27 @@ local function areas_to_command(areas, to_embed)
                 end
             end
             local acc_dashes = 0
-            for _, c in ipairs(a.split.children) do
-                local cr = get_command(c.id)
-                if cr == "-" then
-                    acc_dashes = acc_dashes + 1
-                else
-                    if acc_dashes == 0 then
-                    elseif acc_dashes == 1 then
-                        r = r.."-"
+            if a.expansion > 1 then
+                for _, c in ipairs(a.split.children) do
+                    local cr = get_command(c.id)
+                    if cr == "-" then
+                        acc_dashes = acc_dashes + 1
                     else
-                        r = r.."c"..tonumber(acc_dashes)
+                        if acc_dashes == 0 then
+                        elseif acc_dashes == 1 then
+                            r = r.."-"
+                        else
+                            r = r.."c"..tonumber(acc_dashes)
+                        end
+                        acc_dashes = 0
+                        r = r..cr
                     end
-                    acc_dashes = 0
-                    r = r..cr
+                end
+                if acc_dashes > 0 then
+                    r = r.."c"
                 end
             end
-            if acc_dashes > 0 then
-                r = r.."c"
-            end
-        elseif a.disabled then
-            r = "/"
-        elseif a.layout then
-            r = "x"..a.layout
-        else
-            r = "-"
-        end
-        if a.split then
+
             if a.parent_id then
                 if a.expansion ~= areas[a.parent_id].expansion - 1 then
                     r = "t"..tostring(a.expansion)..r
@@ -894,7 +889,14 @@ local function areas_to_command(areas, to_embed)
                     r = "t"..tostring(a.expansion)..r
                 end
             end
+        elseif a.disabled then
+            r = "/"
+        elseif a.layout then
+            r = "x"..a.layout
+        else
+            r = "-"
         end
+
         return r
     end
 
@@ -924,9 +926,9 @@ if not in_module then
     check_transcoded_command("1_10,2,1h1s131v.", "h1_10,2,1-v1,3,1.")
     check_transcoded_command("332111w.", "w3,3,2,1,1,1.")
     check_transcoded_command("1310111d.", ";d1,3,1,,1,1,1.")
-    check_transcoded_command("dw66.", "dw6,6.")
-    check_transcoded_command(";dw66.", ";dw6,6.")
-    check_transcoded_command("101dw66.", ";dw6,6.")
+    check_transcoded_command("dw66.", "dw6,6")
+    check_transcoded_command(";dw66.", ";dw6,6")
+    check_transcoded_command("101dw66.", ";dw6,6")
     check_transcoded_command("3tdw66.", "t3;dw6,6.")
     print("Passed.")
 end

@@ -203,7 +203,7 @@ function module.create(args_or_name, editor, default_cmd)
         local instance = get_instance_(tag)
         local areas, draft_mode = get_areas(screen, tag)
 
-        if #areas == 0 then return end
+        if areas == nil then return end
         local nested_clients = {}
 
         for _, c in ipairs(cls) do
