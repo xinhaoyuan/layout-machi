@@ -87,9 +87,9 @@ The layout is defined by a sequence of operations as a layout command.
 The layout editor allows users to interactively input their commands and shows the resulting layouts on screen, with the following auxiliary functions:
 
 1. `Up`/`Down`: restore to the history command
-2. `Backspace`: undo the last command. If the command is already empty, restores to the current (maybe transcoded) command of the layout.
+2. `Backspace`: undo the last command. If `Shift` is hold, restores to the current (maybe transcoded) command of the layout.
 3. `Escape`: exit the editor without saving the layout.
-4. `Enter`: when all areas are defined, hit enter will save the layout. If shift is hold, only applies the command without saving it to the history.
+4. `Enter`: when all areas are defined, hit enter will save the layout. If `Shift` is hold, only applies the command without saving it to the history.
 
 ### Layout command
 

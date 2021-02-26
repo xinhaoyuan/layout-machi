@@ -369,11 +369,18 @@ function module.create(data)
             local ok, err = pcall(
                function ()
                   if key == "BackSpace" then
-                      if #current_cmd > 0 then
-                          set_cmd(current_cmd:sub(1, #current_cmd - 1))
-                      elseif embed_args == nil then
+                      local alt = false
+                      for _, m in ipairs(mod) do
+                          if m == "Shift" then
+                              alt = true
+                              break
+                          end
+                      end
+                      if alt then
                           local areas = layout.machi_get_areas(screen, tag)
                           set_cmd(machi_engine.areas_to_command(areas))
+                      else
+                          set_cmd(current_cmd:sub(1, #current_cmd - 1))
                       end
                   elseif key == "Escape" then
                      table.remove(data.cmds, #data.cmds)
