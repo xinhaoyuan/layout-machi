@@ -472,11 +472,10 @@ function module.start(c, exit_keys)
           end
       elseif key == "/" and not draft_mode then
           local current_area = selected_area()
+          local original_cmd = machi.engine.areas_to_command(areas, true, current_area)
           areas[current_area].hole = true
           local prefix, suffix = machi.engine.areas_to_command(
-              areas, true):match("(.*)|(.*)")
-          print(prefix, suffix)
-
+              areas, false):match("(.*)|(.*)")
           areas[current_area].hole = nil
 
           workarea = {
@@ -492,6 +491,7 @@ function module.start(c, exit_keys)
                       screen,
                       {
                           workarea = workarea,
+                          original_cmd = original_cmd,
                           cmd_prefix = prefix,
                           cmd_suffix = suffix,
                       }

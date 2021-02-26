@@ -234,6 +234,10 @@ function module.create(data)
               else
                   current_info = cmd
               end
+
+              if #open_areas == 0 and not pending_op then
+                  current_info = current_info .. " (enter to apply)"
+              end
               return true
           else
               return false
@@ -377,8 +381,12 @@ function module.create(data)
                           end
                       end
                       if alt then
-                          local areas = layout.machi_get_areas(screen, tag)
-                          set_cmd(machi_engine.areas_to_command(areas))
+                          if embed_args then
+                              set_cmd(embed_args.original_cmd or "")
+                          else
+                              local areas = layout.machi_get_areas(screen, tag)
+                              set_cmd(machi_engine.areas_to_command(areas))
+                          end
                       else
                           set_cmd(current_cmd:sub(1, #current_cmd - 1))
                       end
@@ -397,13 +405,9 @@ function module.create(data)
                      end
 
                      log(DEBUG, "restore history #" .. tostring(cmd_index) .. ":" .. data.cmds[cmd_index])
-                     if set_cmd(data.cmds[cmd_index]) and #open_areas == 0 then
-                        current_info = current_info .. " (enter to save)"
-                     end
+                     set_cmd(data.cmds[cmd_index])
                   elseif #open_areas > 0 or pending_op then
-                     if handle_key(key) and #open_areas == 0 and not pending_op then
-                        current_info = current_info .. " (enter to apply)"
-                     end
+                     handle_key(key)
                   else
                      if key == "Return" then
                         local alt = false
