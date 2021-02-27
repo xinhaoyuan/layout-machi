@@ -271,7 +271,9 @@ Each drafting window is associated with a upper-left area (UL) and a bottom-righ
 The geometry of the window is from the upper-left corner of the UL to the bottom-right corner of the BR.
 
 Draft mode is suppose to work well with grid areas (produced by `d` or `w` operations), but it is not limited to those.
-Draft mode is enabled for a newly placed window when its UL and BR is in different areas.
+Draft mode is enabled for a newly placed window if
+(a) `new_placement_cb` returns so, or
+(b) `new_placement_cb` is unspecified and the window's UL and BR corners fit different areas.
 Resize a window to a single area to disable drafting, or across areas to enable drafting.
 You can also use `f` or `.` key in switcher UI to manually cycle through modes despit how the window previously spans areas.
 
