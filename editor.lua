@@ -384,7 +384,7 @@ function module.create(data)
                                 if embed_args then
                                     set_cmd(embed_args.original_cmd or "")
                                 else
-                                    local areas = layout.machi_get_areas(screen, tag)
+                                    local _cd, _td, areas = layout.machi_get_instance_data(screen, tag)
                                     set_cmd(machi_engine.areas_to_command(areas))
                                 end
                             else
@@ -499,8 +499,8 @@ function module.create(data)
         local screen = c.screen
         local tag = screen.selected_tag
         local layout = tag.layout
-        if not layout.machi_get_areas then return end
-        local areas = layout.machi_get_areas(screen, tag)
+        if not layout.machi_get_instance_data then return end
+        local _cd, _td, areas = layout.machi_get_instace_data(screen, tag)
         local key_shares = axis.."_shares"
         local key_spare = axis.."_spare"
         local key_parent_shares = "parent_"..axis.."_shares"

@@ -76,9 +76,9 @@ function module.start(c, exit_keys)
     local start_x = screen.workarea.x
     local start_y = screen.workarea.y
 
-    if (c ~= nil and c.floating) or layout.machi_get_areas == nil then return end
+    if (c ~= nil and c.floating) or layout.machi_get_instance_data == nil then return end
 
-    local areas, draft_mode = layout.machi_get_areas(screen, screen.selected_tag)
+    local cd, td, areas, draft_mode = layout.machi_get_instance_data(screen, screen.selected_tag)
     if areas == nil or #areas == 0 then
         return
     end
@@ -428,11 +428,9 @@ function module.start(c, exit_keys)
                 set_selected_area(nil)
 
                 if c then
-                    local in_draft = c and c.machi_draft
-                    if in_draft == nil then in_draft = draft_mode end
-                    if ctrl and in_draft then
-                        local lu = c.machi.lu
-                        local rd = c.machi.rd
+                    if ctrl and cd[c].draft ~= false then
+                        local lu = cd[c].lu or cd[c].area
+                        local rd = cd[c].rd or cd[c].area
 
                         if shift then
                             lu = choice
@@ -459,20 +457,40 @@ function module.start(c, exit_keys)
                             c.y = min(c.y, areas[rd].y)
                             machi.layout.set_geometry(c, nil, areas[rd], 0, c.border_width)
                         end
-                        c.machi.lu = lu
-                        c.machi.rd = rd
+
+                        if lu == rd and cd[c].draft ~= true then
+                            cd[c].lu = nil
+                            cd[c].rd = nil
+                            cd[c].area = lu
+                        else
+                            cd[c].lu = lu
+                            cd[c].rd = rd
+                            cd[c].area = nil
+                        end
 
                         c:emit_signal("request::activate", "mouse.move", {raise=false})
                         c:raise()
                         awful.layout.arrange(screen)
                     elseif shift then
                         -- move the window
+                        local in_draft = cd[c].draft
+                        if cd[c].draft ~= nil then
+                            in_draft = cd[c].draft
+                        elseif cd[c].lu then
+                            in_draft = true
+                        elseif cd[c].area then
+                            in_draft = false
+                        else
+                            in_draft = draft_mode
+                        end
                         if in_draft then
                             c.x = areas[choice].x
                             c.y = areas[choice].y
                         else
                             machi.layout.set_geometry(c, areas[choice], areas[choice], 0, c.border_width)
-                            c.machi.area = choice
+                            cd[c].lu = nil
+                            cd[c].rd = nil
+                            cd[c].area = choice
                         end
                         c:emit_signal("request::activate", "mouse.move", {raise=false})
                         c:raise()
@@ -528,11 +546,14 @@ function module.start(c, exit_keys)
             )
             exit()
         elseif (key == "f" or key == ".") and c then
-            if c.machi_draft == nil then
-                c.machi_draft = not draft_mode
+            if cd[c].draft == nil then
+                cd[c].draft = not draft_mode
+            elseif cd[c].draft ~= draft_mode then
+                cd[c].draft = draft_mode
             else
-                c.machi_draft = not c.machi_draft
+                cd[c].draft = nil
             end
+            print("set draft to", cd[c].draft, draft_mode)
             awful.layout.arrange(screen)
         elseif key == "Escape" or key == "Return" then
             exit()

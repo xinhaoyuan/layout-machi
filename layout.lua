@@ -163,6 +163,7 @@ function module.create(args_or_name, editor, default_cmd)
                 cmd = persistent and args.editor.get_last_cmd(name) or nil,
                 areas_cache = {},
                 tag_data = {},
+                client_data = setmetatable({}, {__mode="k"}),
             }
             if instances[name].cmd == nil then
                 instances[name].cmd = args.default_cmd
@@ -171,18 +172,18 @@ function module.create(args_or_name, editor, default_cmd)
         return instances[name]
     end
 
-    local function get_areas(screen, tag)
+    local function get_instance_data(screen, tag)
         local workarea = screen.workarea
         local instance = get_instance_(tag)
         local cmd = instance.cmd or module.global_default_cmd
-        if cmd == nil then return {}, false end
+        if cmd == nil then return nil, nil, nil, false end
 
         local key = tostring(workarea.width) .. "x" .. tostring(workarea.height) .. "+" .. tostring(workarea.x) .. "+" .. tostring(workarea.y)
         if instance.areas_cache[key] == nil then
             instance.areas_cache[key] = args.editor.run_cmd(cmd, screen, tag)
         end
         local draft_mode = instance.areas_cache[key] and instance.areas_cache[key][1].draft_mode
-        return instance.areas_cache[key], draft_mode
+        return instance.client_data, instance.tag_data, instance.areas_cache[key], draft_mode ~= nil
     end
 
     local function set_cmd(cmd, tag)
@@ -191,6 +192,7 @@ function module.create(args_or_name, editor, default_cmd)
             instance.cmd = cmd
             instance.areas_cache = {}
             instance.tag_data = {}
+            instance.client_data = setmetatable({}, {__mode="k"})
         end
     end
 
@@ -200,35 +202,38 @@ function module.create(args_or_name, editor, default_cmd)
         local wa = screen.workarea -- get the real workarea without the gap (instead of p.workarea)
         local cls = p.clients
         local tag = screen.selected_tag
-        local instance = get_instance_(tag)
-        local areas, draft_mode = get_areas(screen, tag)
+        local cd, td, areas, draft_mode = get_instance_data(screen, tag)
 
         if areas == nil then return end
         local nested_clients = {}
-
-        for _, c in ipairs(cls) do
-            if c.machi == nil then
-                c.machi = setmetatable({}, {__mode = "v"})
-            end
-        end
 
         for i, c in ipairs(cls) do
             if c.floating or c.immobilized then
                 log(DEBUG, "Ignore client " .. tostring(c))
             else
-                local in_draft = c.machi_draft
-                if in_draft == nil then in_draft = draft_mode end
+                cd[c] = cd[c] or {}
+
+                local in_draft = cd[c].draft
+                if cd[c].draft ~= nil then
+                    in_draft = cd[c].draft
+                elseif cd[c].lu then
+                    in_draft = true
+                elseif cd[c].area then
+                    in_draft = false
+                else
+                    in_draft = draft_mode
+                end
                 local skip = false
 
                 if in_draft then
-                    if c.machi.lu ~= nil and c.machi.rd ~= nil and
-                        c.machi.lu <= #areas and c.machi.rd <= #areas and
-                        not areas[c.machi.lu].inhabitable and not areas[c.machi.rd].inhabitable
+                    if cd[c].lu ~= nil and cd[c].rd ~= nil and
+                        cd[c].lu <= #areas and cd[c].rd <= #areas and
+                        not areas[cd[c].lu].inhabitable and not areas[cd[c].rd].inhabitable
                     then
-                        if areas[c.machi.lu].x == c.x and
-                            areas[c.machi.lu].y == c.y and
-                            areas[c.machi.rd].x + areas[c.machi.rd].width - c.border_width * 2 == c.x + c.width and
-                            areas[c.machi.rd].y + areas[c.machi.rd].height - c.border_width * 2 == c.y + c.height
+                        if areas[cd[c].lu].x == c.x and
+                            areas[cd[c].lu].y == c.y and
+                            areas[cd[c].rd].x + areas[cd[c].rd].width - c.border_width * 2 == c.x + c.width and
+                            areas[cd[c].rd].y + areas[cd[c].rd].height - c.border_width * 2 == c.y + c.height
                         then
                             skip = true
                         end
@@ -247,26 +252,24 @@ function module.create(args_or_name, editor, default_cmd)
                     end
 
                     if lu ~= nil and rd ~= nil then
-                        c.machi.instance = instance
-                        c.machi.area, c.machi.lu, c.machi.rd = nil, lu, rd
+                        cd[c].area, cd[c].lu, cd[c].rd = nil, lu, rd
                         p.geometries[c] = {}
                         module.set_geometry(p.geometries[c], areas[lu], areas[rd], useless_gap, 0)
                     end
                 else
-                    if c.machi.area ~= nil and
-                        c.machi.area < #areas and
-                        not areas[c.machi.area].inhabitable and
-                        areas[c.machi.area].layout == nil and
-                        areas[c.machi.area].x == c.x and
-                        areas[c.machi.area].y == c.y and
-                        areas[c.machi.area].width - c.border_width * 2 == c.width and
-                        areas[c.machi.area].height - c.border_width * 2 == c.height
+                    if cd[c].area ~= nil and
+                        cd[c].area < #areas and
+                        not areas[cd[c].area].inhabitable and
+                        areas[cd[c].area].layout == nil and
+                        areas[cd[c].area].x == c.x and
+                        areas[cd[c].area].y == c.y and
+                        areas[cd[c].area].width - c.border_width * 2 == c.width and
+                        areas[cd[c].area].height - c.border_width * 2 == c.height
                     then
                     else
                         log(DEBUG, "Compute areas for " .. (c.name or ("<untitled:" .. tostring(c) .. ">")))
                         local area = find_area(c, areas)
-                        c.machi.instance = instance
-                        c.machi.area, c.machi.lu, c.machi.rd = area, nil, nil
+                        cd[c].area, cd[c].lu, cd[c].rd = area, nil, nil
                         p.geometries[c] = {}
                         if machi_editor.nested_layouts[areas[area].layout] ~= nil then
                             local clients = nested_clients[area]
@@ -281,9 +284,9 @@ function module.create(args_or_name, editor, default_cmd)
         end
 
         for area, clients in pairs(nested_clients) do
-            if instance.tag_data[area] == nil then
+            if td[area] == nil then
                 -- TODO: Make the default more flexible.
-                instance.tag_data[area] = {
+                td[area] = {
                     column_count = 1,
                     master_count = 1,
                     master_fill_policy = "expand",
@@ -296,7 +299,7 @@ function module.create(args_or_name, editor, default_cmd)
                 }
             end
             local nested_params = {
-                tag = instance.tag_data[area],
+                tag = td[area],
                 screen = p.screen,
                 clients = clients,
                 padding = 0,
@@ -329,17 +332,28 @@ function module.create(args_or_name, editor, default_cmd)
     end
 
     local function resize_handler (c, context, h)
-        local areas, draft_mode = get_areas(c.screen, c.screen.selected_tag)
+        local tag = c.screen.selected_tag
+        local instance = get_instance_(tag)
+        local cd = instance.client_data
+        local cd, td, areas, draft_mode = get_instance_data(c.screen, tag)
+
         if areas == nil then return end
 
-        local in_draft = c.machi_draft
-        if in_draft == nil then in_draft = draft_mode end
-
-        if in_draft then
-            local lu = find_lu(h, areas)
-            local rd = nil
-            if lu ~= nil then
-                if context == "mouse.move" then
+        if context == "mouse.move" then
+            local in_draft = cd[c].draft
+            if cd[c].draft ~= nil then
+                in_draft = cd[c].draft
+            elseif cd[c].lu then
+                in_draft = true
+            elseif cd[c].area then
+                in_draft = false
+            else
+                in_draft = draft_mode
+            end
+            if in_draft then
+                local lu = find_lu(h, areas)
+                local rd = nil
+                if lu ~= nil then
                     -- Use the initial width and height since it may change in undesired way.
                     local hh = {}
                     hh.x = areas[lu].x
@@ -355,46 +369,64 @@ function module.create(args_or_name, editor, default_cmd)
                         hh.y = areas[rd].y + areas[rd].height - c.full_height_before_move
                         lu = find_lu(hh, areas, rd)
                     end
-                else
-                    local hh = {}
-                    hh.x = h.x
-                    hh.y = h.y
-                    hh.width = h.width
-                    hh.height = h.height
-                    hh.border_width = c.border_width
-                    rd = find_rd(hh, areas, lu)
-                end
 
-                if lu ~= nil and rd ~= nil then
-                    c.machi.lu = lu
-                    c.machi.rd = rd
-                    module.set_geometry(c, areas[lu], areas[rd], 0, c.border_width)
-                end
-            end
-        else
-            if context ~= "mouse.move" then return end
-
-            local center_x = h.x + h.width / 2
-            local center_y = h.y + h.height / 2
-
-            local choice = nil
-            local choice_value = nil
-
-            for i, a in ipairs(areas) do
-                if not a.inhabitable then
-                    local ac_x = a.x + a.width / 2
-                    local ac_y = a.y + a.height / 2
-                    local dis = (ac_x - center_x) * (ac_x - center_x) + (ac_y - center_y) * (ac_y - center_y)
-                    if choice_value == nil or choice_value > dis then
-                        choice = i
-                        choice_value = dis
+                    if lu ~= nil and rd ~= nil then
+                        cd[c].lu = lu
+                        cd[c].rd = rd
+                        cd[c].area = nil
+                        module.set_geometry(c, areas[lu], areas[rd], 0, c.border_width)
                     end
                 end
+            else
+                local center_x = h.x + h.width / 2
+                local center_y = h.y + h.height / 2
+
+                local choice = nil
+                local choice_value = nil
+
+                for i, a in ipairs(areas) do
+                    if not a.inhabitable then
+                        local ac_x = a.x + a.width / 2
+                        local ac_y = a.y + a.height / 2
+                        local dis = (ac_x - center_x) * (ac_x - center_x) + (ac_y - center_y) * (ac_y - center_y)
+                        if choice_value == nil or choice_value > dis then
+                            choice = i
+                            choice_value = dis
+                        end
+                    end
+                end
+
+                if choice and cd[c].area ~= choice then
+                    cd[c].lu = nil
+                    cd[c].rd = nil
+                    cd[c].area = choice
+                    module.set_geometry(c, areas[choice], areas[choice], 0, c.border_width)
+                end
+            end
+        elseif cd[c].draft ~= false then
+            local lu = find_lu(h, areas)
+            local rd = nil
+            if lu ~= nil then
+                local hh = {}
+                hh.x = h.x
+                hh.y = h.y
+                hh.width = h.width
+                hh.height = h.height
+                hh.border_width = c.border_width
+                rd = find_rd(hh, areas, lu)
             end
 
-            if choice and c.machi.area ~= choice then
-                c.machi.area = choice
-                module.set_geometry(c, areas[choice], areas[choice], 0, c.border_width)
+            if lu ~= nil and rd ~= nil then
+                if lu == rd and cd[c].draft ~= true then
+                    cd[c].lu = nil
+                    cd[c].rd = nil
+                    cd[c].area = lu
+                else
+                    cd[c].lu = lu
+                    cd[c].rd = rd
+                    cd[c].area = nil
+                end
+                module.set_geometry(c, areas[lu], areas[rd], 0, c.border_width)
             end
         end
     end
@@ -404,8 +436,8 @@ function module.create(args_or_name, editor, default_cmd)
     layout.arrange = arrange
     layout.resize_handler = resize_handler
     layout.machi_get_instance_info = get_instance_info
+    layout.machi_get_instance_data = get_instance_data
     layout.machi_set_cmd = set_cmd
-    layout.machi_get_areas = get_areas
     return layout
 end
 

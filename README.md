@@ -269,7 +269,7 @@ The geometry of the window is from the upper-left corner of the UL to the bottom
 This is suppose to work with areas produced with `d` or `w` operation.
 To enable draft mode in a layout, configure the layout with a command with a leading `d`, for example, `d12210121`, or `dw66`.
 
-__New in machi-ng:__ draft mode can be overrided by per-window settings. Use `f` or `.` key in switcher UI, or change the `c.machi_draft` boolean for window `c`.
+__New in machi-ng:__ draft mode can be overrided by per-window settings. Resize a window to a single area to disable drafting, or across areas to enable drafting. You can also use `f` or `.` key in switcher UI to manually cycle through modes.
 
 ### Nested layouts
 
