@@ -114,13 +114,40 @@ function module.start(c, exit_keys)
    local selected_area_ = nil
    local function selected_area()
        if selected_area_ == nil then
+           local min_dis = nil
            for i, a in ipairs(areas) do
-               if not a.inhabitable and
-                   a.x <= traverse_x and traverse_x < a.x + a.width and
-                   a.y <= traverse_y and traverse_y < a.y + a.height
-               then
-                   selected_area_ = i
+               if not a.inhabitable then
+                   local dis =
+                       math.abs(a.x + traverse_radius - traverse_x) + math.abs(a.x + a.width - traverse_radius - traverse_x) - a.width +
+                       math.abs(a.y + traverse_radius - traverse_y) + math.abs(a.y + a.height - traverse_radius - traverse_y) - a.height +
+                       traverse_radius * 4
+                   if min_dis == nil or min_dis > dis then
+                       min_dis = dis
+                       selected_area_ = i
+                   end
                end
+           end
+
+           if min_dis > 0 then
+               local a = areas[selected_area_]
+               local corners = {
+                   {a.x + traverse_radius, a.y + traverse_radius},
+                   {a.x + traverse_radius, a.y + a.height - traverse_radius},
+                   {a.x + a.width - traverse_radius, a.y + traverse_radius},
+                   {a.x + a.width - traverse_radius, a.y + a.height - traverse_radius}
+               }
+               min_dis = nil
+               local min_i
+               for i, c in ipairs(corners) do
+                   local dis = math.abs(c[1] - traverse_x) + math.abs(c[2] - traverse_y)
+                   if min_dis == nil or min_dis > dis then
+                       min_dis = dis
+                       min_i = i
+                   end
+               end
+
+               traverse_x = corners[min_i][1]
+               traverse_y = corners[min_i][2]
            end
        end
        return selected_area_
