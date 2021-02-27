@@ -212,12 +212,15 @@ function module.create(args_or_name, editor, default_cmd)
             end
         end
 
-        if draft_mode then
-            for i, c in ipairs(cls) do
-                if c.floating or c.immobilized then
-                    log(DEBUG, "Ignore client " .. tostring(c))
-                else
-                    local skip = false
+        for i, c in ipairs(cls) do
+            if c.floating or c.immobilized then
+                log(DEBUG, "Ignore client " .. tostring(c))
+            else
+                local in_draft = c.machi_draft
+                if in_draft == nil then in_draft = draft_mode end
+                local skip = false
+
+                if in_draft then
                     if c.machi.lu ~= nil and c.machi.rd ~= nil and
                         c.machi.lu <= #areas and c.machi.rd <= #areas and
                         not areas[c.machi.lu].inhabitable and not areas[c.machi.rd].inhabitable
@@ -249,12 +252,6 @@ function module.create(args_or_name, editor, default_cmd)
                         p.geometries[c] = {}
                         module.set_geometry(p.geometries[c], areas[lu], areas[rd], useless_gap, 0)
                     end
-                end
-            end
-        else
-            for i, c in ipairs(cls) do
-                if c.floating or c.immobilized then
-                    log(DEBUG, "Ignore client " .. tostring(c))
                 else
                     if c.machi.area ~= nil and
                         c.machi.area < #areas and
@@ -281,62 +278,64 @@ function module.create(args_or_name, editor, default_cmd)
                     end
                 end
             end
+        end
 
-            for area, clients in pairs(nested_clients) do
-                if instance.tag_data[area] == nil then
-                    -- TODO: Make the default more flexible.
-                    instance.tag_data[area] = {
-                        column_count = 1,
-                        master_count = 1,
-                        master_fill_policy = "expand",
-                        gap = 0,
-                        master_width_factor = 0.5,
-                        _private = {
-                            awful_tag_properties = {
-                            },
+        for area, clients in pairs(nested_clients) do
+            if instance.tag_data[area] == nil then
+                -- TODO: Make the default more flexible.
+                instance.tag_data[area] = {
+                    column_count = 1,
+                    master_count = 1,
+                    master_fill_policy = "expand",
+                    gap = 0,
+                    master_width_factor = 0.5,
+                    _private = {
+                        awful_tag_properties = {
                         },
-                    }
-                end
-                local nested_params = {
-                    tag = instance.tag_data[area],
-                    screen = p.screen,
-                    clients = clients,
-                    padding = 0,
-                    geometry = {
-                        x = areas[area].x,
-                        y = areas[area].y,
-                        width = areas[area].width,
-                        height = areas[area].height,
                     },
-                    -- Not sure how useless_gap adjustment works here. It seems to work anyway.
-                    workarea = {
-                        x = areas[area].x - useless_gap,
-                        y = areas[area].y - useless_gap,
-                        width = areas[area].width + useless_gap * 2,
-                        height = areas[area].height + useless_gap * 2,
-                    },
-                    useless_gap = useless_gap,
-                    geometries = {},
                 }
-                machi_editor.nested_layouts[areas[area].layout].arrange(nested_params)
-                for _, c in ipairs(clients) do
-                    p.geometries[c] = {
-                        x = nested_params.geometries[c].x,
-                        y = nested_params.geometries[c].y,
-                        width = nested_params.geometries[c].width,
-                        height = nested_params.geometries[c].height,
-                    }
-                end
+            end
+            local nested_params = {
+                tag = instance.tag_data[area],
+                screen = p.screen,
+                clients = clients,
+                padding = 0,
+                geometry = {
+                    x = areas[area].x,
+                    y = areas[area].y,
+                    width = areas[area].width,
+                    height = areas[area].height,
+                },
+                -- Not sure how useless_gap adjustment works here. It seems to work anyway.
+                workarea = {
+                    x = areas[area].x - useless_gap,
+                    y = areas[area].y - useless_gap,
+                    width = areas[area].width + useless_gap * 2,
+                    height = areas[area].height + useless_gap * 2,
+                },
+                useless_gap = useless_gap,
+                geometries = {},
+            }
+            machi_editor.nested_layouts[areas[area].layout].arrange(nested_params)
+            for _, c in ipairs(clients) do
+                p.geometries[c] = {
+                    x = nested_params.geometries[c].x,
+                    y = nested_params.geometries[c].y,
+                    width = nested_params.geometries[c].width,
+                    height = nested_params.geometries[c].height,
+                }
             end
         end
     end
 
     local function resize_handler (c, context, h)
         local areas, draft_mode = get_areas(c.screen, c.screen.selected_tag)
+        if areas == nil then return end
 
-        if #areas == 0 then return end
+        local in_draft = c.machi_draft
+        if in_draft == nil then in_draft = draft_mode end
 
-        if draft_mode then
+        if in_draft then
             local lu = find_lu(h, areas)
             local rd = nil
             if lu ~= nil then
@@ -375,25 +374,25 @@ function module.create(args_or_name, editor, default_cmd)
         else
             if context ~= "mouse.move" then return end
 
-            if #areas == 0 then return end
-
             local center_x = h.x + h.width / 2
             local center_y = h.y + h.height / 2
 
-            local choice = 1
+            local choice = nil
             local choice_value = nil
 
-            for i, r in ipairs(areas) do
-                local r_x = r.x + r.width / 2
-                local r_y = r.y + r.height / 2
-                local dis = (r_x - center_x) * (r_x - center_x) + (r_y - center_y) * (r_y - center_y)
-                if choice_value == nil or choice_value > dis then
-                    choice = i
-                    choice_value = dis
+            for i, a in ipairs(areas) do
+                if not a.inhabitable then
+                    local ac_x = a.x + a.width / 2
+                    local ac_y = a.y + a.height / 2
+                    local dis = (ac_x - center_x) * (ac_x - center_x) + (ac_y - center_y) * (ac_y - center_y)
+                    if choice_value == nil or choice_value > dis then
+                        choice = i
+                        choice_value = dis
+                    end
                 end
             end
 
-            if c.machi.area ~= choice then
+            if choice and c.machi.area ~= choice then
                 c.machi.area = choice
                 module.set_geometry(c, areas[choice], areas[choice], 0, c.border_width)
             end

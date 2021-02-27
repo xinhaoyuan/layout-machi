@@ -269,6 +269,8 @@ The geometry of the window is from the upper-left corner of the UL to the bottom
 This is suppose to work with areas produced with `d` or `w` operation.
 To enable draft mode in a layout, configure the layout with a command with a leading `d`, for example, `d12210121`, or `dw66`.
 
+__New in machi-ng:__ draft mode can be overrided by per-window settings. Use `f` or `.` key in switcher UI, or change the `c.machi_draft` boolean for window `c`.
+
 ### Nested layouts
 
 __This feature is a toy. It may come with performance and usability issues - you have been warned.__
@@ -279,7 +281,7 @@ Known caveats include:
 2. `client.*wfact` and other layout related operations don't work as machi fakes tag data to the nested layout engine.
     But it hopefully works if one changes the fields in the faked tag data.
 
-__This feature is not available in draft mode.__
+__This feature is not available for windows in draft mode.__
 
 To set up nested layouts, you first need to check/modify `machi.editor.nested_layouts` array, which maps an argument string (`[0-9,]+`) to a layout object.
 In machi command, use the argument string with command `x` will set up the nested layout of the area to the mapped one.
@@ -302,8 +304,9 @@ Calling `machi.switcher.start()` will create a switcher supporting the following
  - `Shift` + arrow keys: move the focused window to other areas by the direction. In draft mode, move the window while preserving its size.
  - `Control`[ + `Shift`] + arrow keys: move the bottom-right (or top-left window if `Shift` is pressed) area of the focused window by direction. Only works in draft mode.
  - `Tab`: switch beteen windows covering the current areas.
- - `u` or `PageUp` (`Prior`): In non-draft mode, you can select the parent of the current area.
- - `/`: In non-draft mode, this opens the editor to edit the selected area using the same command interpretation.
+ - `u` or `PageUp` (`Prior`): select the parent of the current area.
+ - `f` or `.`: toggle the per-window setting of draft mode.
+ - `/`: open the editor to edit the selected area using the same command interpretation.
    Note the final command may be transcoded to be embeddable, but the areas shall be the same.
 
 So far, the key binding is not configurable. One has to modify the source code to change it.

@@ -430,74 +430,78 @@ function module.start(c, exit_keys)
             tablist = nil
             set_selected_area(nil)
 
-            if c and ctrl and draft_mode then
-               local lu = c.machi.lu
-               local rd = c.machi.rd
+            if c then
+                local in_draft = c and c.machi_draft
+                if in_draft == nil then in_draft = draft_mode end
+                if ctrl and in_draft then
+                    local lu = c.machi.lu
+                    local rd = c.machi.rd
 
-               if shift then
-                  lu = choice
-                  if areas[rd].x + areas[rd].width <= areas[lu].x or
-                     areas[rd].y + areas[rd].height <= areas[lu].y
-                  then
-                     rd = nil
-                  end
-               else
-                  rd = choice
-                  if areas[rd].x + areas[rd].width <= areas[lu].x or
-                     areas[rd].y + areas[rd].height <= areas[lu].y
-                  then
-                     lu = nil
-                  end
-               end
+                    if shift then
+                        lu = choice
+                        if areas[rd].x + areas[rd].width <= areas[lu].x or
+                            areas[rd].y + areas[rd].height <= areas[lu].y
+                        then
+                            rd = nil
+                        end
+                    else
+                        rd = choice
+                        if areas[rd].x + areas[rd].width <= areas[lu].x or
+                            areas[rd].y + areas[rd].height <= areas[lu].y
+                        then
+                            lu = nil
+                        end
+                    end
 
-               if lu ~= nil and rd ~= nil then
-                  machi.layout.set_geometry(c, areas[lu], areas[rd], 0, c.border_width)
-               elseif lu ~= nil then
-                  machi.layout.set_geometry(c, areas[lu], nil, 0, c.border_width)
-               elseif rd ~= nil then
-                  c.x = min(c.x, areas[rd].x)
-                  c.y = min(c.y, areas[rd].y)
-                  machi.layout.set_geometry(c, nil, areas[rd], 0, c.border_width)
-               end
-               c.machi.lu = lu
-               c.machi.rd = rd
+                    if lu ~= nil and rd ~= nil then
+                        machi.layout.set_geometry(c, areas[lu], areas[rd], 0, c.border_width)
+                    elseif lu ~= nil then
+                        machi.layout.set_geometry(c, areas[lu], nil, 0, c.border_width)
+                    elseif rd ~= nil then
+                        c.x = min(c.x, areas[rd].x)
+                        c.y = min(c.y, areas[rd].y)
+                        machi.layout.set_geometry(c, nil, areas[rd], 0, c.border_width)
+                    end
+                    c.machi.lu = lu
+                    c.machi.rd = rd
 
-               c:emit_signal("request::activate", "mouse.move", {raise=false})
-               c:raise()
-               api.layout.arrange(screen)
-            elseif c and shift then
-               -- move the window
-               if draft_mode then
-                  c.x = areas[choice].x
-                  c.y = areas[choice].y
-               else
-                  machi.layout.set_geometry(c, areas[choice], areas[choice], 0, c.border_width)
-                  c.machi.area = choice
-               end
-               c:emit_signal("request::activate", "mouse.move", {raise=false})
-               c:raise()
-               api.layout.arrange(screen)
+                    c:emit_signal("request::activate", "mouse.move", {raise=false})
+                    c:raise()
+                    api.layout.arrange(screen)
+                elseif shift then
+                    -- move the window
+                    if in_draft then
+                        c.x = areas[choice].x
+                        c.y = areas[choice].y
+                    else
+                        machi.layout.set_geometry(c, areas[choice], areas[choice], 0, c.border_width)
+                        c.machi.area = choice
+                    end
+                    c:emit_signal("request::activate", "mouse.move", {raise=false})
+                    c:raise()
+                    api.layout.arrange(screen)
 
-               tablist = nil
+                    tablist = nil
+                end
             else
-               maintain_tablist()
-               -- move the focus
-               if #tablist > 0 and tablist[1] ~= c then
-                  c = tablist[1]
-                  api.client.focus = c
-               end
+                maintain_tablist()
+                -- move the focus
+                if #tablist > 0 and tablist[1] ~= c then
+                    c = tablist[1]
+                    api.client.focus = c
+                end
             end
 
             infobox.bgimage = draw_info
          end
-      elseif (key == "u" or key == "Prior") and not draft_mode then
+      elseif (key == "u" or key == "Prior") then
           local current_area = selected_area()
           if areas[current_area].parent_id then
               tablist = nil
               set_selected_area(areas[current_area].parent_id)
               infobox.bgimage = draw_info
           end
-      elseif key == "/" and not draft_mode then
+      elseif key == "/" then
           local current_area = selected_area()
           local original_cmd = machi.engine.areas_to_command(areas, true, current_area)
           areas[current_area].hole = true
@@ -526,6 +530,13 @@ function module.start(c, exit_keys)
               end
           )
           exit()
+      elseif (key == "f" or key == ".") and c then
+          if c.machi_draft == nil then
+              c.machi_draft = not draft_mode
+          else
+              c.machi_draft = not c.machi_draft
+          end
+          api.layout.arrange(screen)
       elseif key == "Escape" or key == "Return" then
          exit()
       else
