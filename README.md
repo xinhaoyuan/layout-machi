@@ -6,6 +6,8 @@ Demos: https://imgur.com/a/OlM60iw
 
 Draft mode: https://imgur.com/a/BOvMeQL
 
+__Most of the development effort now happens in the ng branch, which introduces a few breaking changes but a ton of new features/enhancements.__
+
 ## Why?
 
 TL;DR --- To bring back the control of the window layout.
