@@ -146,9 +146,6 @@ function module.create(data)
 
 
     local function start_interactive(screen, embed_args)
-        local label_font_family = beautiful.get_font(
-            beautiful.font):get_family()
-        local label_size = dpi(30)
         local info_size = dpi(60)
         -- colors are in rgba
         local border_color = with_alpha(
@@ -236,7 +233,7 @@ function module.create(data)
                 end
 
                 if #open_areas == 0 and not pending_op then
-                    current_info = current_info .. " (enter to apply)"
+                    current_info = current_info .. "\n(enter to apply)"
                 end
                 return true
             else
@@ -321,19 +318,22 @@ function module.create(data)
                 end
             end
 
-            cr:select_font_face(label_font_family, "normal", "normal")
-            cr:set_font_size(info_size)
-            cr:set_font_face(cr:get_font_face())
-            msg = current_info
-            ext = cr:text_extents(msg)
+            local pl = lgi.Pango.Layout.create(cr)
+            pl:set_font_description(beautiful.get_merged_font(beautiful.font, info_size))
+            pl:set_alignment("CENTER")
+            pl:set_text(current_info)
+            local w, h = pl:get_size()
+            w = w / lgi.Pango.SCALE
+            h = h / lgi.Pango.SCALE
+            local ext = { width = w, height = h, x_bearing = 0, y_bearing = 0 }
             cr:move_to(width / 2 - ext.width / 2 - ext.x_bearing, height / 2 - ext.height / 2 - ext.y_bearing)
-            cr:text_path(msg)
             cr:set_source_rgba(1, 1, 1, 1)
+            cr:show_layout(pl)
             cr:fill()
             cr:move_to(width / 2 - ext.width / 2 - ext.x_bearing, height / 2 - ext.height / 2 - ext.y_bearing)
-            cr:text_path(msg)
             cr:set_source_rgba(0, 0, 0, 1)
             cr:set_line_width(2.0)
+            cr:layout_path(pl)
             cr:stroke()
         end
 
