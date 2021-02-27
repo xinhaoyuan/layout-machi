@@ -109,6 +109,14 @@ function module.start(c, exit_keys)
     end
 
     local selected_area_ = nil
+    local function set_selected_area(area)
+        selected_area_ = area
+        if area then
+            traverse_x = max(areas[area].x + traverse_radius, min(areas[area].x + areas[area].width - traverse_radius, traverse_x))
+            traverse_y = max(areas[area].y + traverse_radius, min(areas[area].y + areas[area].height - traverse_radius, traverse_y))
+        end
+    end
+
     local function selected_area()
         if selected_area_ == nil then
             local min_dis = nil
@@ -125,34 +133,12 @@ function module.start(c, exit_keys)
                 end
             end
 
-            if min_dis > 0 then
-                local a = areas[selected_area_]
-                local corners = {
-                    {a.x + traverse_radius, a.y + traverse_radius},
-                    {a.x + traverse_radius, a.y + a.height - traverse_radius},
-                    {a.x + a.width - traverse_radius, a.y + traverse_radius},
-                    {a.x + a.width - traverse_radius, a.y + a.height - traverse_radius}
-                }
-                min_dis = nil
-                local min_i
-                for i, c in ipairs(corners) do
-                    local dis = math.abs(c[1] - traverse_x) + math.abs(c[2] - traverse_y)
-                    if min_dis == nil or min_dis > dis then
-                        min_dis = dis
-                        min_i = i
-                    end
-                end
-
-                traverse_x = corners[min_i][1]
-                traverse_y = corners[min_i][2]
-            end
+            set_selected_area(selected_area_)
         end
         return selected_area_
     end
 
-    local function set_selected_area(a)
-        selected_area_ = a
-    end
+    local parent_stack = {}
 
     local function maintain_tablist()
         if tablist == nil then
@@ -422,10 +408,8 @@ function module.start(c, exit_keys)
             end
 
             if choice ~= nil then
-                traverse_x = max(areas[choice].x + traverse_radius, min(areas[choice].x + areas[choice].width - traverse_radius, traverse_x))
-                traverse_y = max(areas[choice].y + traverse_radius, min(areas[choice].y + areas[choice].height - traverse_radius, traverse_y))
                 tablist = nil
-                set_selected_area(nil)
+                set_selected_area(choice)
 
                 if c then
                     if ctrl and cd[c].draft ~= false then
@@ -510,11 +494,23 @@ function module.start(c, exit_keys)
 
                 infobox.bgimage = draw_info
             end
-        elseif (key == "u" or key == "Prior") then
+        elseif (key == "q" or key == "Prior") then
             local current_area = selected_area()
             if areas[current_area].parent_id then
                 tablist = nil
                 set_selected_area(areas[current_area].parent_id)
+                if #parent_stack == 0 or
+                    parent_stack[#parent_stack] ~= current_area then
+                    parent_stack = {current_area}
+                end
+                parent_stack[#parent_stack + 1] = areas[current_area].parent_id
+                infobox.bgimage = draw_info
+            end
+        elseif (key =="e" or key == "Next") then
+            local current_area = selected_area()
+            if #parent_stack > 1 and parent_stack[#parent_stack] == current_area then
+                set_selected_area(parent_stack[#parent_stack - 1])
+                table.remove(parent_stack, #parent_stack)
                 infobox.bgimage = draw_info
             end
         elseif key == "/" then

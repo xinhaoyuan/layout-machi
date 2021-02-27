@@ -310,7 +310,8 @@ Calling `machi.switcher.start()` will create a switcher supporting the following
  - `Shift` + arrow keys: move the focused window to other areas by the direction. In draft mode, move the window while preserving its size.
  - `Control`[ + `Shift`] + arrow keys: move the bottom-right (or top-left window if `Shift` is pressed) area of the focused window by direction. Only works in draft mode.
  - `Tab`: switch beteen windows covering the current areas.
- - `u` or `PageUp` (`Prior`): select the parent of the current area.
+ - `q` or `PageUp` (`Prior`): select the parent of the current area.
+ - `e` or `PageDown` (`Next`): select the previous child of the current area, if `q` or `PageUp` was used.
  - `f` or `.`: toggle the per-window setting of draft mode.
  - `/`: open the editor to edit the selected area using the same command interpretation.
    Note the final command may be transcoded to be embeddable, but the areas shall be the same.
