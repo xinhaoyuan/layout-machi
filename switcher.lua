@@ -78,7 +78,7 @@ function module.start(c, exit_keys)
 
     if (c ~= nil and c.floating) or layout.machi_get_instance_data == nil then return end
 
-    local cd, td, areas, draft_mode = layout.machi_get_instance_data(screen, screen.selected_tag)
+    local cd, td, areas, _new_placement_cb = layout.machi_get_instance_data(screen, screen.selected_tag)
     if areas == nil or #areas == 0 then
         return
     end
@@ -481,7 +481,8 @@ function module.start(c, exit_keys)
                         elseif cd[c].area then
                             in_draft = false
                         else
-                            in_draft = draft_mode
+                            log(ERROR, "Assuming in_draft for unhandled client "..tostring(c))
+                            in_draft = true
                         end
                         if in_draft then
                             c.x = areas[choice].x
@@ -547,13 +548,12 @@ function module.start(c, exit_keys)
             exit()
         elseif (key == "f" or key == ".") and c then
             if cd[c].draft == nil then
-                cd[c].draft = not draft_mode
-            elseif cd[c].draft ~= draft_mode then
-                cd[c].draft = draft_mode
+                cd[c].draft = true
+            elseif cd[c].draft == true then
+                cd[c].draft = false
             else
                 cd[c].draft = nil
             end
-            print("set draft to", cd[c].draft, draft_mode)
             awful.layout.arrange(screen)
         elseif key == "Escape" or key == "Return" then
             exit()

@@ -17,6 +17,7 @@ Machi-ng is a refactoring effort of machi with new features and enhancements.
 1. Added a max split (before merging) of 1,000 for all commands and a global cap of 10,000 areas.
 2. `t` command now applies to the current area and its further splits, instead of globally.
 3. `s` command now shifts inside the last group of pending areas that have the same parent, instead of all pending areas.
+4. There is no more per-layout setting of "draft mode". Every window has its own setting.
 
 ### New features & enhancements
 
@@ -54,7 +55,7 @@ The package comes with the icon for `layoutbox`, which can be set with the follo
 
 `require("beautiful").layout_machi = machi.get_icon()`
 
-By default, any machi layout will use the layout command from `machi.layout.default_cmd`, which is initialized as `dw66.` (see interpretation below).
+By default, any machi layout will use the layout command from `machi.layout.default_cmd`, which is initialized as `w66.` (see interpretation below).
 You can change it after loading the module.
 
 ## Use the layout
@@ -67,6 +68,9 @@ Use `local layout = machi.layout.create(args)` to instantiate the layout with an
   - `persistent`: whether to keep a history of the command for the layout. The default is `true`.
   - `default_cmd`: the command to use if there is no persistent history for this layout.
   - `editor`: the editor used for the layout. The default is `machi.default_editor` (or `machi.editor.default_editor`).
+  - `new_placement_cb`: a callback `function(c, instance, areas)` that fits new client `c` into the areas.
+    Returns whether the new client is in draft mode. This is a new and experimental feature.
+    XXX have a subsection for this.
 
 Either `name` or `name_func` must be set - others are optional.
 
@@ -266,10 +270,10 @@ Unlike the regular placement, where a window fits in a single area, windows in d
 Each drafting window is associated with a upper-left area (UL) and a bottom-right area (BR).
 The geometry of the window is from the upper-left corner of the UL to the bottom-right corner of the BR.
 
-Draft mode is suppose to work well with areas produced with `d` or `w` operation, but it is not limited to those.
-To enable draft mode in a layout by default, configure the layout with a command with a leading `d`, for example, `d12210121`, or `dw66`.
-
-Draft mode can be easily overrided by per-window settings. Resize a window to a single area to disable drafting, or across areas to enable drafting. You can also use `f` or `.` key in switcher UI to manually cycle through modes.
+Draft mode is suppose to work well with grid areas (produced by `d` or `w` operations), but it is not limited to those.
+Draft mode is enabled for a newly placed window when its UL and BR is in different areas.
+Resize a window to a single area to disable drafting, or across areas to enable drafting.
+You can also use `f` or `.` key in switcher UI to manually cycle through modes despit how the window previously spans areas.
 
 ### Nested layouts
 
