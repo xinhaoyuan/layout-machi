@@ -12,7 +12,7 @@ local DEBUG = -1
 
 local module = {
     log_level = WARNING,
-    global_default_cmd = "dw66.",
+    global_default_cmd = "w66.",
     allow_shrinking_by_mouse_moving = false,
 }
 
@@ -176,14 +176,16 @@ function module.create(args_or_name, editor, default_cmd)
         local workarea = screen.workarea
         local instance = get_instance_(tag)
         local cmd = instance.cmd or module.global_default_cmd
-        if cmd == nil then return nil, nil, nil, false end
+        if cmd == nil then return end
 
         local key = tostring(workarea.width) .. "x" .. tostring(workarea.height) .. "+" .. tostring(workarea.x) .. "+" .. tostring(workarea.y)
         if instance.areas_cache[key] == nil then
             instance.areas_cache[key] = args.editor.run_cmd(cmd, screen, tag)
+            if instance.areas_cache[key] == nil then
+                return
+            end
         end
-        local draft_mode = instance.areas_cache[key] and instance.areas_cache[key][1].draft_mode
-        return instance.client_data, instance.tag_data, instance.areas_cache[key], draft_mode ~= nil
+        return instance.client_data, instance.tag_data, instance.areas_cache[key], instance, args.new_placement_cb
     end
 
     local function set_cmd(cmd, tag)
@@ -202,7 +204,7 @@ function module.create(args_or_name, editor, default_cmd)
         local wa = screen.workarea -- get the real workarea without the gap (instead of p.workarea)
         local cls = p.clients
         local tag = screen.selected_tag
-        local cd, td, areas, draft_mode = get_instance_data(screen, tag)
+        local cd, td, areas, instance, new_placement_cb = get_instance_data(screen, tag)
 
         if areas == nil then return end
         local nested_clients = {}
@@ -220,12 +222,14 @@ function module.create(args_or_name, editor, default_cmd)
                     in_draft = true
                 elseif cd[c].area then
                     in_draft = false
+                elseif new_placement_cb then
+                    in_draft = new_placement_cb(c, instance, areas)
                 else
-                    in_draft = draft_mode
+                    in_draft = nil
                 end
                 local skip = false
 
-                if in_draft then
+                if in_draft ~= false then
                     if cd[c].lu ~= nil and cd[c].rd ~= nil and
                         cd[c].lu <= #areas and cd[c].rd <= #areas and
                         not areas[cd[c].lu].inhabitable and not areas[cd[c].rd].inhabitable
@@ -252,7 +256,15 @@ function module.create(args_or_name, editor, default_cmd)
                     end
 
                     if lu ~= nil and rd ~= nil then
-                        cd[c].area, cd[c].lu, cd[c].rd = nil, lu, rd
+                        if lu == rd and cd[c].draft ~= true then
+                            cd[c].lu = nil
+                            cd[c].rd = nil
+                            cd[c].area = lu
+                        else
+                            cd[c].lu = lu
+                            cd[c].rd = rd
+                            cd[c].area = nil
+                        end
                         p.geometries[c] = {}
                         module.set_geometry(p.geometries[c], areas[lu], areas[rd], useless_gap, 0)
                     end
@@ -335,7 +347,7 @@ function module.create(args_or_name, editor, default_cmd)
         local tag = c.screen.selected_tag
         local instance = get_instance_(tag)
         local cd = instance.client_data
-        local cd, td, areas, draft_mode = get_instance_data(c.screen, tag)
+        local cd, td, areas, _placement_cb = get_instance_data(c.screen, tag)
 
         if areas == nil then return end
 
@@ -348,7 +360,8 @@ function module.create(args_or_name, editor, default_cmd)
             elseif cd[c].area then
                 in_draft = false
             else
-                in_draft = draft_mode
+                log(ERROR, "Assuming in_draft for unhandled client "..tostring(c))
+                in_draft = true
             end
             if in_draft then
                 local lu = find_lu(h, areas)
