@@ -6,7 +6,6 @@
 --   parent_y_shares
 --   inhabitable
 --   hole (unique)
---   draft_mode (root only)
 -- }
 --
 -- split {
@@ -758,11 +757,6 @@ local function areas_from_command(command, workarea, minimum)
     end
     split(1)
 
-    -- Compatibility workaround.
-    if command:sub(1, 1) == "d" then
-        root.draft_mode = true
-    end
-
     for i = 1, #closed_areas do
         if closed_areas[i].x + closed_areas[i].width > root.x + orig_width or
             closed_areas[i].y + closed_areas[i].height > root.y + orig_height
@@ -853,11 +847,7 @@ local function areas_to_command(areas, to_embed, root_area)
                 if method == "d" and r == "1,,1" then
                     r = ""
                 end
-                if method == "d" and area_id == 1 then
-                    r = (areas[1].draft_mode and "d" or ";d")..r
-                else
-                    r = method..r..(#m == 0 and m or (method == "w" and "," or ",,"))..m
-                end
+                r = method..r..(#m == 0 and m or (method == "w" and "," or ",,"))..m
             end
             local acc_dashes = 0
             if a.expansion > 1 then
