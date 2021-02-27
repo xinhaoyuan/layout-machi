@@ -11,9 +11,9 @@ local INFO = 0
 local DEBUG = -1
 
 local module = {
-   log_level = WARNING,
-   global_default_cmd = "dw66.",
-   allow_shrinking_by_mouse_moving = false,
+    log_level = WARNING,
+    global_default_cmd = "dw66.",
+    allow_shrinking_by_mouse_moving = false,
 }
 
 local function log(level, msg)
