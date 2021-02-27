@@ -492,18 +492,21 @@ function module.create(data)
     end
 
     function adjust_shares(c, axis, adj)
-        if not c:isvisible() or c.floating or c.immobilized or
-            not c.machi or not c.machi.area then
+        if not c:isvisible() or c.floating or c.immobilized then
             return
         end
         local screen = c.screen
         local tag = screen.selected_tag
         local layout = tag.layout
         if not layout.machi_get_instance_data then return end
-        local _cd, _td, areas = layout.machi_get_instace_data(screen, tag)
+        local cd, _td, areas = layout.machi_get_instance_data(screen, tag)
         local key_shares = axis.."_shares"
         local key_spare = axis.."_spare"
         local key_parent_shares = "parent_"..axis.."_shares"
+
+        if not cd[c] or not cd[c].area then
+            return
+        end
 
         if adj < 0 then
             if axis == "x" and c.width + adj < data.minimum_size then
@@ -534,7 +537,7 @@ function module.create(data)
             end
         end
 
-        local area = c.machi.area
+        local area = cd[c].area
         while areas[area].parent_id do
             if adjust(areas[area].parent_id, areas[area][key_parent_shares], adj) then
                 break
