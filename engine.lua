@@ -791,7 +791,7 @@ local function areas_to_command(areas, to_embed, root_area)
         for _, share in ipairs(shares) do
             if #arg_str > 0 then arg_str = arg_str.."," end
             arg_str = arg_str..tostring(share[1])
-            if not share[2] then
+            if not share[2] or share[2] == 0 then
                 -- nothing
             elseif share[2] > 0 then
                 arg_str = arg_str.."_"..tostring(share[2])
