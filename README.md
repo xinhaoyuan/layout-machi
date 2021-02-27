@@ -262,14 +262,14 @@ Final merge, size 3x1, `w443113132231`:
 
 __This mode is somewhat usable, yet it may change in the future.__
 
-Unlike the original machi layout, where a window fits in a single area, draft mode allows window to span across multiple areas.
-Each tiled window is associated with a upper-left area (UL) and a bottom-right area (BR).
+Unlike the regular placement, where a window fits in a single area, windows in draft mode are allowed to span across multiple areas.
+Each drafting window is associated with a upper-left area (UL) and a bottom-right area (BR).
 The geometry of the window is from the upper-left corner of the UL to the bottom-right corner of the BR.
 
-This is suppose to work with areas produced with `d` or `w` operation.
-To enable draft mode in a layout, configure the layout with a command with a leading `d`, for example, `d12210121`, or `dw66`.
+Draft mode is suppose to work well with areas produced with `d` or `w` operation, but it is not limited to those.
+To enable draft mode in a layout by default, configure the layout with a command with a leading `d`, for example, `d12210121`, or `dw66`.
 
-__New in machi-ng:__ draft mode can be overrided by per-window settings. Resize a window to a single area to disable drafting, or across areas to enable drafting. You can also use `f` or `.` key in switcher UI to manually cycle through modes.
+Draft mode can be easily overrided by per-window settings. Resize a window to a single area to disable drafting, or across areas to enable drafting. You can also use `f` or `.` key in switcher UI to manually cycle through modes.
 
 ### Nested layouts
 
