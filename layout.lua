@@ -209,6 +209,16 @@ function module.create(args_or_name, editor, default_cmd)
         if areas == nil then return end
         local nested_clients = {}
 
+        local function place_client_in_area(c, area)
+            if machi_editor.nested_layouts[areas[area].layout] ~= nil then
+                local clients = nested_clients[area]
+                if clients == nil then clients = {}; nested_clients[area] = clients end
+                clients[#clients + 1] = c
+            else
+                module.set_geometry(p.geometries[c], areas[area], areas[area], useless_gap, 0)
+            end
+        end
+
         for i, c in ipairs(cls) do
             if c.floating or c.immobilized then
                 log(DEBUG, "Ignore client " .. tostring(c))
@@ -256,17 +266,16 @@ function module.create(args_or_name, editor, default_cmd)
                     end
 
                     if lu ~= nil and rd ~= nil then
-                        if lu == rd and cd[c].draft ~= true then
-                            cd[c].lu = nil
-                            cd[c].rd = nil
+                        p.geometries[c] = {}
+                        if lu == rd and cd[c].lu == nil then
                             cd[c].area = lu
+                            place_client_in_area(c, lu)
                         else
                             cd[c].lu = lu
                             cd[c].rd = rd
                             cd[c].area = nil
+                            module.set_geometry(p.geometries[c], areas[lu], areas[rd], useless_gap, 0)
                         end
-                        p.geometries[c] = {}
-                        module.set_geometry(p.geometries[c], areas[lu], areas[rd], useless_gap, 0)
                     end
                 else
                     if cd[c].area ~= nil and
@@ -283,13 +292,7 @@ function module.create(args_or_name, editor, default_cmd)
                         local area = find_area(c, areas)
                         cd[c].area, cd[c].lu, cd[c].rd = area, nil, nil
                         p.geometries[c] = {}
-                        if machi_editor.nested_layouts[areas[area].layout] ~= nil then
-                            local clients = nested_clients[area]
-                            if clients == nil then clients = {}; nested_clients[area] = clients end
-                            clients[#clients + 1] = c
-                        else
-                            module.set_geometry(p.geometries[c], areas[area], areas[area], useless_gap, 0)
-                        end
+                        place_client_in_area(c, area)
                     end
                 end
             end
@@ -434,12 +437,13 @@ function module.create(args_or_name, editor, default_cmd)
                     cd[c].lu = nil
                     cd[c].rd = nil
                     cd[c].area = lu
+                    awful.layout.arrange(c.screen)
                 else
                     cd[c].lu = lu
                     cd[c].rd = rd
                     cd[c].area = nil
+                    module.set_geometry(c, areas[lu], areas[rd], 0, c.border_width)
                 end
-                module.set_geometry(c, areas[lu], areas[rd], 0, c.border_width)
             end
         end
     end
