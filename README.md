@@ -80,12 +80,12 @@ For `new_placement_cb` the arguments are:
   - `instance`: a layout and tag depedent table with the following fields available:
     - `cmd`: the current layout command.
     - `client_data`: a mapping from previously managed clients to their layout related settings and assigned areas.
+      Note that it may contain some clients that are no longer in the layout. You can filter them using `screen.tiled_clients`.
       Each entry is a table with fields:
         - `.placement`: If true, the client has been placed by the layout, otherwise `new_placement_cb` will be called on the client.
         - `.area`: If it is non-nil, the window is fit in the area.
         - `.lu`, `.rd`: If those are non-nil, the window is in draft mode and the fields are for the areas of its corners.
         - `.draft`: if non-nil, this is the overriding perference of draft mode for the window.
-      Note that it may contains some clients that are no longer in the layout. You can filter using `screen.tiled_clients`.
     - `tag_data`: a mapping from area ids to their fake tag data. This is for nested layouts.
   - `areas`: the current array of areas produced by `instance.cmd`. Each area is a table with the following fields available:
     - `id`: self index of the array.
