@@ -554,8 +554,7 @@ function module.start(c, exit_keys)
             }
             gtimer.delayed_call(
                 function ()
-                    print(layout.editor)
-                    layout.editor.start_interactive(
+                    layout.machi_editor.start_interactive(
                         screen,
                         {
                             workarea = workarea,

@@ -69,9 +69,9 @@ Use `local layout = machi.layout.create(args)` to instantiate the layout with an
   - `default_cmd`: the command to use if there is no persistent history for this layout.
   - `editor`: the editor used for the layout. The default is `machi.default_editor` (or `machi.editor.default_editor`).
   - `new_placement_cb`: a callback `function(c, instance, areas, geometry)` that fits new client `c` into the areas.
-    Returns whether the new client is in draft mode. This is a new and experimental feature.
+    This is a new and experimental feature. The interface is subject to changes.
 
-Either `name` or `name_func` must be set - others are optional.
+If `name` and `name_func` are both nil a default name function will be used, which splits the state based on the tag names.
 
 The function is compatible with the previous `machi.layout.create(name, editor, default_cmd)` calls.
 
@@ -80,16 +80,24 @@ For `new_placement_cb` the arguments are:
   - `instance`: a layout and tag depedent table with the following fields available:
     - `cmd`: the current layout command.
     - `client_data`: a mapping from previously managed clients to their layout related settings and assigned areas.
-      Drafting windows are located using `.lu` and `.rd` fields, otherwise located uisng `.area` field; Drafting override is in `.draft` field.
+      Each entry is a table with fields:
+        - `.placement`: If true, the client has been placed by the layout, otherwise `new_placement_cb` will be called on the client.
+        - `.area`: If it is non-nil, the window is fit in the area.
+        - `.lu`, `.rd`: If those are non-nil, the window is in draft mode and the fields are for the areas of its corners.
+        - `.draft`: if non-nil, this is the overriding perference of draft mode for the window.
       Note that it may contains some clients that are no longer in the layout. You can filter using `screen.tiled_clients`.
     - `tag_data`: a mapping from area ids to their fake tag data. This is for nested layouts.
   - `areas`: the current array of areas produced by `instance.cmd`. Each area is a table with the following fields available:
     - `id`: self index of the array.
+    - `inhabitable`: if true, the area is not for placing windows. It could be a parent area, or area disabled by command `/`.
     - `x`, `y`, `width`, `height`: area geometry.
     - `layout`: the string used to index the nested layout, if any.
-  - `geometry`: the output geometry of the client.
+  - `geometry`: the output table the client geometry. Note that the geometry _includes_ the borders.
 
-The callback places the new client by changing its geometry, and returns its draft perference for further area fitting.
+The callback places the new client by changing its geometry and client data.
+Note that after the callback machi will validate the geometry and fit into the areas.
+So no need to set the `.area`, `.lu`, or `.rd` field of the client data in the callback.
+See `placement.fair` in `layout.lua` for an example.
 
 ## The layout editor and commands
 

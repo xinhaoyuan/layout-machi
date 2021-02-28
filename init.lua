@@ -2,14 +2,6 @@ local engine = require(... .. ".engine")
 local layout = require(... .. ".layout")
 local editor = require(... .. ".editor")
 local switcher = require(... .. ".switcher")
-local function default_name(tag)
-    if tag.machi_name_cache == nil then
-        tag.machi_name_cache =
-            tostring(tag.screen.geometry.width) .. "x" .. tostring(tag.screen.geometry.height) .. "+" ..
-            tostring(tag.screen.geometry.x) .. "+" .. tostring(tag.screen.geometry.y) .. '+' .. tag.name
-    end
-    return tag.machi_name_cache
-end
 local default_editor = editor.default_editor
 local default_layout = layout.create{ name_func = default_name }
 local gcolor = require("gears.color")
@@ -34,7 +26,6 @@ return {
     layout = layout,
     editor = editor,
     switcher = switcher,
-    default_name = default_name,
     default_editor = default_editor,
     default_layout = default_layout,
     icon_raw = icon_raw,
