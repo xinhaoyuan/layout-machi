@@ -68,13 +68,28 @@ Use `local layout = machi.layout.create(args)` to instantiate the layout with an
   - `persistent`: whether to keep a history of the command for the layout. The default is `true`.
   - `default_cmd`: the command to use if there is no persistent history for this layout.
   - `editor`: the editor used for the layout. The default is `machi.default_editor` (or `machi.editor.default_editor`).
-  - `new_placement_cb`: a callback `function(c, instance, areas)` that fits new client `c` into the areas.
+  - `new_placement_cb`: a callback `function(c, instance, areas, geometry)` that fits new client `c` into the areas.
     Returns whether the new client is in draft mode. This is a new and experimental feature.
-    XXX have a subsection for this.
 
 Either `name` or `name_func` must be set - others are optional.
 
 The function is compatible with the previous `machi.layout.create(name, editor, default_cmd)` calls.
+
+For `new_placement_cb` the arguments are:
+  - `c`: the new client to be placed.
+  - `instance`: a layout and tag depedent table with the following fields available:
+    - `cmd`: the current layout command.
+    - `client_data`: a mapping from previously managed clients to their layout related settings and assigned areas.
+      Drafting windows are located using `.lu` and `.rd` fields, otherwise located uisng `.area` field; Drafting override is in `.draft` field.
+      Note that it may contains some clients that are no longer in the layout. You can filter using `screen.tiled_clients`.
+    - `tag_data`: a mapping from area ids to their fake tag data. This is for nested layouts.
+  - `areas`: the current array of areas produced by `instance.cmd`. Each area is a table with the following fields available:
+    - `id`: self index of the array.
+    - `x`, `y`, `width`, `height`: area geometry.
+    - `layout`: the string used to index the nested layout, if any.
+  - `geometry`: the output geometry of the client.
+
+The callback places the new client by changing its geometry, and returns its draft perference for further area fitting.
 
 ## The layout editor and commands
 
