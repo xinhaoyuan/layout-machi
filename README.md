@@ -97,7 +97,7 @@ For `new_placement_cb` the arguments are:
 The callback places the new client by changing its geometry and client data.
 Note that after the callback machi will validate the geometry and fit into the areas.
 So no need to set the `.area`, `.lu`, or `.rd` field of the client data in the callback.
-See `placement.fair` in `layout.lua` for an example.
+See `placement.empty_then_fair` in `layout.lua` for an example.
 
 ## The layout editor and commands
 

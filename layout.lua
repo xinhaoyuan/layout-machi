@@ -493,7 +493,7 @@ end
 
 module.placement = {}
 
-function module.placement.fair(c, instance, areas, geometry)
+function module.placement.empty_then_fair(c, instance, areas, geometry)
     local area_client_count = {}
     for _, oc in ipairs(c.screen.tiled_clients) do
         local cd = instance.client_data[oc]
@@ -501,18 +501,28 @@ function module.placement.fair(c, instance, areas, geometry)
             area_client_count[cd.area] = (area_client_count[cd.area] or 0) + 1
         end
     end
-    local emptyness_max = nil
+    local choice_client_count = nil
+    local choice_spare_score = nil
     local choice = nil
     for i = 1, #areas do
         local a = areas[i]
         if a.habitable then
-            local emptyness = a.width * a.height / ((area_client_count[i] or 0) + 1)
-            if emptyness_max == nil or emptyness > emptyness_max then
-                emptyness_max = emptyness
+            -- +1 for the new client
+            local client_count = (area_client_count[i] or 0) + 1
+            local spare_score = a.width * a.height / client_count
+            if choice == nil or (choice_client_count > 1 and client_count == 1) then
+                choice_client_count = client_count
+                choice_spare_score = spare_score
+                choice = i
+            elseif (choice_client_count > 1) == (client_count > 1) and  choice_spare_score < spare_score then
+                choice_client_count = client_count
+                choice_spare_score = spare_score
                 choice = i
             end
         end
     end
+    instance.client_data[c].lu = choice
+    instance.client_data[c].rd = choice
     instance.client_data[c].area = choice
     geometry.x = areas[choice].x
     geometry.y = areas[choice].y
