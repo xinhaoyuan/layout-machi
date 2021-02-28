@@ -493,7 +493,7 @@ end
 
 module.placement = {}
 
-function module.placement.empty_then_fair(c, instance, areas, geometry)
+local function empty_then_maybe_fair(c, instance, areas, geometry, do_fair)
     local area_client_count = {}
     for _, oc in ipairs(c.screen.tiled_clients) do
         local cd = instance.client_data[oc]
@@ -521,13 +521,24 @@ function module.placement.empty_then_fair(c, instance, areas, geometry)
             end
         end
     end
-    instance.client_data[c].lu = choice
-    instance.client_data[c].rd = choice
+    if choice_client_count > 1 and not do_fair then
+        return
+    end
+    instance.client_data[c].lu = nil
+    instance.client_data[c].rd = nil
     instance.client_data[c].area = choice
     geometry.x = areas[choice].x
     geometry.y = areas[choice].y
     geometry.width = areas[choice].width
     geometry.height = areas[choice].height
+end
+
+function module.placement.empty(c, instance, areas, geometry)
+    empty_then_maybe_fair(c, instance, areas, geometry, false)
+end
+
+function module.placement.empty_then_fair(c, instance, areas, geometry)
+    empty_then_maybe_fair(c, instance, areas, geometry, true)
 end
 
 return module
