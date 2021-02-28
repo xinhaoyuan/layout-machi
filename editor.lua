@@ -262,7 +262,7 @@ function module.create(data)
             local msg, ext
 
             for i, a in ipairs(closed_areas) do
-                if not a.inhabitable then
+                if a.habitable then
                     local sa = shrink_area_with_gap(a, gap)
                     local to_highlight = false
                     if pending_op ~= nil then
@@ -286,7 +286,7 @@ function module.create(data)
             end
 
             for i, a in ipairs(open_areas) do
-                if not a.inhabitable then
+                if a.habitable then
                     local sa = shrink_area_with_gap(a, gap)
                     local to_highlight = false
                     if not pending_op then

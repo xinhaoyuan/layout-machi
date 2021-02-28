@@ -121,7 +121,7 @@ function module.start(c, exit_keys)
         if selected_area_ == nil then
             local min_dis = nil
             for i, a in ipairs(areas) do
-                if not a.inhabitable then
+                if a.habitable then
                     local dis =
                         math.abs(a.x + traverse_radius - traverse_x) + math.abs(a.x + a.width - traverse_radius - traverse_x) - a.width +
                         math.abs(a.y + traverse_radius - traverse_y) + math.abs(a.y + a.height - traverse_radius - traverse_y) - a.height +
@@ -191,7 +191,7 @@ function module.start(c, exit_keys)
         local msg, ext
         local active_area = selected_area()
         for i, a in ipairs(areas) do
-            if not a.inhabitable or i == active_area then
+            if a.habitable or i == active_area then
                 cr:rectangle(a.x - start_x, a.y - start_y, a.width, a.height)
                 cr:clip()
                 cr:set_source(fill_color)
@@ -354,7 +354,7 @@ function module.start(c, exit_keys)
             current_area = selected_area()
 
             for i, a in ipairs(areas) do
-                if a.inhabitable then goto continue end
+                if not a.habitable then goto continue end
 
                 local v
                 if key == "Up" then
@@ -530,7 +530,7 @@ function module.start(c, exit_keys)
             current_area = parent_stack[#parent_stack]
 
             if c and ctrl then
-                if not areas[current_area].inhabitable and cd[c].draft ~= true then
+                if areas[current_area].habitable and cd[c].draft ~= true then
                     cd[c].lu, cd[c].rd, cd[c].area = nil, nil, current_area
                 end
                 machi.layout.set_geometry(c, areas[current_area], areas[current_area], 0, c.border_width)

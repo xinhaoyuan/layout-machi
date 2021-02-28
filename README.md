@@ -89,7 +89,7 @@ For `new_placement_cb` the arguments are:
     - `tag_data`: a mapping from area ids to their fake tag data. This is for nested layouts.
   - `areas`: the current array of areas produced by `instance.cmd`. Each area is a table with the following fields available:
     - `id`: self index of the array.
-    - `inhabitable`: if true, the area is not for placing windows. It could be a parent area, or area disabled by command `/`.
+    - `habitable`: if true, the area is for placing windows. It could be false for a parent area, or an area disabled by command `/`.
     - `x`, `y`, `width`, `height`: area geometry.
     - `layout`: the string used to index the nested layout, if any.
   - `geometry`: the output table the client geometry. Note that the geometry _includes_ the borders.
