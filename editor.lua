@@ -286,36 +286,34 @@ function module.create(data)
             end
 
             for i, a in ipairs(open_areas) do
-                if a.habitable then
-                    local sa = shrink_area_with_gap(a, gap)
-                    local to_highlight = false
-                    if not pending_op then
-                        to_highlight = i == #open_areas
-                    else
-                        to_highlight = a.group_id == op_count
-                    end
-                    cr:rectangle(sa.x - start_x, sa.y - start_y, sa.width, sa.height)
-                    cr:clip()
-                    if i == #open_areas then
-                        cr:set_source(active_color)
-                    else
-                        cr:set_source(open_color)
-                    end
-                    cr:rectangle(sa.x - start_x, sa.y - start_y, sa.width, sa.height)
-                    cr:fill()
-
-                    cr:set_source(border_color)
-                    cr:rectangle(sa.x - start_x, sa.y - start_y, sa.width, sa.height)
-                    cr:set_line_width(10.0)
-                    if to_highlight then
-                        cr:stroke()
-                    else
-                        cr:set_dash({5, 5}, 0)
-                        cr:stroke()
-                        cr:set_dash({}, 0)
-                    end
-                    cr:reset_clip()
+                local sa = shrink_area_with_gap(a, gap)
+                local to_highlight = false
+                if not pending_op then
+                    to_highlight = i == #open_areas
+                else
+                    to_highlight = a.group_id == op_count
                 end
+                cr:rectangle(sa.x - start_x, sa.y - start_y, sa.width, sa.height)
+                cr:clip()
+                if i == #open_areas then
+                    cr:set_source(active_color)
+                else
+                    cr:set_source(open_color)
+                end
+                cr:rectangle(sa.x - start_x, sa.y - start_y, sa.width, sa.height)
+                cr:fill()
+
+                cr:set_source(border_color)
+                cr:rectangle(sa.x - start_x, sa.y - start_y, sa.width, sa.height)
+                cr:set_line_width(10.0)
+                if to_highlight then
+                    cr:stroke()
+                else
+                    cr:set_dash({5, 5}, 0)
+                    cr:stroke()
+                    cr:set_dash({}, 0)
+                end
+                cr:reset_clip()
             end
 
             local pl = lgi.Pango.Layout.create(cr)
