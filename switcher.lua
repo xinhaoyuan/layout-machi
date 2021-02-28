@@ -304,6 +304,14 @@ function module.start(c, exit_keys)
         maintain_tablist()
         assert(tablist ~= nil)
 
+        local shift = false
+        local ctrl = false
+        for i, m in ipairs(mod) do
+            if m == "Shift" then shift = true
+            elseif m == "Control" then ctrl = true
+            end
+        end
+
         if key == "Tab" then
             if #tablist > 0 then
                 tablist_index = tablist_index % #tablist + 1
@@ -314,14 +322,6 @@ function module.start(c, exit_keys)
                 infobox.bgimage = draw_info
             end
         elseif key == "Up" or key == "Down" or key == "Left" or key == "Right" then
-            local shift = false
-            local ctrl = false
-            for i, m in ipairs(mod) do
-                if m == "Shift" then shift = true
-                elseif m == "Control" then ctrl = true
-                end
-            end
-
             local current_area = selected_area()
 
             if c and (shift or ctrl) then
@@ -496,23 +496,48 @@ function module.start(c, exit_keys)
             end
         elseif (key == "q" or key == "Prior") then
             local current_area = selected_area()
-            if areas[current_area].parent_id then
-                tablist = nil
-                set_selected_area(areas[current_area].parent_id)
-                if #parent_stack == 0 or
-                    parent_stack[#parent_stack] ~= current_area then
-                    parent_stack = {current_area}
-                end
-                parent_stack[#parent_stack + 1] = areas[current_area].parent_id
-                infobox.bgimage = draw_info
+            if areas[current_area].parent_id == nil then
+                return
             end
+
+            tablist = nil
+            set_selected_area(areas[current_area].parent_id)
+            if #parent_stack == 0 or
+                parent_stack[#parent_stack] ~= current_area then
+                parent_stack = {current_area}
+            end
+            parent_stack[#parent_stack + 1] = areas[current_area].parent_id
+            current_area = parent_stack[#parent_stack]
+
+            if c and ctrl and cd[c].draft ~= false then
+                if cd[c].area then
+                    cd[c].lu, cd[c].rd, cd[c].area = cd[c].area, cd[c].area, nil
+                end
+                machi.layout.set_geometry(c, areas[current_area], areas[current_area], 0, c.border_width)
+                awful.layout.arrange(screen)
+            end
+
+            infobox.bgimage = draw_info
         elseif (key =="e" or key == "Next") then
             local current_area = selected_area()
-            if #parent_stack > 1 and parent_stack[#parent_stack] == current_area then
-                set_selected_area(parent_stack[#parent_stack - 1])
-                table.remove(parent_stack, #parent_stack)
-                infobox.bgimage = draw_info
+            if #parent_stack <= 1 or parent_stack[#parent_stack] ~= current_area then
+                return
             end
+
+            tablist = nil
+            set_selected_area(parent_stack[#parent_stack - 1])
+            table.remove(parent_stack, #parent_stack)
+            current_area = parent_stack[#parent_stack]
+
+            if c and ctrl then
+                if not areas[current_area].inhabitable and cd[c].draft ~= true then
+                    cd[c].lu, cd[c].rd, cd[c].area = nil, nil, current_area
+                end
+                machi.layout.set_geometry(c, areas[current_area], areas[current_area], 0, c.border_width)
+                awful.layout.arrange(screen)
+            end
+
+            infobox.bgimage = draw_info
         elseif key == "/" then
             local current_area = selected_area()
             local original_cmd = machi.engine.areas_to_command(areas, true, current_area)
