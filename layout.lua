@@ -219,11 +219,21 @@ function module.create(args_or_name, editor, default_cmd)
             end
         end
 
+        -- Make new clients appear in the end.
+        local j = 0
+        for i = 1, #cls do
+            if cd[cls[i]] ~= nil then
+                j = j + 1
+                cls[j], cls[i] = cls[i], cls[j]
+            end
+        end
+
         for i, c in ipairs(cls) do
             if c.floating or c.immobilized then
                 log(DEBUG, "Ignore client " .. tostring(c))
             else
                 cd[c] = cd[c] or {}
+                p.geometries[c] = {}
 
                 local in_draft = cd[c].draft
                 if cd[c].draft ~= nil then
@@ -233,21 +243,26 @@ function module.create(args_or_name, editor, default_cmd)
                 elseif cd[c].area then
                     in_draft = false
                 elseif new_placement_cb then
-                    in_draft = new_placement_cb(c, instance, areas)
+                    in_draft = new_placement_cb(c, instance, areas, p.geometries[c])
                 else
                     in_draft = nil
                 end
+
                 local skip = false
+                local cx = p.geometries[c].x or c.x
+                local cy = p.geometries[c].y or c.y
+                local cw = p.geometries[c].w or c.width
+                local ch = p.geometries[c].h or c.height
 
                 if in_draft ~= false then
                     if cd[c].lu ~= nil and cd[c].rd ~= nil and
                         cd[c].lu <= #areas and cd[c].rd <= #areas and
                         not areas[cd[c].lu].inhabitable and not areas[cd[c].rd].inhabitable
                     then
-                        if areas[cd[c].lu].x == c.x and
-                            areas[cd[c].lu].y == c.y and
-                            areas[cd[c].rd].x + areas[cd[c].rd].width - c.border_width * 2 == c.x + c.width and
-                            areas[cd[c].rd].y + areas[cd[c].rd].height - c.border_width * 2 == c.y + c.height
+                        if areas[cd[c].lu].x == cx and
+                            areas[cd[c].lu].y == cy and
+                            areas[cd[c].rd].x + areas[cd[c].rd].width - c.border_width * 2 == cx + cw and
+                            areas[cd[c].rd].y + areas[cd[c].rd].height - c.border_width * 2 == cy + ch
                         then
                             skip = true
                         end
@@ -259,14 +274,13 @@ function module.create(args_or_name, editor, default_cmd)
                         log(DEBUG, "Compute areas for " .. (c.name or ("<untitled:" .. tostring(c) .. ">")))
                         lu = find_lu(c, areas)
                         if lu ~= nil then
-                            c.x = areas[lu].x
-                            c.y = areas[lu].y
+                            cx = areas[lu].x
+                            cy = areas[lu].y
                             rd = find_rd(c, areas, lu)
                         end
                     end
 
                     if lu ~= nil and rd ~= nil then
-                        p.geometries[c] = {}
                         if lu == rd and cd[c].lu == nil then
                             cd[c].area = lu
                             place_client_in_area(c, lu)
@@ -282,16 +296,15 @@ function module.create(args_or_name, editor, default_cmd)
                         cd[c].area < #areas and
                         not areas[cd[c].area].inhabitable and
                         areas[cd[c].area].layout == nil and
-                        areas[cd[c].area].x == c.x and
-                        areas[cd[c].area].y == c.y and
-                        areas[cd[c].area].width - c.border_width * 2 == c.width and
-                        areas[cd[c].area].height - c.border_width * 2 == c.height
+                        areas[cd[c].area].x == cx and
+                        areas[cd[c].area].y == cy and
+                        areas[cd[c].area].width - c.border_width * 2 == cw and
+                        areas[cd[c].area].height - c.border_width * 2 == ch
                     then
                     else
                         log(DEBUG, "Compute areas for " .. (c.name or ("<untitled:" .. tostring(c) .. ">")))
                         local area = find_area(c, areas)
                         cd[c].area, cd[c].lu, cd[c].rd = area, nil, nil
-                        p.geometries[c] = {}
                         place_client_in_area(c, area)
                     end
                 end
