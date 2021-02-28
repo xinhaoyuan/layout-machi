@@ -49,7 +49,7 @@ local function find_area(c, areas)
     local choice_value = nil
     local c_area = c.width * c.height
     for i, a in ipairs(areas) do
-        if not a.inhabitable then
+        if a.habitable then
             local x_cap = max(0, min(c.x + c.width, a.x + a.width) - max(c.x, a.x))
             local y_cap = max(0, min(c.y + c.height, a.y + a.height) - max(c.y, a.y))
             local cap = x_cap * y_cap
@@ -80,7 +80,7 @@ end
 local function find_lu(c, areas, rd)
     local lu = nil
     for i, a in ipairs(areas) do
-        if not a.inhabitable then
+        if a.habitable then
             if rd == nil or (a.x < areas[rd].x + areas[rd].width and a.y < areas[rd].y + areas[rd].height) then
                 if lu == nil or distance(c.x, c.y, a.x, a.y) < distance(c.x, c.y, areas[lu].x, areas[lu].y) then
                     lu = i
@@ -97,7 +97,7 @@ local function find_rd(c, border_width, areas, lu)
     y = c.y + c.height + (border_width or 0) * 2
     local rd = nil
     for i, a in ipairs(areas) do
-        if not a.inhabitable then
+        if a.habitable then
             if lu == nil or (a.x + a.width > areas[lu].x and a.y + a.height > areas[lu].y) then
                 if rd == nil or distance(x, y, a.x + a.width, a.y + a.height) < distance(x, y, areas[rd].x + areas[rd].width, areas[rd].y + areas[rd].height) then
                     rd = i
@@ -267,7 +267,7 @@ function module.create(args_or_name, editor, default_cmd)
                 if in_draft ~= false then
                     if cd[c].lu ~= nil and cd[c].rd ~= nil and
                         cd[c].lu <= #areas and cd[c].rd <= #areas and
-                        not areas[cd[c].lu].inhabitable and not areas[cd[c].rd].inhabitable
+                        areas[cd[c].lu].habitable and areas[cd[c].rd].habitable
                     then
                         if areas[cd[c].lu].x == geo.x and
                             areas[cd[c].lu].y == geo.y and
@@ -305,7 +305,7 @@ function module.create(args_or_name, editor, default_cmd)
                 else
                     if cd[c].area ~= nil and
                         cd[c].area <= #areas and
-                        not areas[cd[c].area].inhabitable and
+                        areas[cd[c].area].habitable and
                         areas[cd[c].area].layout == nil and
                         areas[cd[c].area].x == geo.x and
                         areas[cd[c].area].y == geo.y and
@@ -435,7 +435,7 @@ function module.create(args_or_name, editor, default_cmd)
                 local choice_value = nil
 
                 for i, a in ipairs(areas) do
-                    if not a.inhabitable then
+                    if a.habitable then
                         local ac_x = a.x + a.width / 2
                         local ac_y = a.y + a.height / 2
                         local dis = (ac_x - center_x) * (ac_x - center_x) + (ac_y - center_y) * (ac_y - center_y)
@@ -505,7 +505,7 @@ function module.placement.fair(c, instance, areas, geometry)
     local choice = nil
     for i = 1, #areas do
         local a = areas[i]
-        if not a.inhabitable then
+        if a.habitable then
             local emptyness = a.width * a.height / ((area_client_count[i] or 0) + 1)
             if emptyness_max == nil or emptyness > emptyness_max then
                 emptyness_max = emptyness

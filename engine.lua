@@ -4,7 +4,7 @@
 --   parent_cid
 --   parent_x_shares
 --   parent_y_shares
---   inhabitable
+--   habitable
 --   hole (unique)
 -- }
 --
@@ -243,6 +243,7 @@ local function areas_from_command(command, workarea, minimum)
         local i = #closed_areas + 1
         closed_areas[i] = a
         a.id = i
+        a.habitable = true
         return a, i
     end
 
@@ -284,7 +285,7 @@ local function areas_from_command(command, workarea, minimum)
             end
 
             local a, area_index = close_area()
-            a.inhabitable = true
+            a.habitable = false
             a.split = {
                 method = method,
                 x_shares = method == "h" and shares or {{1}},
@@ -396,7 +397,7 @@ local function areas_from_command(command, workarea, minimum)
             end
 
             local a, area_index = close_area()
-            a.inhabitable = true
+            a.habitable = false
             a.split = {
                 method = method,
                 x_shares = x_shares,
@@ -561,7 +562,7 @@ local function areas_from_command(command, workarea, minimum)
 
         elseif method == "/" then
 
-            close_area().inhabitable = true
+            close_area().habitable = false
 
         elseif method == ";" then
 
@@ -761,7 +762,7 @@ local function areas_from_command(command, workarea, minimum)
         if closed_areas[i].x + closed_areas[i].width > root.x + orig_width or
             closed_areas[i].y + closed_areas[i].height > root.y + orig_height
         then
-            closed_areas[i].inhabitable = true
+            closed_areas[i].habitable = false
         end
     end
 
@@ -769,7 +770,7 @@ local function areas_from_command(command, workarea, minimum)
         if open_areas[i].x + open_areas[i].width > root.x + orig_width or
             open_areas[i].y + open_areas[i].height > root.y + orig_height
         then
-            open_areas[i].inhabitable = true
+            open_areas[i].habitable = false
         end
     end
 
