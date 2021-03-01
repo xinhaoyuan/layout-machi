@@ -121,15 +121,15 @@ function module.set_geometry(c, area_lu, area_rd, useless_gap, border_width)
     end
 end
 
-function module.default_name_func(tag)
-    if tag.machi_name_cache == nil then
-        tag.machi_name_cache =
+-- TODO: the string need to be updated when its screen geometry changed.
+local function get_machi_tag_string(tag)
+    if tag.machi_tag_string == nil then
+        tag.machi_tag_string =
             tostring(tag.screen.geometry.width) .. "x" .. tostring(tag.screen.geometry.height) .. "+" ..
             tostring(tag.screen.geometry.x) .. "+" .. tostring(tag.screen.geometry.y) .. '+' .. tag.name
     end
-    return tag.machi_name_cache
+    return tag.machi_tag_string
 end
-
 
 function module.create(args_or_name, editor, default_cmd)
     local args
@@ -147,7 +147,10 @@ function module.create(args_or_name, editor, default_cmd)
         return nil
     end
     if args.name == nil and args.name_func == nil then
-        args.name_func = module.default_name_func
+        local prefix = args.icon_name and (args.icon_name.."-") or ""
+        args.name_func = function (tag)
+            return prefix..get_machi_tag_string(tag)
+        end
     end
     args.editor = args.editor or editor or machi_editor.default_editor
     args.default_cmd = args.default_cmd or default_cmd or global_default_cmd

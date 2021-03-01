@@ -71,7 +71,7 @@ Use `local layout = machi.layout.create(args)` to instantiate the layout with an
   - `new_placement_cb`: a callback `function(c, instance, areas, geometry)` that fits new client `c` into the areas.
     This is a new and experimental feature. The interface is subject to changes.
 
-If `name` and `name_func` are both nil a default name function will be used, which splits the state based on the tag names.
+If `name` and `name_func` are both nil, a default name function will be used, which depends on the tag names, screen geometries, and `icon_name`.
 
 The function is compatible with the previous `machi.layout.create(name, editor, default_cmd)` calls.
 
