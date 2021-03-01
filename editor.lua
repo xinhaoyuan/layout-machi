@@ -664,14 +664,14 @@ function module.create(data)
       local info_size = api.dpi(60)
       -- colors are in rgba
       local border_color = with_alpha(api.gears.color(
-        api.beautiful.editor_border_color or api.beautiful.border_focus), 
-        api.beautiful.editor_border_opacity or 0.75)
+        api.beautiful.machi_editor_border_color or api.beautiful.border_focus), 
+        api.beautiful.machi_editor_border_opacity or 0.75)
       local active_color = with_alpha(api.gears.color(
-        api.beautiful.editor_active_color or api.beautiful.bg_focus), 
-        api.beautiful.editor_active_opacity or 0.5)
+        api.beautiful.machi_editor_active_color or api.beautiful.bg_focus), 
+        api.beautiful.machi_editor_active_opacity or 0.5)
       local open_color   = with_alpha(api.gears.color(
-        api.beautiful.editor_open_color or api.beautiful.bg_normal), 
-        api.beautiful.editor_open_opacity or 0.5)
+        api.beautiful.machi_editor_open_color or api.beautiful.bg_normal), 
+        api.beautiful.machi_editor_open_opacity or 0.5)
       local closed_color = open_color
 
       screen = screen or api.screen.focused()
