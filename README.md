@@ -21,10 +21,10 @@ Machi-ng is a refactoring effort of machi with new features and enhancements.
 
 ### New features & enhancements
 
-1. Minimum area size.
-2. More tolerating "safer" error handling.
+1. Areas are protected by a minimum size (not configurable for now).
+2. More tolerating "safer" error handling. If the screen cannot fit the minimum size of the layout, areas out of the screen will be hidden, but it will not crash the layout logic.
 3. Dynamic size adjustment with propagation.
-4. Editing non-global areas.
+4. Editor can be used on areas instead of entire screens.
 
 ## Why?
 
@@ -82,7 +82,7 @@ For `new_placement_cb` the arguments are:
     - `client_data`: a mapping from previously managed clients to their layout related settings and assigned areas.
       Note that it may contain some clients that are no longer in the layout. You can filter them using `screen.tiled_clients`.
       Each entry is a table with fields:
-        - `.placement`: If true, the client has been placed by the layout, otherwise `new_placement_cb` will be called on the client.
+        - `.placement`: If true, the client has been placed by the layout, otherwise `new_placement_cb` will be called on the client in the further.
         - `.area`: If it is non-nil, the window is fit in the area.
         - `.lu`, `.rd`: If those are non-nil, the window is in draft mode and the fields are for the areas of its corners.
         - `.draft`: if non-nil, this is the overriding perference of draft mode for the window.
@@ -287,9 +287,7 @@ Final merge, size 3x1, `w443113132231`:
 
 ### Draft mode
 
-__This mode is somewhat usable, yet it may change in the future.__
-
-Unlike the regular placement, where a window fits in a single area, windows in draft mode are allowed to span across multiple areas.
+Unlike the regular placement, where a window fits in a single area, windows in draft mode can span across multiple areas.
 Each drafting window is associated with a upper-left area (UL) and a bottom-right area (BR).
 The geometry of the window is from the upper-left corner of the UL to the bottom-right corner of the BR.
 
@@ -297,7 +295,7 @@ Draft mode is suppose to work well with grid areas (produced by `d` or `w` opera
 Draft mode is enabled for a newly placed window if
 (a) `new_placement_cb` returns so, or
 (b) `new_placement_cb` is unspecified and the window's UL and BR corners fit different areas.
-Resize a window to a single area to disable drafting, or across areas to enable drafting.
+Resizing a window to a single area disables drafting, otherwise resizing across areas enables drafting.
 You can also use `f` or `.` key in switcher UI to manually cycle through modes despit how the window previously spans areas.
 
 ### Nested layouts
