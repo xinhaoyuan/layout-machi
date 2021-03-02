@@ -543,7 +543,7 @@ function module.create(data)
             area = areas[area].parent_id
         end
 
-        layout.machi_set_cmd(machi_engine.areas_to_command(areas), tag)
+        layout.machi_set_cmd(machi_engine.areas_to_command(areas), tag, true)
         awful.layout.arrange(screen)
     end
 

@@ -196,13 +196,15 @@ function module.create(args_or_name, editor, default_cmd)
         return instance.client_data, instance.tag_data, instance.areas_cache[key], instance, args.new_placement_cb
     end
 
-    local function set_cmd(cmd, tag)
+    local function set_cmd(cmd, tag, keep_instance_data)
         local instance = get_instance_(tag)
         if instance.cmd ~= cmd then
             instance.cmd = cmd
             instance.areas_cache = {}
-            instance.tag_data = {}
-            instance.client_data = setmetatable({}, {__mode="k"})
+            if not keep_instance_data then
+                instance.tag_data = {}
+                instance.client_data = setmetatable({}, {__mode="k"})
+            end
         end
     end
 
