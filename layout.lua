@@ -1,6 +1,7 @@
 local this_package = ... and (...):match("(.-)[^%.]+$") or ""
 local machi_editor = require(this_package.."editor")
 local awful = require("awful")
+local gobject = require("gears.object")
 local capi = {
     screen = screen
 }
@@ -201,6 +202,9 @@ function module.create(args_or_name, editor, default_cmd)
         if instance.cmd ~= cmd then
             instance.cmd = cmd
             instance.areas_cache = {}
+            for _, tag in pairs(instance.tag_data) do
+                tag:emit_signal("property::layout")
+            end
             if not keep_instance_data then
                 instance.tag_data = {}
                 instance.client_data = setmetatable({}, {__mode="k"})
@@ -208,13 +212,42 @@ function module.create(args_or_name, editor, default_cmd)
         end
     end
 
+    local clean_up
+    local tag_data = setmetatable({}, {__mode = "k"})
+
+    clean_up = function (tag)
+        local screen = tag.screen
+        local _cd, _td, _areas, instance, _new_placement_cb = get_instance_data(screen, tag)
+
+        if tag_data[tag].regsitered then
+            tag_data[tag].regsitered = false
+            tag:disconnect_signal("property::layout", clean_up)
+            tag:connect_signal("property::selected", clean_up)
+            for _, tag in pairs(instance.tag_data) do
+                tag:emit_signal("property::layout")
+            end
+        end
+    end
+
+    clean_up_on_selected_change = function (tag)
+        if not tag.selected then clean_up(tag) end
+    end
+
     local function arrange(p)
+        local tag = p.tag or capi.screen[p.screen].selected_tag
         local useless_gap = p.useless_gap
         local screen = get_screen(p.screen)
         local wa = screen.workarea -- get the real workarea without the gap (instead of p.workarea)
         local cls = p.clients
         local tag = screen.selected_tag
         local cd, td, areas, instance, new_placement_cb = get_instance_data(screen, tag)
+
+        if not tag_data[tag] then tag_data[tag] = {} end
+        if not tag_data[tag].registered then
+            tag_data[tag].regsitered = true
+            tag:connect_signal("property::layout", clean_up)
+            tag:connect_signal("property::selected", clean_up)
+        end
 
         if areas == nil then return end
         local nested_clients = {}
@@ -337,18 +370,22 @@ function module.create(args_or_name, editor, default_cmd)
             end
         end
 
-        for area, clients in pairs(nested_clients) do
+        local arranged_area = {}
+        local function arrange_nested_layout(area, clients)
+            local nested_layout = machi_editor.nested_layouts[areas[area].layout]
+            if not nested_layout then return end
             if td[area] == nil then
+                local tag = gobject{}
+                td[area] = tag
                 -- TODO: Make the default more flexible.
-                td[area] = {
-                    column_count = 1,
-                    master_count = 1,
-                    master_fill_policy = "expand",
-                    gap = 0,
-                    master_width_factor = 0.5,
-                    _private = {
-                        awful_tag_properties = {
-                        },
+                tag.layout = nested_layout
+                tag.column_count = 1
+                tag.master_count = 1
+                tag.master_fill_policy = "expand"
+                tag.gap = 0
+                tag.master_width_factor = 0.5
+                tag._private = {
+                    awful_tag_properties = {
                     },
                 }
             end
@@ -373,7 +410,7 @@ function module.create(args_or_name, editor, default_cmd)
                 useless_gap = useless_gap,
                 geometries = {},
             }
-            machi_editor.nested_layouts[areas[area].layout].arrange(nested_params)
+            nested_layout.arrange(nested_params)
             for _, c in ipairs(clients) do
                 p.geometries[c] = {
                     x = nested_params.geometries[c].x,
@@ -381,6 +418,17 @@ function module.create(args_or_name, editor, default_cmd)
                     width = nested_params.geometries[c].width,
                     height = nested_params.geometries[c].height,
                 }
+            end
+        end
+        for area, clients in pairs(nested_clients) do
+            arranged_area[area] = true
+            arrange_nested_layout(area, clients)
+        end
+        -- Also rearrange empty nested layouts.
+        -- TODO Iterate through only if the area has a nested layout
+        for area, data in pairs(areas) do
+            if not arranged_area[area] and areas[area].layout then
+                arrange_nested_layout(area, {})
             end
         end
     end
