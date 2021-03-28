@@ -292,21 +292,21 @@ function module.create(args_or_name, editor, default_cmd)
                  },
                  -- Not sure how useless_gap adjustment works here. It seems to work anyway.
                  workarea = {
-                     x = regions[region].x - useless_gap / 2,
-                     y = regions[region].y - useless_gap / 2,
-                     width = regions[region].width + useless_gap,
-                     height = regions[region].height + useless_gap,
+                     x = regions[region].x - useless_gap,
+                     y = regions[region].y - useless_gap,
+                     width = regions[region].width + useless_gap * 2,
+                     height = regions[region].height + useless_gap * 2,
                  },
-                 useless_gap = 0,
+                 useless_gap = useless_gap,
                  geometries = {},
              }
              regions[region].layout.arrange(nested_params)
              for _, c in ipairs(clients) do
                  p.geometries[c] = {
-                     x = nested_params.geometries[c].x - useless_gap / 2,
-                     y = nested_params.geometries[c].y - useless_gap / 2,
-                     width = nested_params.geometries[c].width + useless_gap,
-                     height = nested_params.geometries[c].height + useless_gap,
+                     x = nested_params.geometries[c].x,
+                     y = nested_params.geometries[c].y,
+                     width = nested_params.geometries[c].width,
+                     height = nested_params.geometries[c].height,
                  }
              end
          end
