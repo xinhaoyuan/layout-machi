@@ -59,7 +59,8 @@ The function is compatible with the previous `machi.layout.create(name, editor, 
 ### Starting editor in lua
 
 Call `local editor = machi.editor.create()` to create an editor.
-To edit the layout `l` on screen `s`, call `editor.start_interactive(s = awful.screen.focused(), l = awful.layout.get(s))`.
+To edit the layout `l` on screen `s`, call `editor.start_interactive(s, l)`.
+Calling it with no arguments would be the same as `editor.start_interactive(awful.screen.focused(), awful.layout.get(awful.screen.focused()))`.
 
 ### Basic usage
 
