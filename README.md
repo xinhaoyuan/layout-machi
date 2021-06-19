@@ -6,7 +6,7 @@ Demos: https://imgur.com/a/OlM60iw
 
 Draft mode: https://imgur.com/a/BOvMeQL
 
-__Most of the development effort now happens in the ng branch, which introduces a few breaking changes but a ton of new features/enhancements.__
+__`ng` is merged into `master`. Checkout `legacy` tag for the previous master checkpoint.__
 
 ## Machi-ng
 
