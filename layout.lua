@@ -234,12 +234,11 @@ function module.create(args_or_name, editor, default_cmd)
     end
 
     local function arrange(p)
-        local tag = p.tag or capi.screen[p.screen].selected_tag
         local useless_gap = p.useless_gap
         local screen = get_screen(p.screen)
         local wa = screen.workarea -- get the real workarea without the gap (instead of p.workarea)
         local cls = p.clients
-        local tag = screen.selected_tag
+        local tag = p.tag or screen.selected_tag
         local cd, td, areas, instance, new_placement_cb = get_instance_data(screen, tag)
 
         if not tag_data[tag] then tag_data[tag] = {} end
