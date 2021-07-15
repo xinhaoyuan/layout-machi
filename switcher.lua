@@ -411,78 +411,76 @@ function module.start(c, exit_keys)
                 tablist = nil
                 set_selected_area(choice)
 
-                if c then
-                    if ctrl and cd[c].draft ~= false then
-                        local lu = cd[c].lu or cd[c].area
-                        local rd = cd[c].rd or cd[c].area
+                if c and ctrl and cd[c].draft ~= false then
+                    local lu = cd[c].lu or cd[c].area
+                    local rd = cd[c].rd or cd[c].area
 
-                        if shift then
-                            lu = choice
-                            if areas[rd].x + areas[rd].width <= areas[lu].x or
-                                areas[rd].y + areas[rd].height <= areas[lu].y
-                            then
-                                rd = nil
-                            end
-                        else
-                            rd = choice
-                            if areas[rd].x + areas[rd].width <= areas[lu].x or
-                                areas[rd].y + areas[rd].height <= areas[lu].y
-                            then
-                                lu = nil
-                            end
+                    if shift then
+                        lu = choice
+                        if areas[rd].x + areas[rd].width <= areas[lu].x or
+                            areas[rd].y + areas[rd].height <= areas[lu].y
+                        then
+                            rd = nil
                         end
-
-                        if lu ~= nil and rd ~= nil then
-                            machi.layout.set_geometry(c, areas[lu], areas[rd], 0, c.border_width)
-                        elseif lu ~= nil then
-                            machi.layout.set_geometry(c, areas[lu], nil, 0, c.border_width)
-                        elseif rd ~= nil then
-                            c.x = min(c.x, areas[rd].x)
-                            c.y = min(c.y, areas[rd].y)
-                            machi.layout.set_geometry(c, nil, areas[rd], 0, c.border_width)
+                    else
+                        rd = choice
+                        if areas[rd].x + areas[rd].width <= areas[lu].x or
+                            areas[rd].y + areas[rd].height <= areas[lu].y
+                        then
+                            lu = nil
                         end
-
-                        if lu == rd and cd[c].draft ~= true then
-                            cd[c].lu = nil
-                            cd[c].rd = nil
-                            cd[c].area = lu
-                        else
-                            cd[c].lu = lu
-                            cd[c].rd = rd
-                            cd[c].area = nil
-                        end
-
-                        c:emit_signal("request::activate", "mouse.move", {raise=false})
-                        c:raise()
-                        awful.layout.arrange(screen)
-                    elseif shift then
-                        -- move the window
-                        local in_draft = cd[c].draft
-                        if cd[c].draft ~= nil then
-                            in_draft = cd[c].draft
-                        elseif cd[c].lu then
-                            in_draft = true
-                        elseif cd[c].area then
-                            in_draft = false
-                        else
-                            log(ERROR, "Assuming in_draft for unhandled client "..tostring(c))
-                            in_draft = true
-                        end
-                        if in_draft then
-                            c.x = areas[choice].x
-                            c.y = areas[choice].y
-                        else
-                            machi.layout.set_geometry(c, areas[choice], areas[choice], 0, c.border_width)
-                            cd[c].lu = nil
-                            cd[c].rd = nil
-                            cd[c].area = choice
-                        end
-                        c:emit_signal("request::activate", "mouse.move", {raise=false})
-                        c:raise()
-                        awful.layout.arrange(screen)
-
-                        tablist = nil
                     end
+
+                    if lu ~= nil and rd ~= nil then
+                        machi.layout.set_geometry(c, areas[lu], areas[rd], 0, c.border_width)
+                    elseif lu ~= nil then
+                        machi.layout.set_geometry(c, areas[lu], nil, 0, c.border_width)
+                    elseif rd ~= nil then
+                        c.x = min(c.x, areas[rd].x)
+                        c.y = min(c.y, areas[rd].y)
+                        machi.layout.set_geometry(c, nil, areas[rd], 0, c.border_width)
+                    end
+
+                    if lu == rd and cd[c].draft ~= true then
+                        cd[c].lu = nil
+                        cd[c].rd = nil
+                        cd[c].area = lu
+                    else
+                        cd[c].lu = lu
+                        cd[c].rd = rd
+                        cd[c].area = nil
+                    end
+
+                    c:emit_signal("request::activate", "mouse.move", {raise=false})
+                    c:raise()
+                    awful.layout.arrange(screen)
+                elseif c and shift then
+                    -- move the window
+                    local in_draft = cd[c].draft
+                    if cd[c].draft ~= nil then
+                        in_draft = cd[c].draft
+                    elseif cd[c].lu then
+                        in_draft = true
+                    elseif cd[c].area then
+                        in_draft = false
+                    else
+                        log(ERROR, "Assuming in_draft for unhandled client "..tostring(c))
+                        in_draft = true
+                    end
+                    if in_draft then
+                        c.x = areas[choice].x
+                        c.y = areas[choice].y
+                    else
+                        machi.layout.set_geometry(c, areas[choice], areas[choice], 0, c.border_width)
+                        cd[c].lu = nil
+                        cd[c].rd = nil
+                        cd[c].area = choice
+                    end
+                    c:emit_signal("request::activate", "mouse.move", {raise=false})
+                    c:raise()
+                    awful.layout.arrange(screen)
+
+                    tablist = nil
                 else
                     maintain_tablist()
                     -- move the focus
