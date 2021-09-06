@@ -36,8 +36,9 @@ local function fair_split(length, shares)
     local sum_adj
     local remaining = #shares
     local spare = nil
-    local need_recompute = false
+    local need_recompute
     repeat
+        need_recompute = false
         sum_weight = 0
         sum_adj = 0
         for i = 1, #shares do
