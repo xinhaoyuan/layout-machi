@@ -210,6 +210,11 @@ function module.create(data)
             [" "] = "-",
         }
 
+        local curpos = 0
+        local current_info_pre = ""
+        local current_info_post = ""
+        local current_msg
+
         local function set_cmd(cmd)
             local new_closed_areas, new_open_areas, new_pending_op = machi_engine.areas_from_command(
                 cmd,
@@ -225,15 +230,17 @@ function module.create(data)
                     new_closed_areas, new_open_areas, new_pending_op
                 current_cmd = cmd
 
+
+                current_info_pre = current_cmd:sub(0, curpos)
+                current_info_post =  current_cmd:sub(curpos+1, #current_cmd)
                 if embed_args then
-                    current_info =
-                        embed_args.cmd_prefix.."["..current_cmd.."]"..embed_args.cmd_suffix
-                else
-                    current_info = cmd
+                    current_info_pre = cmd_prefix.."["..precur
+                    current_info_post = postcur.."]"..embed_args.cmd_suffix
                 end
 
+                current_msg = ""
                 if #open_areas == 0 and not pending_op then
-                    current_info = current_info .. "\n(enter to apply)"
+                    current_msg = "(enter to apply)"
                 end
                 return true
             else
@@ -241,12 +248,25 @@ function module.create(data)
             end
         end
 
+        local move_cursor = function(n)
+            curpos = curpos + n
+            if curpos > #current_cmd then
+                curpos = #current_cmd
+            elseif curpos < 0 then
+                curpos = 0
+            end
+            -- trigger refresh
+            set_cmd(current_cmd)
+        end
+
+
         local function handle_key(key)
             if key_translate_tab[key] ~= nil then
                 key = key_translate_tab[key]
             end
 
-            return set_cmd(current_cmd..key)
+
+            return set_cmd(current_cmd:sub(0, curpos)..key..current_cmd:sub(curpos+1, #current_cmd))
         end
 
 
@@ -319,20 +339,57 @@ function module.create(data)
             local pl = lgi.Pango.Layout.create(cr)
             pl:set_font_description(beautiful.get_merged_font(beautiful.font, info_size))
             pl:set_alignment("CENTER")
-            pl:set_text(current_info)
-            local w, h = pl:get_size()
-            w = w / lgi.Pango.SCALE
-            h = h / lgi.Pango.SCALE
-            local ext = { width = w, height = h, x_bearing = 0, y_bearing = 0 }
-            cr:move_to(width / 2 - ext.width / 2 - ext.x_bearing, height / 2 - ext.height / 2 - ext.y_bearing)
-            cr:set_source_rgba(1, 1, 1, 1)
-            cr:show_layout(pl)
+            pl:set_text(current_info_pre)
+            local w0, _ = pl:get_pixel_size()
+            pl:set_text(current_info_pre..current_info_post)
+            local w, h = pl:get_pixel_size()
+
+            local cursor_border = 1
+            local cursor_width = 1
+            cr:rectangle(
+                width / 2 - w / 2 + w0,
+                height / 2 - h / 2,
+                2 * cursor_border + cursor_width,
+                h
+            )
+            cr:set_source_rgba(0, 0, 0, 0.8)
             cr:fill()
-            cr:move_to(width / 2 - ext.width / 2 - ext.x_bearing, height / 2 - ext.height / 2 - ext.y_bearing)
-            cr:set_source_rgba(0, 0, 0, 1)
-            cr:set_line_width(2.0)
-            cr:layout_path(pl)
-            cr:stroke()
+            cr:rectangle(
+                cursor_border + width / 2 - w / 2 + w0,
+                cursor_border + height / 2 - h / 2,
+                cursor_width,
+                h - 2 * cursor_border
+            )
+            cr:set_source_rgba(1, 1, 1, 0.8)
+            cr:fill()
+
+            local pl_msg = lgi.Pango.Layout.create(cr)
+            pl_msg:set_font_description(beautiful.get_merged_font(beautiful.font, info_size))
+            pl_msg:set_alignment("CENTER")
+            pl_msg:set_text(current_msg)
+            local w_msg, h_msg = pl_msg:get_pixel_size()
+            local lh = pl_msg:get_line_spacing()
+
+            local draw = function(pl, w, h, y_offset)
+                local ext = { width = w, height = h, x_bearing = 0, y_bearing = 0 }
+                cr:move_to(
+                    width / 2 - ext.width / 2 - ext.x_bearing,
+                    y_offset + height / 2 - ext.height / 2 - ext.y_bearing
+                )
+                cr:set_source_rgba(1, 1, 1, 1)
+                cr:show_layout(pl)
+                cr:fill()
+                cr:move_to(
+                    width / 2 - ext.width / 2 - ext.x_bearing,
+                    y_offset + height / 2 - ext.height / 2 - ext.y_bearing
+                )
+                cr:set_source_rgba(0, 0, 0, 1)
+                cr:set_line_width(2.0)
+                cr:layout_path(pl)
+                cr:stroke()
+            end
+            draw(pl, w, h, 0)
+            draw(pl_msg, w_msg, h_msg, h + lh)
         end
 
         local function refresh()
@@ -370,7 +427,11 @@ function module.create(data)
 
                 local ok, err = pcall(
                     function ()
-                        if key == "BackSpace" then
+                        if key == "Left" then
+                            move_cursor(-1)
+                        elseif key == "Right" then
+                            move_cursor(1)
+                        elseif key == "BackSpace" then
                             local alt = false
                             for _, m in ipairs(mod) do
                                 if m == "Shift" then
@@ -386,7 +447,12 @@ function module.create(data)
                                     set_cmd(machi_engine.areas_to_command(areas))
                                 end
                             else
-                                set_cmd(current_cmd:sub(1, #current_cmd - 1))
+                                local s = curpos - 1
+                                if s < 0 then
+                                    s = 0
+                                end
+                                set_cmd(current_cmd:sub(0, s)..current_cmd:sub(curpos+1, #current_cmd))
+                                move_cursor(-1)
                             end
                         elseif key == "Escape" then
                             table.remove(data.cmds, #data.cmds)
@@ -404,8 +470,14 @@ function module.create(data)
 
                             log(DEBUG, "restore history #" .. tostring(cmd_index) .. ":" .. data.cmds[cmd_index])
                             set_cmd(data.cmds[cmd_index])
-                        elseif #open_areas > 0 or pending_op then
-                            handle_key(key)
+                            move_cursor(#data.cmds[cmd_index])
+                        elseif #open_areas > 0 or pending_op or curpos < #current_cmd then
+                            if key == "." or key == "Return" then
+                                move_cursor(#current_cmd)
+                            end
+                            if handle_key(key) then
+                                move_cursor(1)
+                            end
                         else
                             if key == "Return" then
                                 local alt = false
@@ -420,9 +492,9 @@ function module.create(data)
                                 if not alt and persistent then
                                     table.remove(data.cmds, #data.cmds)
                                     add_cmd(instance_name, get_final_cmd())
-                                    current_info = "Saved!"
+                                    current_msg = "Saved!"
                                 else
-                                    current_info = "Applied!"
+                                    current_msg = "Applied"
                                 end
 
                                 to_exit = true
