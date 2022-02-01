@@ -234,8 +234,8 @@ function module.create(data)
                 current_info_pre = current_cmd:sub(0, curpos)
                 current_info_post =  current_cmd:sub(curpos+1, #current_cmd)
                 if embed_args then
-                    current_info_pre = cmd_prefix.."["..precur
-                    current_info_post = postcur.."]"..embed_args.cmd_suffix
+                    current_info_pre = embed_args.cmd_prefix.."["..current_info_pre
+                    current_info_post = current_info_post.."]"..embed_args.cmd_suffix
                 end
 
                 current_msg = ""
