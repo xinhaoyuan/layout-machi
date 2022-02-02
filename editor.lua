@@ -215,7 +215,7 @@ function module.create(data)
         local current_info_post = ""
         local current_msg
 
-        local function set_cmd(cmd)
+        local function set_cmd(cmd, arbitrary_input)
             local new_closed_areas, new_open_areas, new_pending_op = machi_engine.areas_from_command(
                 cmd,
                 {
@@ -225,11 +225,12 @@ function module.create(data)
                     height = workarea.height - gap * 2
                 },
                 gap * 2 + data.minimum_size)
-            if new_closed_areas then
-                closed_areas, open_areas, pending_op =
-                    new_closed_areas, new_open_areas, new_pending_op
+            if new_closed_areas or not arbitrary_input then
+                if new_closed_areas then
+                    closed_areas, open_areas, pending_op =
+                        new_closed_areas, new_open_areas, new_pending_op
+                end
                 current_cmd = cmd
-
 
                 current_info_pre = current_cmd:sub(0, curpos)
                 current_info_post =  current_cmd:sub(curpos+1, #current_cmd)
@@ -239,7 +240,7 @@ function module.create(data)
                 end
 
                 current_msg = ""
-                if #open_areas == 0 and not pending_op then
+                if new_closed_areas and #open_areas == 0 and not pending_op then
                     current_msg = "(enter to apply)"
                 end
                 return true
@@ -265,8 +266,7 @@ function module.create(data)
                 key = key_translate_tab[key]
             end
 
-
-            return set_cmd(current_cmd:sub(0, curpos)..key..current_cmd:sub(curpos+1, #current_cmd))
+            return set_cmd(current_cmd:sub(0, curpos)..key..current_cmd:sub(curpos+1, #current_cmd), true)
         end
 
 
