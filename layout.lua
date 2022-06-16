@@ -3,7 +3,9 @@ local machi_editor = require(this_package.."editor")
 local awful = require("awful")
 local gobject = require("gears.object")
 local capi = {
-    screen = screen
+    screen = screen,
+    client = client,
+    mouse = mouse,
 }
 
 local ERROR = 2
@@ -626,5 +628,27 @@ end
 function module.placement.empty_then_fair(c, instance, areas, geometry)
     empty_then_maybe_fair(c, instance, areas, geometry, true)
 end
+
+local function patch_awful_layout()
+    local old_alayout_move_handler = awful.layout.move_handler
+    if old_alayout_move_handler == nil then return end
+    -- Mostly the original one but does not swap clients in machi layouts.
+    function awful.layout.move_handler(c, context, ...)
+        if not c.floating and context == "mouse.move" then
+            local s = capi.mouse.screen
+            if s.selected_tag and s.selected_tag.layout and
+                s.selected_tag.layout.machi_set_cmd then
+                if c.screen ~= s then
+                    c.screen = s
+                end
+                return
+            end
+        end
+        return old_alayout_move_handler(c, context, ...)
+    end
+    capi.client.disconnect_signal("request::geometry", old_alayout_move_handler)
+    capi.client.connect_signal("request::geometry", awful.layout.move_handler)
+end
+patch_awful_layout()
 
 return module
