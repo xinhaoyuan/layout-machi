@@ -122,14 +122,9 @@ function module.set_geometry(c, area_lu, area_rd, useless_gap, border_width)
     end
 end
 
--- TODO: the string need to be updated when its screen geometry changed.
 local function get_machi_tag_string(tag)
-    if tag.machi_tag_string == nil then
-        tag.machi_tag_string =
-            tostring(tag.screen.geometry.width) .. "x" .. tostring(tag.screen.geometry.height) .. "+" ..
-            tostring(tag.screen.geometry.x) .. "+" .. tostring(tag.screen.geometry.y) .. '+' .. tag.name
-    end
-    return tag.machi_tag_string
+    return tostring(tag.screen.geometry.width) .. "x" .. tostring(tag.screen.geometry.height) .. "+" ..
+        tostring(tag.screen.geometry.x) .. "+" .. tostring(tag.screen.geometry.y) .. '+' .. tag.name
 end
 
 local function sanitize_geometry(geo, parent_area)
