@@ -247,12 +247,16 @@ function module.create(args_or_name, editor, default_cmd)
 
     clean_up = function (tag)
         local screen = tag.screen
+        if not screen then
+            -- This could happen when deleting tag.
+            return
+        end
         local _cd, _nt, _areas, instance, _new_placement_cb = get_instance_data(screen, tag)
 
         if tag_data[tag].regsitered then
             tag_data[tag].regsitered = false
             tag:disconnect_signal("property::layout", clean_up)
-            tag:connect_signal("property::selected", clean_up)
+            tag:disconnect_signal("property::selected", clean_up)
             for _, tag in pairs(instance.nested_tags) do
                 tag:emit_signal("property::layout")
             end
