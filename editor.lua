@@ -464,13 +464,17 @@ function module.create(data)
 
     local function run_cmd(cmd, screen, tag)
         local gap = tag.gap
+        local wa_adjust_left = beautiful.machi_workarea_adjust_left or 0
+        local wa_adjust_right = beautiful.machi_workarea_adjust_right or 0
+        local wa_adjust_top = beautiful.machi_workarea_adjust_top or 0
+        local wa_adjust_bottom = beautiful.machi_workarea_adjust_bottom or 0
         local areas, closed = machi_engine.areas_from_command(
             cmd,
             {
-                x = screen.workarea.x + gap,
-                y = screen.workarea.y + gap,
-                width = screen.workarea.width - gap * 2,
-                height = screen.workarea.height - gap * 2
+                x = screen.workarea.x + wa_adjust_left - gap,
+                y = screen.workarea.y + wa_adjust_top - gap,
+                width = screen.workarea.width - wa_adjust_left - wa_adjust_right + gap * 2,
+                height = screen.workarea.height - wa_adjust_top - wa_adjust_bottom + gap * 2
             },
             gap * 2 + data.minimum_size)
         if not areas or #closed > 0 then
